@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root {
+  /* Light Mode (Default) */
+  --color-primary: #002152;
+  --color-secondary: #F9560B;
+  --color-background: #f8fafc; 
+  --color-card: #ffffff;
+  --color-card-border: #e2e8f0;
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-footer-bg: #DBD3C0;
+  --color-footer-text: #002152;
+}
+
+
+.dark {
+  /* Dark Mode */
+  --color-primary: #F9560B;
+  --color-secondary: #DBD3C0;
+  --color-background: #0f172a;
+  --color-card: #1e293b;
+  --color-card-border: #334155;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-footer-bg: #1e293b;
+  --color-footer-text: #94a3b8;
+}
+
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: 'Inter', sans-serif;
+  transition-property: color, background-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+
+/* Base styles for buttons to make them theme-aware */
+.btn-primary {
+    @apply bg-primary text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200;
+}
+
+
+.btn-primary:hover {
+    @apply bg-secondary;
+}
+
+
+.btn-primary:disabled {
+    @apply bg-gray-400 cursor-not-allowed;
+}
+
+
+.btn-secondary {
+    @apply bg-card text-text-secondary font-semibold py-2 px-4 rounded-md border border-card-border transition-colors duration-200;
+}
+
+
+.btn-secondary:hover {
+    @apply bg-background border-secondary text-secondary;
+}
+
+@layer components {
+  .form-radio-custom {
+    @apply appearance-none bg-background border-2 border-card-border rounded-full w-5 h-5 cursor-pointer checked:bg-secondary checked:border-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-card focus:ring-secondary;
+  }
+}
