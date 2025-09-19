@@ -1,3 +1,4 @@
+// src/app/signup/page.jsx
 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -7,6 +8,10 @@ import api from './api'; // <-- make sure you have this axios instance file
 
 export default function SignupPage() {
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+import styles from '../login/Auth.module.css'; 
+
+export default function SignupPage() {
+    const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -33,6 +38,8 @@ export default function SignupPage() {
             setLoading(false);
         }
     };
+    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleSubmit = (e) => { /* ... same as before ... */ };
 
     return (
         <main className={styles.pageWrapper}>
@@ -67,4 +74,5 @@ export default function SignupPage() {
             </div>
         </main>
     );
+}
 }
