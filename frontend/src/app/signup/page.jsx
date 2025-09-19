@@ -3,6 +3,11 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import styles from '../login/Auth.module.css';
+import api from './api'; // <-- make sure you have this axios instance file
+
+export default function SignupPage() {
+    const [formData, setFormData] = useState({ name: '', email: '', password: '' });
 import styles from '../login/Auth.module.css'; 
 
 export default function SignupPage() {
@@ -11,6 +16,28 @@ export default function SignupPage() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setLoading(true);
+        setError('');
+        try {
+            const res = await api.post('/signup', formData);
+            if (res.data?.Status) {
+                router.push('/login'); // ✅ use router.push instead of navigate
+            } else {
+                setError(res.data?.Error || 'Registration failed');
+            }
+        } catch (err) {
+            console.error(err);
+            setError('Registration error');
+        } finally {
+            setLoading(false);
+        }
+    };
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
     const handleSubmit = (e) => { /* ... same as before ... */ };
 
@@ -47,4 +74,5 @@ export default function SignupPage() {
             </div>
         </main>
     );
+}
 }
