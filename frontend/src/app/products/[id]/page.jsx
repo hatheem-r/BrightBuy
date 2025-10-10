@@ -4,34 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
-
-// --- MOCK DATA ---
-const getProductById = async (id) => {
-    const mockProduct = {
-        id: '1',
-        name: 'Samsung 1TB NVME SSD',
-        sku: 'SS-NVME-1TB-BLK',
-        description: [
-            'High Speed 8,000MB/s',
-            'PCIe 5.0, NVME SSD',
-            'Type-C Connectivity',
-            'Original Branded'
-        ],
-        rating: 4.5,
-        variants: [
-            { id: 'v1', name: 'Samsung 1TB NVME SSD - Black', color: 'Black', memory: '1TB', price: 2999.00, oldPrice: 3499.00, stock: 15, default: true },
-            { id: 'v2', name: 'Samsung 1TB NVME SSD - White', color: 'White', memory: '1TB', price: 3099.00, oldPrice: 3599.00, stock: 8 },
-            { id: 'v3', name: 'Samsung 2TB NVME SSD - Black', color: 'Black', memory: '2TB', price: 4999.00, oldPrice: 5999.00, stock: 5 },
-        ],
-        images: ['/placeholder-ssd.jpg', '/placeholder-ssd-2.jpg', '/placeholder-ssd-3.jpg', '/placeholder-ssd-4.jpg']
-    };
-    return mockProduct;
-};
-
-const similarProducts = [
-    // Add similar products if needed
-];
-// --- END MOCK DATA ---
+import { getProductById } from '@/lib/api';
 
 export default function ProductDetailPage() {
     const params = useParams();
