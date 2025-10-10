@@ -1,31 +1,96 @@
 // middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
-const db = require('../config/db');
 
-const protect = async (req, res, next) => {
-    let token;
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        try {
-            token = req.headers.authorization.split(' ')[1];
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            
-            // Fetch user from db using the ID from the token
-            const [rows] = await db.query('SELECT user_id, name, email FROM users WHERE user_id = ?', [decoded.id]);
-            
-            if (rows.length === 0) {
-                return res.status(401).json({ message: 'Not authorized, user not found' });
-            }
-            
-            req.user = rows[0]; // atach user info to the request
-            next();
+// Middleware to verify JWT token
+exports.authenticate = (req, res, next) => {
+  try {
+    // Get token from header
+    const authHeader = req.headers.authorization;
 
-        } catch (error) {
-            res.status(401).json({ message: 'Not authorized, token failed' });
-        }
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Access denied. No token provided.'
+      });
     }
-    if (!token) {
-        res.status(401).json({ message: 'Not authorized, no token' });
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+    // Verify token
+    const decoded = jwt.verify(
+      token, 
+      process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+    );
+
+    // Add user info to request
+    req.user = decoded;
+    next();
+
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token expired. Please login again.'
+      });
     }
+    
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid token.'
+    });
+  }
 };
 
-module.exports = { protect };
+// Middleware to check user role
+exports.authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required.'
+      });
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Insufficient permissions.'
+      });
+    }
+
+    next();
+  };
+};
+
+// Middleware to check if user is customer
+exports.isCustomer = (req, res, next) => {
+  if (!req.user || req.user.role !== 'customer') {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Customer access only.'
+    });
+  }
+  next();
+};
+
+// Middleware to check if user is admin or manager
+exports.isStaff = (req, res, next) => {
+  if (!req.user || !['admin', 'manager'].includes(req.user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Staff access only.'
+    });
+  }
+  next();
+};
+
+// Middleware to check if user is admin
+exports.isAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Admin access only.'
+    });
+  }
+  next();
+};

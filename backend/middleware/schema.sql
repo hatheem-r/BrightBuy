@@ -5,6 +5,7 @@
 -- Drop existing tables if they exist (for clean setup)
 --@block
 CREATE DATABASE brightbuy;
+USE brightbuy;
 
 
 DROP TABLE IF EXISTS order_items;
@@ -487,6 +488,21 @@ VALUES (
         'admin',
         TRUE
     );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -15,7 +15,7 @@ app.use(express.json()); // To accept JSON data in the body
 // --- API Routes ---
 // Example: We will create these files next
 app.use('/api/products', require('./routes/products'));
-// app.use('/api/auth', require('./routes/auth'));
+app.use('/api/auth', require('./routes/auth'));
 // app.use('/api/orders', require('./routes/orders'));
 
 // Basic Test Route
