@@ -11,9 +11,14 @@ const Navbar = () => {
   return (
     <header className="bg-card shadow-sm sticky top-0 z-50 border-b border-card-border">
       <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
-        <Link href="/" className="text-2xl font-bold text-primary">
-          BrightBuy
-        </Link>
+        <div className="flex items-center space-x-6">
+          <Link href="/" className="text-2xl font-bold text-primary">
+            BrightBuy
+          </Link>
+          <Link href="/Test" className="text-text-secondary hover:text-secondary transition-colors">
+            Test Counter
+          </Link>
+        </div>
         <div className="flex items-center space-x-4">
           <ThemeSwitcher />
           <Link href="/cart" className="text-text-secondary hover:text-secondary relative">

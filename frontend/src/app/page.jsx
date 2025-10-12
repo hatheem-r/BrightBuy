@@ -40,9 +40,14 @@ export default function HomePage() {
         <div className="container mx-auto px-6 text-center">
             <h1 className="text-5xl font-extrabold text-text-primary mb-4">Your Tech Destination</h1>
             <p className="text-lg text-text-secondary mb-8 max-w-2xl mx-auto">Discover the latest in consumer electronics, from high-performance gadgets to everyday essentials, all in one place.</p>
-            <Link href="/products" className="bg-primary text-white px-8 py-3 rounded-full font-semibold hover:bg-secondary transition-colors text-lg">
-                Explore Products
-            </Link>
+            <div className="flex justify-center gap-4">
+              <Link href="/products" className="bg-primary text-white px-8 py-3 rounded-full font-semibold hover:bg-secondary transition-colors text-lg">
+                  Explore Products
+              </Link>
+              <Link href="/Test" className="bg-secondary text-white px-8 py-3 rounded-full font-semibold hover:bg-primary transition-colors text-lg">
+                  Try Counter
+              </Link>
+            </div>
         </div>
       </section>
 
