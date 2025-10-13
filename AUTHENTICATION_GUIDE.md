@@ -5,18 +5,22 @@ This guide explains how to set up and test the authentication system for BrightB
 ## 🔧 Backend Setup
 
 ### 1. Install Dependencies
+
 ```bash
 cd backend
 npm install
 ```
 
 ### 2. Configure Environment Variables
+
 Create a `.env` file in the backend directory:
+
 ```bash
 cp .env.example .env
 ```
 
 Edit `.env` and update:
+
 ```
 PORT=5001
 DB_HOST=localhost
@@ -27,7 +31,9 @@ JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
 ```
 
 ### 3. Set Up Database
+
 Run the SQL scripts in order:
+
 ```bash
 # 1. Create database and schema
 mysql -u root -p < backend/middleware/schema.sql
@@ -37,6 +43,7 @@ mysql -u root -p < backend/middleware/test_users.sql
 ```
 
 ### 4. Start Backend Server
+
 ```bash
 cd backend
 npm run dev
@@ -47,12 +54,14 @@ Server will run on: http://localhost:5001
 ## 🎨 Frontend Setup
 
 ### 1. Install Dependencies
+
 ```bash
 cd frontend
 npm install
 ```
 
 ### 2. Start Development Server
+
 ```bash
 npm run dev
 ```
@@ -64,16 +73,19 @@ Frontend will run on: http://localhost:3000
 Use these credentials to test the authentication:
 
 ### Admin Account
+
 - **Email:** admin@brightbuy.com
 - **Password:** password123
 - **Redirects to:** /admin/dashboard
 
 ### Manager Account
+
 - **Email:** manager@brightbuy.com
 - **Password:** password123
 - **Redirects to:** /manager/dashboard
 
 ### Customer Account
+
 - **Email:** customer@brightbuy.com
 - **Password:** password123
 - **Redirects to:** / (home page)
@@ -83,9 +95,11 @@ Use these credentials to test the authentication:
 ### Authentication Routes
 
 #### POST `/api/auth/login`
+
 Login with email and password.
 
 **Request:**
+
 ```json
 {
   "email": "admin@brightbuy.com",
@@ -94,6 +108,7 @@ Login with email and password.
 ```
 
 **Response (Success):**
+
 ```json
 {
   "success": true,
@@ -109,6 +124,7 @@ Login with email and password.
 ```
 
 **Response (Error):**
+
 ```json
 {
   "success": false,
@@ -117,9 +133,11 @@ Login with email and password.
 ```
 
 #### POST `/api/auth/register`
+
 Register a new user.
 
 **Request:**
+
 ```json
 {
   "name": "John Doe",
@@ -130,6 +148,7 @@ Register a new user.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -145,14 +164,17 @@ Register a new user.
 ```
 
 #### GET `/api/auth/me`
+
 Get current logged-in user information (requires authentication).
 
 **Headers:**
+
 ```
 Authorization: Bearer <your_jwt_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -183,19 +205,28 @@ The backend includes middleware for protecting routes:
 ### Example Usage
 
 ```javascript
-const { authenticate, isAdmin, isStaff } = require('./middleware/authMiddleware');
+const {
+  authenticate,
+  isAdmin,
+  isStaff,
+} = require("./middleware/authMiddleware");
 
 // Protect a route (any authenticated user)
-router.get('/profile', authenticate, profileController.getProfile);
+router.get("/profile", authenticate, profileController.getProfile);
 
 // Admin only route
-router.delete('/users/:id', authenticate, isAdmin, userController.deleteUser);
+router.delete("/users/:id", authenticate, isAdmin, userController.deleteUser);
 
 // Staff only route (admin or manager)
-router.get('/dashboard', authenticate, isStaff, dashboardController.getStats);
+router.get("/dashboard", authenticate, isStaff, dashboardController.getStats);
 
 // Multiple roles allowed
-router.post('/reports', authenticate, authorize('admin', 'manager'), reportController.create);
+router.post(
+  "/reports",
+  authenticate,
+  authorize("admin", "manager"),
+  reportController.create
+);
 ```
 
 ## 🔄 How Login Works
@@ -254,22 +285,26 @@ frontend/
 ## 🐛 Troubleshooting
 
 ### Backend won't start
+
 - Check if MySQL is running
 - Verify database credentials in `.env`
 - Ensure database `brightbuy` exists
 - Check if port 5001 is available
 
 ### Login fails with "Server error"
+
 - Check backend console for errors
 - Verify test users are created in database
 - Ensure JWT_SECRET is set in `.env`
 
 ### Frontend shows CORS error
+
 - Ensure backend has CORS enabled (already configured)
 - Check if backend is running on port 5001
 - Verify API_BASE_URL in frontend/src/lib/api.js
 
 ### Token expired error
+
 - Tokens expire after 7 days
 - User needs to login again
 - Clear localStorage and login fresh

@@ -5,6 +5,7 @@
 ### Backend (Node.js + Express + MySQL)
 
 #### 1. **Authentication Controller** (`backend/controllers/authController.js`)
+
 - ✅ `login()` - Authenticates users with email/password, verifies hashed password with bcrypt
 - ✅ `register()` - Creates new user accounts with hashed passwords
 - ✅ `getMe()` - Returns current authenticated user information
@@ -15,6 +16,7 @@
 - ✅ Comprehensive error handling
 
 #### 2. **Authentication Middleware** (`backend/middleware/authMiddleware.js`)
+
 - ✅ `authenticate` - Verifies JWT tokens from Authorization header
 - ✅ `authorize(...roles)` - Checks if user has specific role(s)
 - ✅ `isCustomer` - Ensures user is a customer
@@ -24,16 +26,19 @@
 - ✅ Role-based access control
 
 #### 3. **Authentication Routes** (`backend/routes/auth.js`)
+
 - ✅ `POST /api/auth/login` - Login endpoint
 - ✅ `POST /api/auth/register` - Registration endpoint
 - ✅ `GET /api/auth/me` - Get current user (protected)
 
 #### 4. **Server Configuration** (`backend/server.js`)
+
 - ✅ Auth routes integrated into main server
 - ✅ CORS enabled for frontend communication
 - ✅ JSON body parser configured
 
 #### 5. **Database Test Data** (`backend/middleware/test_users.sql`)
+
 - ✅ Test admin account (admin@brightbuy.com)
 - ✅ Test manager account (manager@brightbuy.com)
 - ✅ Test customer accounts
@@ -42,6 +47,7 @@
 ### Frontend (Next.js 15 + React)
 
 #### 1. **API Module** (`frontend/src/lib/api.js`)
+
 - ✅ Centralized API request helper
 - ✅ `login(email, password)` - Login API call
 - ✅ `register(userData)` - Registration API call
@@ -51,6 +57,7 @@
 - ✅ Error handling
 
 #### 2. **Login Page** (`frontend/src/app/login/page.jsx`)
+
 - ✅ Form with email and password fields
 - ✅ State management (email, password, loading, error)
 - ✅ onClick handler for login button
@@ -64,6 +71,7 @@
   - Admin → `/admin/dashboard`
 
 #### 3. **Admin Dashboard** (`frontend/src/app/admin/dashboard/page.jsx`)
+
 - ✅ Protected route (checks authentication)
 - ✅ Role verification (admin only)
 - ✅ Dashboard UI with stats
@@ -71,6 +79,7 @@
 - ✅ Logout functionality
 
 #### 4. **Manager Dashboard** (`frontend/src/app/manager/dashboard/page.jsx`)
+
 - ✅ Protected route (checks authentication)
 - ✅ Role verification (manager only)
 - ✅ Dashboard UI with stats
@@ -80,6 +89,7 @@
 ### Documentation & Testing
 
 #### 1. **Authentication Guide** (`AUTHENTICATION_GUIDE.md`)
+
 - ✅ Complete setup instructions
 - ✅ Test credentials documentation
 - ✅ API endpoint documentation
@@ -88,6 +98,7 @@
 - ✅ Troubleshooting guide
 
 #### 2. **Test Script** (`test_auth.sh`)
+
 - ✅ Automated API testing
 - ✅ Tests all user roles
 - ✅ Tests authentication failure cases
@@ -143,15 +154,16 @@
 
 ## 🛡️ Role-Based Access Control
 
-| Role     | Access Level | Dashboard Route      | Description                    |
-|----------|--------------|----------------------|--------------------------------|
-| customer | Basic        | `/`                  | Regular shoppers               |
-| manager  | Medium       | `/manager/dashboard` | Inventory & order management   |
-| admin    | Full         | `/admin/dashboard`   | Complete system access         |
+| Role     | Access Level | Dashboard Route      | Description                  |
+| -------- | ------------ | -------------------- | ---------------------------- |
+| customer | Basic        | `/`                  | Regular shoppers             |
+| manager  | Medium       | `/manager/dashboard` | Inventory & order management |
+| admin    | Full         | `/admin/dashboard`   | Complete system access       |
 
 ## 📁 Files Created/Modified
 
 ### Backend Files
+
 ```
 ✅ backend/controllers/authController.js       (NEW)
 ✅ backend/middleware/authMiddleware.js        (UPDATED - was empty)
@@ -161,6 +173,7 @@
 ```
 
 ### Frontend Files
+
 ```
 ✅ frontend/src/lib/api.js                     (UPDATED - added auth functions)
 ✅ frontend/src/app/login/page.jsx             (UPDATED - added functionality)
@@ -169,6 +182,7 @@
 ```
 
 ### Documentation Files
+
 ```
 ✅ AUTHENTICATION_GUIDE.md                     (NEW)
 ✅ test_auth.sh                                (NEW)
@@ -177,17 +191,18 @@
 
 ## 🧪 Test Accounts
 
-| Role     | Email                      | Password     | Dashboard               |
-|----------|---------------------------|--------------|-------------------------|
-| Admin    | admin@brightbuy.com       | password123  | /admin/dashboard        |
-| Manager  | manager@brightbuy.com     | password123  | /manager/dashboard      |
-| Customer | customer@brightbuy.com    | password123  | / (home)                |
+| Role     | Email                  | Password    | Dashboard          |
+| -------- | ---------------------- | ----------- | ------------------ |
+| Admin    | admin@brightbuy.com    | password123 | /admin/dashboard   |
+| Manager  | manager@brightbuy.com  | password123 | /manager/dashboard |
+| Customer | customer@brightbuy.com | password123 | / (home)           |
 
 ## 🚀 How to Test
 
 ### Quick Start (3 Steps)
 
 1. **Start Backend**
+
 ```bash
 cd backend
 npm run dev
@@ -195,11 +210,13 @@ npm run dev
 ```
 
 2. **Import Test Users**
+
 ```bash
 mysql -u root -p < backend/middleware/test_users.sql
 ```
 
 3. **Start Frontend**
+
 ```bash
 cd frontend
 npm run dev
@@ -207,11 +224,13 @@ npm run dev
 ```
 
 4. **Login**
+
 - Go to http://localhost:3000/login
 - Use test credentials above
 - Get redirected based on role
 
 ### Automated Testing
+
 ```bash
 # Run the test script (backend must be running)
 ./test_auth.sh
@@ -220,6 +239,7 @@ npm run dev
 ## 🔍 API Testing with cURL
 
 ### Login as Admin
+
 ```bash
 curl -X POST http://localhost:5001/api/auth/login \
   -H "Content-Type: application/json" \
@@ -230,6 +250,7 @@ curl -X POST http://localhost:5001/api/auth/login \
 ```
 
 ### Get Current User
+
 ```bash
 # Replace TOKEN with actual token from login
 curl -X GET http://localhost:5001/api/auth/me \
@@ -252,6 +273,7 @@ curl -X GET http://localhost:5001/api/auth/me \
 ## 🐛 Known Limitations & Future Improvements
 
 ### Current Limitations
+
 - No refresh token mechanism
 - No password reset functionality
 - No email verification
@@ -261,6 +283,7 @@ curl -X GET http://localhost:5001/api/auth/me \
 - No two-factor authentication (2FA)
 
 ### Recommended Improvements
+
 1. Add refresh token rotation
 2. Implement password reset via email
 3. Add email verification on signup
@@ -275,16 +298,19 @@ curl -X GET http://localhost:5001/api/auth/me \
 ## 📞 Support & Troubleshooting
 
 ### Backend Issues
+
 - **"Cannot connect to database"**: Check MySQL is running and .env credentials
 - **"JWT_SECRET not defined"**: Add JWT_SECRET to .env file
 - **"Port 5001 in use"**: Change PORT in .env or kill process on 5001
 
 ### Frontend Issues
+
 - **"Network Error"**: Ensure backend is running on port 5001
 - **"Login button doesn't work"**: Check browser console for errors
 - **"Redirects to wrong page"**: Check user role in database
 
 ### Testing Issues
+
 - **Test users don't exist**: Run test_users.sql script
 - **Wrong password error**: Ensure you're using "password123"
 - **Token expired**: Tokens expire after 7 days, login again
@@ -292,6 +318,7 @@ curl -X GET http://localhost:5001/api/auth/me \
 ## 🎉 Success Criteria
 
 All requirements have been met:
+
 - ✅ Login button has onClick handler
 - ✅ Backend checks hashed password using bcrypt
 - ✅ Customer redirects to appropriate dashboard

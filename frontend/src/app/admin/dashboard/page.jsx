@@ -1,6 +1,6 @@
-'use client';
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+"use client";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -8,19 +8,19 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     // Check authentication
-    const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('user');
+    const token = localStorage.getItem("authToken");
+    const userData = localStorage.getItem("user");
 
     if (!token || !userData) {
-      router.push('/login');
+      router.push("/login");
       return;
     }
 
     const parsedUser = JSON.parse(userData);
-    
+
     // Check if user is admin
-    if (parsedUser.role !== 'admin') {
-      router.push('/');
+    if (parsedUser.role !== "admin") {
+      router.push("/");
       return;
     }
 
@@ -28,13 +28,17 @@ export default function AdminDashboard() {
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    router.push('/login');
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+    router.push("/login");
   };
 
   if (!user) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
   }
 
   return (
@@ -42,8 +46,12 @@ export default function AdminDashboard() {
       <div className="container mx-auto px-6 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-text-primary">Admin Dashboard</h1>
-            <p className="text-text-secondary mt-2">Welcome back, {user.name}!</p>
+            <h1 className="text-3xl font-bold text-text-primary">
+              Admin Dashboard
+            </h1>
+            <p className="text-text-secondary mt-2">
+              Welcome back, {user.name}!
+            </p>
           </div>
           <button
             onClick={handleLogout}
@@ -55,25 +63,35 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-card border border-card-border rounded-lg p-6">
-            <h3 className="text-text-secondary text-sm font-medium">Total Users</h3>
+            <h3 className="text-text-secondary text-sm font-medium">
+              Total Users
+            </h3>
             <p className="text-3xl font-bold text-text-primary mt-2">1,234</p>
           </div>
           <div className="bg-card border border-card-border rounded-lg p-6">
-            <h3 className="text-text-secondary text-sm font-medium">Total Orders</h3>
+            <h3 className="text-text-secondary text-sm font-medium">
+              Total Orders
+            </h3>
             <p className="text-3xl font-bold text-text-primary mt-2">567</p>
           </div>
           <div className="bg-card border border-card-border rounded-lg p-6">
-            <h3 className="text-text-secondary text-sm font-medium">Total Products</h3>
+            <h3 className="text-text-secondary text-sm font-medium">
+              Total Products
+            </h3>
             <p className="text-3xl font-bold text-text-primary mt-2">89</p>
           </div>
           <div className="bg-card border border-card-border rounded-lg p-6">
             <h3 className="text-text-secondary text-sm font-medium">Revenue</h3>
-            <p className="text-3xl font-bold text-text-primary mt-2">Rs. 45,678</p>
+            <p className="text-3xl font-bold text-text-primary mt-2">
+              Rs. 45,678
+            </p>
           </div>
         </div>
 
         <div className="bg-card border border-card-border rounded-lg p-6">
-          <h2 className="text-xl font-bold text-text-primary mb-4">Admin Controls</h2>
+          <h2 className="text-xl font-bold text-text-primary mb-4">
+            Admin Controls
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button className="p-4 bg-primary text-white rounded-lg hover:opacity-90">
               Manage Users

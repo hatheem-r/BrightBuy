@@ -1,7 +1,7 @@
 // controllers/authController.js
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const db = require('../config/db');
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const db = require("../config/db");
 
 // Login controller
 exports.login = async (req, res) => {
@@ -12,20 +12,20 @@ exports.login = async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Email and password are required'
+        message: "Email and password are required",
       });
     }
 
     // Check if user exists
     const [users] = await db.query(
-      'SELECT user_id, name, email, password_hash, role, is_active FROM users WHERE email = ?',
+      "SELECT user_id, name, email, password_hash, role, is_active FROM users WHERE email = ?",
       [email]
     );
 
     if (users.length === 0) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: "Invalid email or password",
       });
     }
 
@@ -35,7 +35,7 @@ exports.login = async (req, res) => {
     if (!user.is_active) {
       return res.status(403).json({
         success: false,
-        message: 'Account is inactive. Please contact support.'
+        message: "Account is inactive. Please contact support.",
       });
     }
 
@@ -45,45 +45,44 @@ exports.login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: "Invalid email or password",
       });
     }
 
     // Update last login
     await db.query(
-      'UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?',
+      "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?",
       [user.user_id]
     );
 
     // Generate JWT token
     const token = jwt.sign(
-      { 
-        userId: user.user_id, 
-        email: user.email, 
-        role: user.role 
+      {
+        userId: user.user_id,
+        email: user.email,
+        role: user.role,
       },
-      process.env.JWT_SECRET || 'your-secret-key-change-in-production',
-      { expiresIn: '7d' }
+      process.env.JWT_SECRET || "your-secret-key-change-in-production",
+      { expiresIn: "7d" }
     );
 
     // Return success response with token and user info
     res.json({
       success: true,
-      message: 'Login successful',
+      message: "Login successful",
       token,
       user: {
         id: user.user_id,
         name: user.name,
         email: user.email,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
-
   } catch (error) {
-    console.error('Login error:', error);
+    console.error("Login error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error. Please try again later.'
+      message: "Server error. Please try again later.",
     });
   }
 };
@@ -97,20 +96,20 @@ exports.register = async (req, res) => {
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Name, email, and password are required'
+        message: "Name, email, and password are required",
       });
     }
 
     // Check if user already exists
     const [existingUsers] = await db.query(
-      'SELECT user_id FROM users WHERE email = ?',
+      "SELECT user_id FROM users WHERE email = ?",
       [email]
     );
 
     if (existingUsers.length > 0) {
       return res.status(409).json({
         success: false,
-        message: 'Email already registered'
+        message: "Email already registered",
       });
     }
 
@@ -120,38 +119,37 @@ exports.register = async (req, res) => {
 
     // Insert new user
     const [result] = await db.query(
-      'INSERT INTO users (name, email, password_hash, phone, role) VALUES (?, ?, ?, ?, ?)',
-      [name, email, passwordHash, phone || null, 'customer']
+      "INSERT INTO users (name, email, password_hash, phone, role) VALUES (?, ?, ?, ?, ?)",
+      [name, email, passwordHash, phone || null, "customer"]
     );
 
     // Generate JWT token
     const token = jwt.sign(
-      { 
-        userId: result.insertId, 
-        email: email, 
-        role: 'customer' 
+      {
+        userId: result.insertId,
+        email: email,
+        role: "customer",
       },
-      process.env.JWT_SECRET || 'your-secret-key-change-in-production',
-      { expiresIn: '7d' }
+      process.env.JWT_SECRET || "your-secret-key-change-in-production",
+      { expiresIn: "7d" }
     );
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful',
+      message: "Registration successful",
       token,
       user: {
         id: result.insertId,
         name,
         email,
-        role: 'customer'
-      }
+        role: "customer",
+      },
     });
-
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error("Registration error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error. Please try again later.'
+      message: "Server error. Please try again later.",
     });
   }
 };
@@ -162,14 +160,14 @@ exports.getMe = async (req, res) => {
     const userId = req.user.userId;
 
     const [users] = await db.query(
-      'SELECT user_id, name, email, role, phone, created_at, last_login FROM users WHERE user_id = ?',
+      "SELECT user_id, name, email, role, phone, created_at, last_login FROM users WHERE user_id = ?",
       [userId]
     );
 
     if (users.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
 
@@ -182,15 +180,14 @@ exports.getMe = async (req, res) => {
         role: users[0].role,
         phone: users[0].phone,
         createdAt: users[0].created_at,
-        lastLogin: users[0].last_login
-      }
+        lastLogin: users[0].last_login,
+      },
     });
-
   } catch (error) {
-    console.error('Get user error:', error);
+    console.error("Get user error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error. Please try again later.'
+      message: "Server error. Please try again later.",
     });
   }
 };

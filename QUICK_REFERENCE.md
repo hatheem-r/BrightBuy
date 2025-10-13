@@ -3,6 +3,7 @@
 ## 📋 Quick Start Checklist
 
 ### Setup (One-time)
+
 ```bash
 # 1. Backend Setup
 cd backend
@@ -20,6 +21,7 @@ npm install
 ```
 
 ### Running the App
+
 ```bash
 # Terminal 1: Start Backend
 cd backend
@@ -33,6 +35,7 @@ npm run dev
 ```
 
 ### Testing Login
+
 ```
 🌐 Go to: http://localhost:3000/login
 
@@ -56,11 +59,11 @@ npm run dev
     FRONTEND                        BACKEND                    DATABASE
     ========                        =======                    ========
 
-1.  User enters                     
-    email/password                  
-    ↓                               
-2.  Click "Sign In"                 
-    ↓                               
+1.  User enters
+    email/password
+    ↓
+2.  Click "Sign In"
+    ↓
 3.  POST /api/auth/login ──────→   Receive credentials
     {email, password}                       ↓
                                     4. Validate input
@@ -168,19 +171,24 @@ npm run dev
 
 ```javascript
 // Protect any authenticated route
-router.get('/profile', authenticate, getProfile);
+router.get("/profile", authenticate, getProfile);
 
 // Admin only
-router.delete('/users/:id', authenticate, isAdmin, deleteUser);
+router.delete("/users/:id", authenticate, isAdmin, deleteUser);
 
 // Staff only (admin OR manager)
-router.get('/reports', authenticate, isStaff, getReports);
+router.get("/reports", authenticate, isStaff, getReports);
 
 // Multiple roles allowed
-router.post('/inventory', authenticate, authorize('admin', 'manager'), updateInventory);
+router.post(
+  "/inventory",
+  authenticate,
+  authorize("admin", "manager"),
+  updateInventory
+);
 
 // Customer only
-router.post('/orders', authenticate, isCustomer, createOrder);
+router.post("/orders", authenticate, isCustomer, createOrder);
 ```
 
 ## 📁 Project Structure

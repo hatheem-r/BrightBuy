@@ -1,5 +1,5 @@
 // middleware/authMiddleware.js
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 // Middleware to verify JWT token
 exports.authenticate = (req, res, next) => {
@@ -7,10 +7,10 @@ exports.authenticate = (req, res, next) => {
     // Get token from header
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
-        message: 'Access denied. No token provided.'
+        message: "Access denied. No token provided.",
       });
     }
 
@@ -18,25 +18,24 @@ exports.authenticate = (req, res, next) => {
 
     // Verify token
     const decoded = jwt.verify(
-      token, 
-      process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+      token,
+      process.env.JWT_SECRET || "your-secret-key-change-in-production"
     );
 
     // Add user info to request
     req.user = decoded;
     next();
-
   } catch (error) {
-    if (error.name === 'TokenExpiredError') {
+    if (error.name === "TokenExpiredError") {
       return res.status(401).json({
         success: false,
-        message: 'Token expired. Please login again.'
+        message: "Token expired. Please login again.",
       });
     }
-    
+
     return res.status(401).json({
       success: false,
-      message: 'Invalid token.'
+      message: "Invalid token.",
     });
   }
 };
@@ -47,14 +46,14 @@ exports.authorize = (...roles) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: 'Authentication required.'
+        message: "Authentication required.",
       });
     }
 
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: 'Access denied. Insufficient permissions.'
+        message: "Access denied. Insufficient permissions.",
       });
     }
 
@@ -64,10 +63,10 @@ exports.authorize = (...roles) => {
 
 // Middleware to check if user is customer
 exports.isCustomer = (req, res, next) => {
-  if (!req.user || req.user.role !== 'customer') {
+  if (!req.user || req.user.role !== "customer") {
     return res.status(403).json({
       success: false,
-      message: 'Access denied. Customer access only.'
+      message: "Access denied. Customer access only.",
     });
   }
   next();
@@ -75,10 +74,10 @@ exports.isCustomer = (req, res, next) => {
 
 // Middleware to check if user is admin or manager
 exports.isStaff = (req, res, next) => {
-  if (!req.user || !['admin', 'manager'].includes(req.user.role)) {
+  if (!req.user || !["admin", "manager"].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
-      message: 'Access denied. Staff access only.'
+      message: "Access denied. Staff access only.",
     });
   }
   next();
@@ -86,10 +85,10 @@ exports.isStaff = (req, res, next) => {
 
 // Middleware to check if user is admin
 exports.isAdmin = (req, res, next) => {
-  if (!req.user || req.user.role !== 'admin') {
+  if (!req.user || req.user.role !== "admin") {
     return res.status(403).json({
       success: false,
-      message: 'Access denied. Admin access only.'
+      message: "Access denied. Admin access only.",
     });
   }
   next();
