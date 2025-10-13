@@ -36,6 +36,36 @@ export default function ProductDetailPage() {
     setAddedToCart(false);
   };
 
+  // Get unique variant attributes
+  const getUniqueAttributes = (attribute) => {
+    return [
+      ...new Set(product?.variants.map((v) => v[attribute]).filter(Boolean)),
+    ];
+  };
+
+  // Find best matching variant when switching attributes
+  const findMatchingVariant = (attributeType, attributeValue) => {
+    // Try to find variant with same other attributes
+    const candidates = product.variants.filter(
+      (v) => v[attributeType] === attributeValue
+    );
+
+    if (candidates.length === 1) return candidates[0].id;
+
+    // Try to match other attributes from current selection
+    const bestMatch = candidates.find((v) => {
+      if (attributeType !== "color" && v.color === selectedVariant?.color)
+        return true;
+      if (attributeType !== "memory" && v.memory === selectedVariant?.memory)
+        return true;
+      if (attributeType !== "size" && v.size === selectedVariant?.size)
+        return true;
+      return false;
+    });
+
+    return bestMatch ? bestMatch.id : candidates[0].id;
+  };
+
   const handleAddToCart = () => {
     if (selectedVariant) {
       addToCart(selectedVariant, 1);
@@ -97,53 +127,193 @@ export default function ProductDetailPage() {
             ))}
           </ul>
 
-          <div className="mb-4">
-            <label className="text-md font-semibold text-text-primary">
-              Color:{" "}
-              <span className="font-normal text-text-secondary">
-                {selectedVariant?.color}
-              </span>
-            </label>
-          </div>
-          <div className="mb-6">
-            <label className="text-md font-semibold text-text-primary mb-2 block">
-              Memory:
-            </label>
-            <div className="flex gap-2">
-              {[...new Set(product.variants.map((v) => v.memory))].map(
-                (memory) => (
-                  <button
-                    key={memory}
-                    onClick={() =>
-                      handleVariantChange(
-                        product.variants.find(
-                          (v) =>
-                            v.memory === memory &&
-                            v.color === selectedVariant.color
-                        )?.id ||
-                          product.variants.find((v) => v.memory === memory).id
-                      )
-                    }
-                    className={`px-4 py-2 rounded-md text-sm font-semibold border-2 ${
-                      selectedVariant.memory === memory
-                        ? "border-secondary bg-orange-50 text-secondary"
-                        : "border-card-border bg-card text-text-primary"
+          {/* Variant Selection Section */}
+          {product.variants && product.variants.length > 1 && (
+            <div className="mb-6 p-4 bg-card border border-card-border rounded-lg">
+              <h3 className="text-lg font-semibold text-text-primary mb-4">
+                Choose Your Variant
+              </h3>
+
+              {/* Color Selection */}
+              {getUniqueAttributes("color").length > 0 && (
+                <div className="mb-4">
+                  <label className="text-md font-semibold text-text-primary mb-2 block">
+                    Color:{" "}
+                    <span className="font-normal text-text-secondary">
+                      {selectedVariant?.color}
+                    </span>
+                  </label>
+                  <div className="flex gap-2 flex-wrap">
+                    {getUniqueAttributes("color").map((color) => {
+                      const isAvailable = product.variants.some(
+                        (v) => v.color === color && v.stock_quantity > 0
+                      );
+                      const isSelected = selectedVariant?.color === color;
+
+                      return (
+                        <button
+                          key={color}
+                          onClick={() =>
+                            handleVariantChange(
+                              findMatchingVariant("color", color)
+                            )
+                          }
+                          disabled={!isAvailable}
+                          className={`px-4 py-2 rounded-md text-sm font-semibold border-2 transition-all ${
+                            isSelected
+                              ? "border-secondary bg-secondary text-white shadow-md"
+                              : isAvailable
+                              ? "border-card-border bg-card text-text-primary hover:border-primary"
+                              : "border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed"
+                          }`}
+                        >
+                          {color}
+                          {!isAvailable && (
+                            <span className="ml-1 text-xs">(Out of Stock)</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Memory/Storage Selection */}
+              {getUniqueAttributes("memory").length > 0 && (
+                <div className="mb-4">
+                  <label className="text-md font-semibold text-text-primary mb-2 block">
+                    Storage:{" "}
+                    <span className="font-normal text-text-secondary">
+                      {selectedVariant?.memory}
+                    </span>
+                  </label>
+                  <div className="flex gap-2 flex-wrap">
+                    {getUniqueAttributes("memory").map((memory) => {
+                      const isAvailable = product.variants.some(
+                        (v) => v.memory === memory && v.stock_quantity > 0
+                      );
+                      const isSelected = selectedVariant?.memory === memory;
+
+                      return (
+                        <button
+                          key={memory}
+                          onClick={() =>
+                            handleVariantChange(
+                              findMatchingVariant("memory", memory)
+                            )
+                          }
+                          disabled={!isAvailable}
+                          className={`px-4 py-2 rounded-md text-sm font-semibold border-2 transition-all ${
+                            isSelected
+                              ? "border-secondary bg-secondary text-white shadow-md"
+                              : isAvailable
+                              ? "border-card-border bg-card text-text-primary hover:border-primary"
+                              : "border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed"
+                          }`}
+                        >
+                          {memory}
+                          {!isAvailable && (
+                            <span className="ml-1 text-xs">(Out of Stock)</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Size Selection */}
+              {getUniqueAttributes("size").length > 0 && (
+                <div className="mb-4">
+                  <label className="text-md font-semibold text-text-primary mb-2 block">
+                    Size:{" "}
+                    <span className="font-normal text-text-secondary">
+                      {selectedVariant?.size}
+                    </span>
+                  </label>
+                  <div className="flex gap-2 flex-wrap">
+                    {getUniqueAttributes("size").map((size) => {
+                      const isAvailable = product.variants.some(
+                        (v) => v.size === size && v.stock_quantity > 0
+                      );
+                      const isSelected = selectedVariant?.size === size;
+
+                      return (
+                        <button
+                          key={size}
+                          onClick={() =>
+                            handleVariantChange(
+                              findMatchingVariant("size", size)
+                            )
+                          }
+                          disabled={!isAvailable}
+                          className={`px-4 py-2 rounded-md text-sm font-semibold border-2 transition-all ${
+                            isSelected
+                              ? "border-secondary bg-secondary text-white shadow-md"
+                              : isAvailable
+                              ? "border-card-border bg-card text-text-primary hover:border-primary"
+                              : "border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed"
+                          }`}
+                        >
+                          {size}
+                          {!isAvailable && (
+                            <span className="ml-1 text-xs">(Out of Stock)</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Selected Variant Info */}
+              <div className="mt-4 pt-4 border-t border-card-border">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-text-secondary">
+                    SKU:{" "}
+                    <span className="font-mono">{selectedVariant?.sku}</span>
+                  </span>
+                  <span
+                    className={`font-semibold ${
+                      selectedVariant?.stock_quantity > 0
+                        ? "text-green-600"
+                        : "text-red-500"
                     }`}
                   >
-                    {memory}
-                  </button>
-                )
-              )}
+                    {selectedVariant?.stock_quantity > 0
+                      ? `${selectedVariant.stock_quantity} in stock`
+                      : "Out of Stock"}
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Single Variant Info */}
+          {product.variants && product.variants.length === 1 && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm text-blue-800">
+                <i className="fas fa-info-circle mr-2"></i>
+                This product has only one variant available
+              </p>
+            </div>
+          )}
 
           <div className="mb-6">
             <span className="text-2xl text-text-secondary line-through mr-3">
-              Rs. {selectedVariant?.oldPrice.toFixed(2)}
+              Rs.{" "}
+              {selectedVariant?.oldPrice?.toFixed(2) ||
+                selectedVariant?.old_price?.toFixed(2)}
             </span>
             <span className="text-4xl font-extrabold text-primary">
-              Rs. {selectedVariant?.price.toFixed(2)}
+              Rs. {selectedVariant?.price?.toFixed(2)}
             </span>
+            {selectedVariant?.oldPrice && (
+              <span className="ml-3 text-sm font-semibold text-green-600">
+                Save Rs.{" "}
+                {(selectedVariant.oldPrice - selectedVariant.price).toFixed(2)}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-4">
