@@ -16,9 +16,12 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Check if user exists
+    // Check if user exists and get customer_id if applicable
     const [users] = await db.query(
-      "SELECT user_id, name, email, password_hash, role, is_active FROM users WHERE email = ?",
+      `SELECT u.user_id, u.name, u.email, u.password_hash, u.role, u.is_active, c.customer_id
+       FROM users u
+       LEFT JOIN Customer c ON u.email = c.email
+       WHERE u.email = ?`,
       [email]
     );
 
@@ -61,6 +64,7 @@ exports.login = async (req, res) => {
         userId: user.user_id,
         email: user.email,
         role: user.role,
+        customerId: user.customer_id || null,
       },
       process.env.JWT_SECRET || "your-secret-key-change-in-production",
       { expiresIn: "7d" }
@@ -76,6 +80,7 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        customer_id: user.customer_id || null,
       },
     });
   } catch (error) {
