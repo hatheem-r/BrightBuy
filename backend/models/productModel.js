@@ -198,6 +198,25 @@ class ProductModel {
       throw error;
     }
   }
+
+  // Get all product names for autocomplete
+  static async getProductNames() {
+    const sql = `
+      SELECT DISTINCT
+        p.product_id,
+        p.name,
+        p.brand
+      FROM Product p
+      ORDER BY p.name ASC
+    `;
+
+    try {
+      const [rows] = await db.query(sql);
+      return rows;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = ProductModel;

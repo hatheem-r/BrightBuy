@@ -35,6 +35,13 @@ export const productsAPI = {
     if (!response.ok) throw new Error("Failed to search products");
     return response.json();
   },
+
+  // Get product names for autocomplete
+  getProductNames: async () => {
+    const response = await fetch(`${API_BASE_URL}/products/names`);
+    if (!response.ok) throw new Error("Failed to fetch product names");
+    return response.json();
+  },
 };
 
 // Categories API

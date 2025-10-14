@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { productsAPI, categoriesAPI } from "@/services/api";
 
 const ProductCard = ({ product }) => {
@@ -64,6 +65,9 @@ const ProductCard = ({ product }) => {
 };
 
 export default function ProductsPage() {
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search");
+
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -76,11 +80,16 @@ export default function ProductsPage() {
       try {
         setLoading(true);
 
-        // Fetch products and categories in parallel
-        const [productsData, categoriesData] = await Promise.all([
-          productsAPI.getAllProducts(),
-          categoriesAPI.getAllCategories(),
-        ]);
+        // If search query exists, use search API
+        let productsData;
+        if (searchQuery) {
+          productsData = await productsAPI.searchProducts(searchQuery);
+        } else {
+          productsData = await productsAPI.getAllProducts();
+        }
+
+        // Fetch categories
+        const categoriesData = await categoriesAPI.getAllCategories();
 
         setProducts(productsData);
 
@@ -104,7 +113,7 @@ export default function ProductsPage() {
     };
 
     fetchData();
-  }, []);
+  }, [searchQuery]);
 
   // Helper function to assign icons based on category name
   const getCategoryIcon = (categoryName) => {
@@ -214,12 +223,20 @@ export default function ProductsPage() {
       <div className="container mx-auto px-6 py-12">
         <div className="mb-10">
           <h1 className="text-4xl font-extrabold text-text-primary">
-            {selectedCategory === "all"
-              ? "All Products"
-              : categories.find((c) => c.id === selectedCategory)?.name}
+            {searchQuery ? (
+              <>Search Results for "{searchQuery}"</>
+            ) : selectedCategory === "all" ? (
+              "All Products"
+            ) : (
+              categories.find((c) => c.id === selectedCategory)?.name
+            )}
           </h1>
           <p className="text-text-secondary mt-2">
-            {selectedCategory === "all"
+            {searchQuery
+              ? `Found ${filteredProducts.length} product${
+                  filteredProducts.length !== 1 ? "s" : ""
+                }`
+              : selectedCategory === "all"
               ? "Browse our curated selection of electronics and gadgets."
               : `Showing ${filteredProducts.length} product${
                   filteredProducts.length !== 1 ? "s" : ""
@@ -229,13 +246,23 @@ export default function ProductsPage() {
 
         {filteredProducts.length === 0 ? (
           <div className="text-center py-16">
-            <div className="text-6xl mb-4">📦</div>
+            <div className="text-6xl mb-4">{searchQuery ? "�" : "�📦"}</div>
             <h3 className="text-xl font-semibold text-text-primary mb-2">
-              No Products Found
+              {searchQuery ? "No Results Found" : "No Products Found"}
             </h3>
             <p className="text-text-secondary">
-              Try selecting a different category
+              {searchQuery
+                ? `No products match "${searchQuery}". Try a different search term.`
+                : "Try selecting a different category"}
             </p>
+            {searchQuery && (
+              <Link
+                href="/products"
+                className="mt-4 inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+              >
+                View All Products
+              </Link>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
