@@ -9,18 +9,22 @@ Comprehensive **Inventory Dashboard for Staff** with real-time product inventory
 ## 🎯 Key Features
 
 ### 1. **Overview Tab - Dashboard Summary**
+
 - **Key Metrics Cards**:
+
   - Total Products with unit count
   - Inventory Value (total stock value)
   - Total Units Sold with revenue
   - Active Orders count with delivered count
 
 - **Stock Status Summary**:
+
   - ✅ In Stock: Products with adequate inventory
   - ⚠️ Low Stock: Products running low (need restocking)
   - ❌ Out of Stock: Products unavailable
 
 - **Order Status Breakdown**:
+
   - Pending Orders
   - Processing Orders
   - Shipped Orders (in transit)
@@ -34,13 +38,16 @@ Comprehensive **Inventory Dashboard for Staff** with real-time product inventory
   - Total revenue generated
 
 ### 2. **Products Tab - Inventory Management**
+
 - **Search Functionality**:
+
   - Search by product name
   - Search by SKU (Stock Keeping Unit)
   - Search by category
   - Search by brand
 
 - **Status Filtering**:
+
   - All Status
   - In Stock only
   - Low Stock only
@@ -57,7 +64,9 @@ Comprehensive **Inventory Dashboard for Staff** with real-time product inventory
   - Stock Status with color-coded badges
 
 ### 3. **Orders Tab - Order Management**
+
 - **Order Status Filtering**:
+
   - All Orders
   - Pending (awaiting processing)
   - Processing (being prepared)
@@ -82,6 +91,7 @@ Comprehensive **Inventory Dashboard for Staff** with real-time product inventory
 ### 1. **`frontend/src/app/inventory/page.jsx`**
 
 **Complete Rewrite:**
+
 - Replaced simple product grid with comprehensive dashboard
 - Added 3 tabs: Overview, Products, Orders
 - Implemented real-time data fetching from API
@@ -92,6 +102,7 @@ Comprehensive **Inventory Dashboard for Staff** with real-time product inventory
 - Added statistics calculations using useMemo
 
 **New Features:**
+
 ```javascript
 // State Management
 const [activeTab, setActiveTab] = useState("overview");
@@ -118,6 +129,7 @@ const stats = useMemo(() => {
 ### 2. **`frontend/src/lib/api.js`**
 
 **New API Function:**
+
 ```javascript
 export async function getInventoryData() {
   // Returns comprehensive mock data:
@@ -128,6 +140,7 @@ export async function getInventoryData() {
 ```
 
 **Mock Data Includes:**
+
 - 15 sample products from various categories
 - Stock levels: in-stock, low-stock, out-of-stock
 - Sales data for each product
@@ -152,7 +165,7 @@ export async function getInventoryData() {
       <span>📦</span>
     </div>
   </div>
-  
+
   {/* Similar cards for: */}
   {/* - Inventory Value 💰 */}
   {/* - Total Sold 📈 */}
@@ -170,7 +183,7 @@ export async function getInventoryData() {
     <p className="text-2xl font-bold">{stats.inStock}</p>
     <span>✅</span>
   </div>
-  
+
   {/* Low Stock ⚠️ */}
   {/* Out of Stock ❌ */}
 </div>
@@ -178,26 +191,27 @@ export async function getInventoryData() {
 
 ### Products Table
 
-| Product | SKU | Category | Brand | Total Stock | Sold | Avg Price | Status |
-|---------|-----|----------|-------|-------------|------|-----------|--------|
-| Samsung SSD | SS-NVME-SSD | Storage | Samsung | 28 | 156 | Rs. 3,774 | ✅ In Stock |
-| Logitech Mouse | LG-MOUSE-PRO | Peripherals | Logitech | 37 | 243 | Rs. 8,499 | ✅ In Stock |
-| Razer Keyboard | RAZER-KB-RGB | Peripherals | Razer | 8 | 134 | Rs. 18,499 | ⚠️ Low Stock |
-| Anker PowerBank | ANK-PB20K | Power | Anker | 0 | 412 | Rs. 8,999 | ❌ Out of Stock |
+| Product         | SKU          | Category    | Brand    | Total Stock | Sold | Avg Price  | Status          |
+| --------------- | ------------ | ----------- | -------- | ----------- | ---- | ---------- | --------------- |
+| Samsung SSD     | SS-NVME-SSD  | Storage     | Samsung  | 28          | 156  | Rs. 3,774  | ✅ In Stock     |
+| Logitech Mouse  | LG-MOUSE-PRO | Peripherals | Logitech | 37          | 243  | Rs. 8,499  | ✅ In Stock     |
+| Razer Keyboard  | RAZER-KB-RGB | Peripherals | Razer    | 8           | 134  | Rs. 18,499 | ⚠️ Low Stock    |
+| Anker PowerBank | ANK-PB20K    | Power       | Anker    | 0           | 412  | Rs. 8,999  | ❌ Out of Stock |
 
 ### Orders Table
 
-| Order # | Customer | Date | Items | Total | Payment | Status | Tracking |
-|---------|----------|------|-------|-------|---------|--------|----------|
-| ORD-2025-001234 | John Doe | 10/12/2025 | 2 | Rs. 86,499 | Paid | Processing | DHL1234567890 |
-| ORD-2025-001235 | Jane Smith | 10/13/2025 | 1 | Rs. 126,799 | Pending | Pending | — |
-| ORD-2025-001236 | Robert Johnson | 10/10/2025 | 3 | Rs. 19,099 | Paid | Shipped | ARX9876543210 |
+| Order #         | Customer       | Date       | Items | Total       | Payment | Status     | Tracking      |
+| --------------- | -------------- | ---------- | ----- | ----------- | ------- | ---------- | ------------- |
+| ORD-2025-001234 | John Doe       | 10/12/2025 | 2     | Rs. 86,499  | Paid    | Processing | DHL1234567890 |
+| ORD-2025-001235 | Jane Smith     | 10/13/2025 | 1     | Rs. 126,799 | Pending | Pending    | —             |
+| ORD-2025-001236 | Robert Johnson | 10/10/2025 | 3     | Rs. 19,099  | Paid    | Shipped    | ARX9876543210 |
 
 ---
 
 ## 🔢 Mock Data Statistics
 
 ### Products Summary
+
 - **Total Products**: 15
 - **In Stock**: 10 products
 - **Low Stock**: 3 products (≤10 units)
@@ -208,6 +222,7 @@ export async function getInventoryData() {
 - **Total Revenue**: Rs. 4,567,890
 
 ### Product Categories
+
 - Storage: 3 products
 - Peripherals: 5 products
 - Audio: 2 products
@@ -218,6 +233,7 @@ export async function getInventoryData() {
 - Cameras: 1 product
 
 ### Orders Summary
+
 - **Total Orders**: 10
 - **Pending**: 2 orders
 - **Processing**: 3 orders
@@ -226,11 +242,13 @@ export async function getInventoryData() {
 - **Cancelled**: 1 order
 
 ### Order Payment Status
+
 - **Paid**: 7 orders
 - **Pending**: 2 orders (Cash on Delivery)
 - **Failed**: 1 order
 
 ### Courier Services
+
 - DHL Express: 4 orders
 - Pronto Courier: 3 orders
 - Aramex: 2 orders
@@ -242,59 +260,64 @@ export async function getInventoryData() {
 
 ### Stock Status Colors
 
-| Status | Background | Text | Border | Icon |
-|--------|------------|------|--------|------|
-| In Stock | Green-100 | Green-800 | Green-200 | ✅ |
-| Low Stock | Yellow-100 | Yellow-800 | Yellow-200 | ⚠️ |
-| Out of Stock | Red-100 | Red-800 | Red-200 | ❌ |
+| Status       | Background | Text       | Border     | Icon |
+| ------------ | ---------- | ---------- | ---------- | ---- |
+| In Stock     | Green-100  | Green-800  | Green-200  | ✅   |
+| Low Stock    | Yellow-100 | Yellow-800 | Yellow-200 | ⚠️   |
+| Out of Stock | Red-100    | Red-800    | Red-200    | ❌   |
 
 ### Order Status Colors
 
-| Status | Background | Text | Border |
-|--------|------------|------|--------|
-| Pending | Yellow-100 | Yellow-800 | Yellow-200 |
-| Processing | Blue-100 | Blue-800 | Blue-200 |
-| Shipped | Purple-100 | Purple-800 | Purple-200 |
-| Delivered | Green-100 | Green-800 | Green-200 |
-| Cancelled | Red-100 | Red-800 | Red-200 |
+| Status     | Background | Text       | Border     |
+| ---------- | ---------- | ---------- | ---------- |
+| Pending    | Yellow-100 | Yellow-800 | Yellow-200 |
+| Processing | Blue-100   | Blue-800   | Blue-200   |
+| Shipped    | Purple-100 | Purple-800 | Purple-200 |
+| Delivered  | Green-100  | Green-800  | Green-200  |
+| Cancelled  | Red-100    | Red-800    | Red-200    |
 
 ### Payment Status Colors
 
-| Status | Background | Text |
-|--------|------------|------|
-| Paid | Green-100 | Green-800 |
-| Pending | Yellow-100 | Yellow-800 |
-| Failed | Red-100 | Red-800 |
-| Refunded | Gray-100 | Gray-800 |
+| Status   | Background | Text       |
+| -------- | ---------- | ---------- |
+| Paid     | Green-100  | Green-800  |
+| Pending  | Yellow-100 | Yellow-800 |
+| Failed   | Red-100    | Red-800    |
+| Refunded | Gray-100   | Gray-800   |
 
 ---
 
 ## 🚀 How to Use
 
 ### Step 1: Start Development Server
+
 ```bash
 cd frontend
 npm run dev
 ```
 
 ### Step 2: Navigate to Inventory Dashboard
+
 Visit: http://localhost:3000/inventory
 
 ### Step 3: Explore Features
 
 **Overview Tab:**
+
 1. View total products, inventory value, sales data
 2. Check stock status distribution (in-stock, low-stock, out-of-stock)
 3. Monitor order status breakdown
 4. Review quick statistics
 
 **Products Tab:**
+
 1. Search for products by name, SKU, category, or brand
 2. Filter by stock status (All, In Stock, Low Stock, Out of Stock)
 3. View detailed product information in table format
 4. Identify products needing restocking (low/out of stock)
 
 **Orders Tab:**
+
 1. Filter orders by status (All, Pending, Processing, Shipped, Delivered, Cancelled)
 2. View order details: customer, items, amount, payment status
 3. Check tracking information and estimated delivery dates
@@ -307,21 +330,25 @@ Visit: http://localhost:3000/inventory
 ### 1. Statistics Cards (Top Row)
 
 **Total Products Card 📦**
+
 - Shows total number of products
 - Displays total units in stock
 - Blue background indicator
 
 **Inventory Value Card 💰**
+
 - Calculates total value of all stock
 - Shows count of in-stock products
 - Green background indicator
 
 **Total Sold Card 📈**
+
 - Displays total units sold
 - Shows total revenue generated
 - Purple background indicator
 
 **Active Orders Card 🚚**
+
 - Shows pending + processing + shipped orders
 - Displays count of delivered orders
 - Orange background indicator
@@ -329,16 +356,19 @@ Visit: http://localhost:3000/inventory
 ### 2. Stock Status Summary (Second Row)
 
 **In Stock ✅**
+
 - Products with adequate inventory
 - Green background (positive status)
 - Ready for sale
 
 **Low Stock ⚠️**
+
 - Products running low (typically ≤10 units)
 - Yellow background (warning status)
 - Needs restocking soon
 
 **Out of Stock ❌**
+
 - Products unavailable (0 units)
 - Red background (critical status)
 - Requires immediate restocking
@@ -346,6 +376,7 @@ Visit: http://localhost:3000/inventory
 ### 3. Order Status Breakdown (Overview Tab)
 
 Shows distribution of orders across:
+
 - **Pending**: Newly placed, awaiting processing
 - **Processing**: Being prepared for shipment
 - **Shipped**: In transit to customer
@@ -356,9 +387,11 @@ Shows distribution of orders across:
 ## 💡 Staff Use Cases
 
 ### Use Case 1: Check Stock Levels
+
 **Scenario**: Staff needs to identify products running low
 
 **Steps:**
+
 1. Go to Inventory Dashboard
 2. View Stock Status Summary (top section)
 3. Click "Products" tab
@@ -367,9 +400,11 @@ Shows distribution of orders across:
 6. Note SKUs for purchase orders
 
 ### Use Case 2: Monitor Sales Performance
+
 **Scenario**: Manager wants to see top-selling products
 
 **Steps:**
+
 1. Go to Overview tab
 2. Check "Total Sold" statistic
 3. View "Total Revenue" amount
@@ -378,9 +413,11 @@ Shows distribution of orders across:
 6. Identify best-sellers (highest sold count)
 
 ### Use Case 3: Track Orders
+
 **Scenario**: Staff needs to check ongoing deliveries
 
 **Steps:**
+
 1. Go to Orders tab
 2. Filter by "Shipped" status
 3. View tracking numbers
@@ -388,9 +425,11 @@ Shows distribution of orders across:
 5. Contact courier if needed (courier contact provided)
 
 ### Use Case 4: Process Pending Orders
+
 **Scenario**: Staff needs to process new orders
 
 **Steps:**
+
 1. Go to Orders tab
 2. Filter by "Pending"
 3. Review order details
@@ -399,9 +438,11 @@ Shows distribution of orders across:
 6. Change status to "Processing" (future feature)
 
 ### Use Case 5: Find Specific Product
+
 **Scenario**: Customer asks about product availability
 
 **Steps:**
+
 1. Go to Products tab
 2. Use search box (enter name, SKU, or brand)
 3. Check stock status
@@ -414,6 +455,7 @@ Shows distribution of orders across:
 ## 🔍 Search & Filter Capabilities
 
 ### Products Search (Multi-field)
+
 ```javascript
 // Searches across:
 - Product Name (e.g., "Samsung SSD")
@@ -425,12 +467,14 @@ Shows distribution of orders across:
 ### Status Filters
 
 **Products:**
+
 - All Status → Shows all products
 - In Stock → Only products with stock > 10
 - Low Stock → Products with 1-10 units
 - Out of Stock → Products with 0 units
 
 **Orders:**
+
 - All Orders → Shows all orders
 - Pending → New orders awaiting processing
 - Processing → Orders being prepared
@@ -442,11 +486,11 @@ Shows distribution of orders across:
 
 ## 📱 Responsive Design
 
-| Screen Size | Layout | Behavior |
-|-------------|--------|----------|
-| Mobile (<640px) | Single column | Cards stack vertically, horizontal scroll for tables |
-| Tablet (640-1024px) | 2 columns | Stats in 2 columns, tables scroll horizontally |
-| Desktop (>1024px) | 4 columns | Full grid layout, tables fit comfortably |
+| Screen Size         | Layout        | Behavior                                             |
+| ------------------- | ------------- | ---------------------------------------------------- |
+| Mobile (<640px)     | Single column | Cards stack vertically, horizontal scroll for tables |
+| Tablet (640-1024px) | 2 columns     | Stats in 2 columns, tables scroll horizontally       |
+| Desktop (>1024px)   | 4 columns     | Full grid layout, tables fit comfortably             |
 
 ---
 
@@ -477,6 +521,7 @@ UI updates instantly (client-side filtering)
 ## 🛠️ Technical Implementation
 
 ### State Management
+
 ```javascript
 // Tab switching
 const [activeTab, setActiveTab] = useState("overview");
@@ -492,6 +537,7 @@ const [loading, setLoading] = useState(true);
 ```
 
 ### Performance Optimization
+
 ```javascript
 // Memoized filtering (prevents unnecessary recalculations)
 const filteredProducts = useMemo(() => {
@@ -505,6 +551,7 @@ const stats = useMemo(() => {
 ```
 
 ### Loading State
+
 ```jsx
 {loading ? (
   <div className="flex items-center justify-center min-h-screen">
@@ -521,18 +568,22 @@ const stats = useMemo(() => {
 ## 🔮 Future Enhancements
 
 ### Phase 2 Features
+
 1. ⬜ **Backend Integration**
+
    - Replace mock data with real API calls
    - Connect to MySQL database
    - Real-time data updates
 
 2. ⬜ **Order Management Actions**
+
    - Update order status (admin/manager only)
    - Add tracking numbers
    - Cancel/refund orders
    - Print order receipts
 
 3. ⬜ **Product Management**
+
    - Add new products
    - Edit product details
    - Update stock quantities
@@ -540,6 +591,7 @@ const stats = useMemo(() => {
    - Bulk import/export
 
 4. ⬜ **Advanced Analytics**
+
    - Sales charts (daily, weekly, monthly)
    - Revenue trends
    - Top products by revenue
@@ -547,18 +599,21 @@ const stats = useMemo(() => {
    - Stock turnover rate
 
 5. ⬜ **Notifications**
+
    - Low stock alerts
    - Out of stock warnings
    - New order notifications
    - Delivery confirmations
 
 6. ⬜ **Export Features**
+
    - Export products to CSV/Excel
    - Export orders to PDF
    - Generate inventory reports
    - Sales reports
 
 7. ⬜ **Stock Management**
+
    - Stock adjustment history
    - Reorder point settings
    - Supplier management
@@ -595,8 +650,9 @@ const stats = useMemo(() => {
 ## 📚 Database Schema Compatibility
 
 ### Products Data Structure
+
 ```sql
-SELECT 
+SELECT
   p.product_id,
   p.name,
   p.sku,
@@ -605,7 +661,7 @@ SELECT
   COUNT(DISTINCT pv.variant_id) as variants,
   SUM(pv.stock_quantity) as totalStock,
   AVG(pv.price) as avgPrice,
-  CASE 
+  CASE
     WHEN SUM(pv.stock_quantity) = 0 THEN 'out-of-stock'
     WHEN SUM(pv.stock_quantity) <= 10 THEN 'low-stock'
     ELSE 'in-stock'
@@ -617,8 +673,9 @@ GROUP BY p.product_id;
 ```
 
 ### Orders Data Structure
+
 ```sql
-SELECT 
+SELECT
   o.*,
   COUNT(oi.order_item_id) as total_items
 FROM orders o
@@ -631,16 +688,16 @@ ORDER BY o.created_at DESC;
 
 ## 🎯 Key Metrics Displayed
 
-| Metric | Calculation | Purpose |
-|--------|-------------|---------|
-| Total Products | COUNT(products) | Inventory breadth |
-| Total Stock | SUM(variant.stock_quantity) | Available units |
-| Inventory Value | SUM(stock × price) | Asset value |
-| Total Sold | SUM(order_items.quantity) | Sales volume |
-| Total Revenue | SUM(orders.total_amount) | Income generated |
-| In Stock | Products with stock > 10 | Healthy inventory |
-| Low Stock | Products with stock 1-10 | Restock warning |
-| Out of Stock | Products with stock = 0 | Critical shortage |
+| Metric          | Calculation                 | Purpose           |
+| --------------- | --------------------------- | ----------------- |
+| Total Products  | COUNT(products)             | Inventory breadth |
+| Total Stock     | SUM(variant.stock_quantity) | Available units   |
+| Inventory Value | SUM(stock × price)          | Asset value       |
+| Total Sold      | SUM(order_items.quantity)   | Sales volume      |
+| Total Revenue   | SUM(orders.total_amount)    | Income generated  |
+| In Stock        | Products with stock > 10    | Healthy inventory |
+| Low Stock       | Products with stock 1-10    | Restock warning   |
+| Out of Stock    | Products with stock = 0     | Critical shortage |
 
 ---
 
