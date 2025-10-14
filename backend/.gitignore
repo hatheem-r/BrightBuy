@@ -15,9 +15,9 @@ lerna-debug.log*
 .pnpm-debug.log*
 
 # Environment Variables
-.env
-.env.local
-.env.test
+# .env
+# .env.local
+# .env.test
 
 # Editor & IDE Directories
 .vscode/
