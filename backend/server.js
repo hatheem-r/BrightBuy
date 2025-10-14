@@ -2,9 +2,11 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
-const db = require("./config/db"); // initializes the DB connection
 
+// Load environment variables FIRST before requiring db
 dotenv.config();
+
+const db = require("./config/db"); // initializes the DB connection
 
 const app = express();
 
