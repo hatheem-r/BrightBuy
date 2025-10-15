@@ -2,7 +2,7 @@
 -- This script creates test users with different roles
 -- Default password for all users: "password123"
 -- Passwords are hashed using bcryptjs with salt rounds = 10
-USE brightbuy;
+USE brightbuy_db;
 -- Insert test users
 -- Password hash for "password123": $2a$10$xVvVQJZPF0C7bqrwO8YWHudlzlD3y7vJ8jVvjPvKUWF6UPXxK5PSm
 INSERT INTO users (

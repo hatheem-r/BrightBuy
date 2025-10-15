@@ -5,26 +5,31 @@ import { useRouter } from "next/navigation";
 export default function AdminDashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check authentication
     const token = localStorage.getItem("authToken");
     const userData = localStorage.getItem("user");
 
     if (!token || !userData) {
-      router.push("/login");
+      router.replace("/login");
       return;
     }
 
-    const parsedUser = JSON.parse(userData);
-
-    // Check if user is admin
-    if (parsedUser.role !== "admin") {
-      router.push("/");
+    try {
+      const parsedUser = JSON.parse(userData);
+      if (parsedUser.role !== "admin") {
+        router.replace("/");
+        return;
+      }
+      setUser(parsedUser);
+    } catch (e) {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      router.replace("/login");
       return;
     }
-
-    setUser(parsedUser);
+    setLoading(false);
   }, [router]);
 
   const handleLogout = () => {
@@ -33,10 +38,10 @@ export default function AdminDashboard() {
     router.push("/login");
   };
 
-  if (!user) {
+  if (loading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        Loading...
+        Verifying access...
       </div>
     );
   }

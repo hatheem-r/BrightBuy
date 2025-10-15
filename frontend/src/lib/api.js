@@ -1,60 +1,59 @@
 // Centralized API helpers for the frontend.
-// For now we export mock functions; later these can be replaced with real HTTP calls.
+// For now we export mock functions where backend is not ready; auth uses real API calls via axios.
+
+import axios from 'axios';
 
 // Base API URL - adjust this based on your environment
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
-// Helper function to make API requests
-async function apiRequest(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+});
 
-  const config = {
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    ...options,
-  };
-
-  // Add auth token if available
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+// Interceptor to add the auth token to every request if it exists
+apiClient.interceptors.request.use(
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
+);
 
-  const response = await fetch(url, config);
-  const data = await response.json();
+// --- AUTHENTICATION API FUNCTIONS ---
 
-  if (!response.ok) {
-    throw new Error(data.message || "API request failed");
+export const login = async (email, password) => {
+  try {
+    const response = await apiClient.post('/auth/login', { email, password });
+    return response.data; // { success, message, token, user }
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Login failed');
   }
+};
 
-  return data;
-}
+export const register = async (userData) => {
+  try {
+    const response = await apiClient.post('/auth/register', userData);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Registration failed');
+  }
+};
 
-// Authentication APIs
-export async function login(email, password) {
-  return apiRequest("/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  });
-}
-
-export async function register(userData) {
-  return apiRequest("/auth/register", {
-    method: "POST",
-    body: JSON.stringify(userData),
-  });
-}
-
-export async function getCurrentUser() {
-  return apiRequest("/auth/me", {
-    method: "GET",
-  });
-}
+export const getCurrentUser = async () => {
+  try {
+    const response = await apiClient.get('/auth/me');
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch user');
+  }
+};
 
 export async function getProductById(id) {
   // Mock product — replace with an API call when backend is available.
@@ -652,7 +651,7 @@ export async function getInventoryData() {
       },
     ],
   };
-}
+};
 
 const api = {
   login,

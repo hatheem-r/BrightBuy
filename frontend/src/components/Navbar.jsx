@@ -1,12 +1,26 @@
 // src/components/Navbar.jsx
 'use client';
-import Link from 'next/link';
 import React from 'react';
+import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
 const Navbar = () => {
   const { cartCount } = useCart();
+  const { isAuthenticated, user, logout } = useAuth(); // Use AuthContext
+
+  const getDashboardLink = () => {
+    if (!user) return '/login'; // Fallback, though should be authenticated if this is called
+    switch (user.role) {
+      case 'admin':
+        return '/admin/dashboard';
+      case 'manager':
+        return '/manager/dashboard';
+      default:
+        return '/'; // Customer dashboard or home
+    }
+  };
 
   return (
     <header className="bg-card shadow-sm sticky top-0 z-50 border-b border-card-border">
@@ -24,9 +38,20 @@ const Navbar = () => {
               </span>
             )}
           </Link>
-          <Link href="/login" className="bg-primary text-white px-4 py-2 rounded-md hover:bg-secondary transition-colors">
-            Login
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link href={getDashboardLink()} className="bg-primary text-white px-4 py-2 rounded-md hover:bg-secondary transition-colors">
+                {user.role === 'admin' || user.role === 'manager' ? 'Dashboard' : 'Profile'}
+              </Link>
+              <button onClick={logout} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors">
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link href="/login" className="bg-primary text-white px-4 py-2 rounded-md hover:bg-secondary transition-colors">
+              Login
+            </Link>
+          )}
         </div>
       </nav>
     </header>

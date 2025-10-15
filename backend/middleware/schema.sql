@@ -3,9 +3,8 @@
 -- E-commerce Platform Database
 -- ============================================
 -- Drop existing tables if they exist (for clean setup)
---@block
-CREATE DATABASE brightbuy;
-USE brightbuy;
+CREATE DATABASE brightbuy_db;
+USE brightbuy_db;
 
 
 DROP TABLE IF EXISTS order_items;
@@ -18,7 +17,6 @@ DROP TABLE IF EXISTS categories;
 DROP TABLE IF EXISTS users;
 
 
---@block
 -- ============================================
 -- BLOCK 1: USER MANAGEMENT
 -- Tables: users
@@ -40,7 +38,6 @@ CREATE TABLE users (
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 
---@block
 -- ============================================
 -- BLOCK 2: PRODUCT CATALOG
 -- Tables: categories, products, product_variants, product_images
@@ -62,7 +59,6 @@ CREATE TABLE categories (
         INDEX idx_active (is_active)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
---@block
 -- Main products table
 CREATE TABLE products (
     product_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -82,11 +78,9 @@ CREATE TABLE products (
         INDEX idx_category (category_id),
         INDEX idx_active (is_active),
         INDEX idx_featured (is_featured),
-        INDEX idx_sku (sku),
         INDEX idx_name (name)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
---@block
 -- Product variants (for different colors, sizes, memory options, etc.)
 CREATE TABLE product_variants (
     variant_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -110,7 +104,6 @@ CREATE TABLE product_variants (
     INDEX idx_sku (sku)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
---@block
 -- Product images
 CREATE TABLE product_images (
     image_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -128,7 +121,6 @@ CREATE TABLE product_images (
     INDEX idx_primary (is_primary)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
---@block
 -- ============================================
 -- BLOCK 3: SHOPPING CART
 -- Tables: cart_items
@@ -148,7 +140,6 @@ CREATE TABLE cart_items (
     INDEX idx_variant (variant_id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
---@block
 -- ============================================
 -- BLOCK 4: ORDER MANAGEMENT
 -- Tables: orders, order_items
@@ -213,7 +204,6 @@ CREATE TABLE order_items (
     INDEX idx_variant (variant_id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
---@block
 -- ============================================
 -- BLOCK 5: SAMPLE DATA FOR TESTING
 -- Purpose: Insert sample data for development and testing
@@ -239,7 +229,6 @@ VALUES (
     ('Audio', 'Audio devices and accessories', TRUE),
     ('Storage', 'Storage devices and solutions', TRUE);
 
-    --@block
 -- Insert sample products
 INSERT INTO products (
         name,
@@ -323,7 +312,6 @@ VALUES (
     );
 
 
-    --@block
 -- Insert sample product variants for Samsung SSD
 INSERT INTO product_variants (
         product_id,
@@ -375,7 +363,6 @@ VALUES (
     );
 
 
-    --@block
 -- Insert sample product variants for other products
 INSERT INTO product_variants (
         product_id,
@@ -463,7 +450,6 @@ VALUES (
     );
 
 
-    --@block
 -- Insert sample users (passwords should be hashed in real application)
 -- Password: 'password123' hashed with bcrypt
 INSERT INTO users (name, email, password_hash, role, is_active)
@@ -578,7 +564,6 @@ VALUES (
  VALUES (?, ?, ?, 'customer');
  */
 -- Query 4: User login - get user by email
--- Used in: POST /api/auth/login
 /*
  SELECT user_id, name, email, password_hash, role, is_active 
  FROM users 
@@ -592,7 +577,6 @@ VALUES (
  WHERE user_id = ?;
  */
 -- Query 6: Add item to cart
--- Used in: POST /api/cart
 /*
  INSERT INTO cart_items (user_id, variant_id, quantity) 
  VALUES (?, ?, ?)
@@ -601,7 +585,6 @@ VALUES (
  updated_at = CURRENT_TIMESTAMP;
  */
 -- Query 7: Get cart items for user
--- Used in: GET /api/cart
 /*
  SELECT 
  ci.cart_item_id,
@@ -623,25 +606,21 @@ VALUES (
  ORDER BY ci.added_at DESC;
  */
 -- Query 8: Update cart item quantity
--- Used in: PUT /api/cart/:id
 /*
  UPDATE cart_items 
  SET quantity = ?, updated_at = CURRENT_TIMESTAMP 
  WHERE cart_item_id = ? AND user_id = ?;
  */
 -- Query 9: Remove item from cart
--- Used in: DELETE /api/cart/:id
 /*
  DELETE FROM cart_items 
  WHERE cart_item_id = ? AND user_id = ?;
  */
 -- Query 10: Clear user cart
--- Used in: DELETE /api/cart
 /*
  DELETE FROM cart_items WHERE user_id = ?;
  */
 -- Query 11: Create new order
--- Used in: POST /api/orders
 /*
  INSERT INTO orders (
  order_number, user_id, 
@@ -652,7 +631,6 @@ VALUES (
  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', 'Pending');
  */
 -- Query 12: Create order items
--- Used in: POST /api/orders (after creating order)
 /*
  INSERT INTO order_items (
  order_id, variant_id, product_name, variant_name, 
@@ -660,7 +638,6 @@ VALUES (
  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
  */
 -- Query 13: Get user orders
--- Used in: GET /api/orders
 /*
  SELECT 
  o.order_id,
@@ -679,7 +656,6 @@ VALUES (
  ORDER BY o.created_at DESC;
  */
 -- Query 14: Get order details by order number
--- Used in: GET /api/orders/:orderNumber
 /*
  SELECT 
  o.order_id,
@@ -711,14 +687,12 @@ VALUES (
  WHERE o.order_number = ? AND o.user_id = ?;
  */
 -- Query 15: Update order status
--- Used in: PUT /api/orders/:id/status (admin only)
 /*
  UPDATE orders 
  SET order_status = ?, updated_at = CURRENT_TIMESTAMP 
  WHERE order_id = ?;
  */
 -- Query 16: Search products by name or category
--- Used in: GET /api/products/search?q=keyword
 /*
  SELECT DISTINCT
  p.product_id,
@@ -745,7 +719,6 @@ VALUES (
  ORDER BY p.rating DESC, p.created_at DESC;
  */
 -- Query 17: Get inventory/stock levels (for admin/inventory page)
--- Used in: GET /api/inventory
 /*
  SELECT 
  p.product_id,
@@ -771,14 +744,12 @@ VALUES (
  ORDER BY pv.stock_quantity ASC, p.name ASC;
  */
 -- Query 18: Update product stock
--- Used in: PUT /api/inventory/:variantId
 /*
  UPDATE product_variants 
  SET stock_quantity = ?, updated_at = CURRENT_TIMESTAMP 
  WHERE variant_id = ?;
  */
 -- Query 19: Get featured products (for homepage)
--- Used in: GET /api/products/featured
 /*
  SELECT 
  p.product_id,
@@ -797,7 +768,6 @@ VALUES (
  LIMIT 10;
  */
 -- Query 20: Get products by category
--- Used in: GET /api/products/category/:categoryId
 /*
  SELECT 
  p.product_id,
