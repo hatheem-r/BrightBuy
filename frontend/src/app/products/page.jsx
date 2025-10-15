@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { productsAPI, categoriesAPI } from "@/services/api";
 
 const ProductCard = ({ product }) => {
-  const imageUrl = product.image_url 
+  const imageUrl = product.image_url
     ? `http://localhost:5001${product.image_url}`
     : null;
   const stockStatus = product.stock_status || "Out of Stock";
@@ -26,14 +26,14 @@ const ProductCard = ({ product }) => {
       <Link href={`/products/${product.product_id}`}>
         <div className="relative h-48 bg-background overflow-hidden">
           {imageUrl ? (
-            <img 
+            <img
               src={imageUrl}
               alt={product.name}
               className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.src = '';
-                e.target.style.display = 'none';
+                e.target.src = "";
+                e.target.style.display = "none";
               }}
             />
           ) : (
@@ -43,41 +43,14 @@ const ProductCard = ({ product }) => {
               </span>
             </div>
           )}
-        </div>
-        <div className="p-4">
-          <h3 className="font-semibold text-text-primary truncate">
-            {product.name}
-          </h3>
-        {product.brand && (
-          <p className="text-xs text-text-secondary mb-2">{product.brand}</p>
-        )}
-        {product.description && (
-          <p className="text-xs text-text-secondary mb-2 line-clamp-2">
-            {product.description}
-          </p>
-        )}
-        <div className="flex justify-between items-center mt-2">
-          <span className="text-sm text-text-secondary">
-            {product.size && <span className="mr-2">{product.size}</span>}
-            {product.color && <span>{product.color}</span>}
-          </span>
-          <span className="font-bold text-lg text-primary">
-            ${product.price ? parseFloat(product.price).toFixed(2) : 'N/A'}
-          </span>
-        </div>
-        </div>
-        <div className="p-4">
-          <div className="h-48 bg-background rounded-md mb-4 flex items-center justify-center relative">
-            <span className="text-text-secondary text-sm">
-              {product.brand || "Product Image"}
-            </span>
-            {/* Stock Badge */}
-            <div
-              className={`absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-semibold border ${getStockBadgeStyle()}`}
-            >
-              {stockStatus}
-            </div>
+          {/* Stock Badge */}
+          <div
+            className={`absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-semibold border ${getStockBadgeStyle()}`}
+          >
+            {stockStatus}
           </div>
+        </div>
+        <div className="p-4">
           <h3 className="font-semibold text-text-primary truncate">
             {product.name}
           </h3>

@@ -3,7 +3,6 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const path = require("path");
-const db = require("./config/db"); // initializes the DB connection
 
 // Load environment variables FIRST before requiring db
 dotenv.config();
@@ -13,11 +12,19 @@ const db = require("./config/db"); // initializes the DB connection
 const app = express();
 
 // Middleware
-app.use(cors()); // Enable Cross-Origin Resource Sharing
+// Configure CORS to allow requests from frontend
+app.use(
+  cors({
+    origin: ["http://localhost:3000", "http://localhost:3001"], // Allow Next.js default ports
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json()); // To accept JSON data in the body
 
 // Serve static assets (product images)
-app.use('/assets', express.static(path.join(__dirname, '../assets')));
+app.use("/assets", express.static(path.join(__dirname, "../assets")));
 
 // --- API Routes ---
 app.use("/api/products", require("./routes/products"));

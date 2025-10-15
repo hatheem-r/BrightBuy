@@ -85,7 +85,7 @@ class ProductModel {
         pv.color,
         pv.description,
         pv.is_default,
-        pv.image_url
+        pv.image_url,
         COALESCE(i.quantity, 0) as stock_quantity,
         CASE 
           WHEN i.quantity > 10 THEN 'In Stock'
@@ -139,7 +139,7 @@ class ProductModel {
         pv.size,
         pv.color,
         pv.description,
-        pv.image_url
+        pv.image_url,
         COALESCE(i.quantity, 0) as stock_quantity,
         CASE 
           WHEN i.quantity > 10 THEN 'In Stock'
