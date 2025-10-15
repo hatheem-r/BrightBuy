@@ -5,18 +5,38 @@ import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { productsAPI, categoriesAPI } from "@/services/api";
 
-const ProductCard = ({ product }) => (
-  <div className="bg-card border border-card-border rounded-lg shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-    <Link href={`/products/${product.product_id}`}>
-      <div className="p-4">
-        <div className="h-48 bg-background rounded-md mb-4 flex items-center justify-center">
-          <span className="text-text-secondary text-sm">
-            {product.brand || "Product Image"}
-          </span>
+const ProductCard = ({ product }) => {
+  const imageUrl = product.image_url 
+    ? `http://localhost:5001${product.image_url}`
+    : null;
+
+  return (
+    <div className="bg-card border border-card-border rounded-lg shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+      <Link href={`/products/${product.product_id}`}>
+        <div className="relative h-48 bg-background overflow-hidden">
+          {imageUrl ? (
+            <img 
+              src={imageUrl}
+              alt={product.name}
+              className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '';
+                e.target.style.display = 'none';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-text-secondary text-sm">
+                {product.brand || "Product Image"}
+              </span>
+            </div>
+          )}
         </div>
-        <h3 className="font-semibold text-text-primary truncate">
-          {product.name}
-        </h3>
+        <div className="p-4">
+          <h3 className="font-semibold text-text-primary truncate">
+            {product.name}
+          </h3>
         {product.brand && (
           <p className="text-xs text-text-secondary mb-2">{product.brand}</p>
         )}
@@ -34,10 +54,11 @@ const ProductCard = ({ product }) => (
             ${product.price ? parseFloat(product.price).toFixed(2) : 'N/A'}
           </span>
         </div>
-      </div>
-    </Link>
-  </div>
-);
+        </div>
+      </Link>
+    </div>
+  );
+};
 
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");

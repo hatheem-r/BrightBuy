@@ -15,13 +15,14 @@ class ProductModel {
         pv.size,
         pv.color,
         pv.description,
+        pv.image_url,
         GROUP_CONCAT(DISTINCT c.name) as categories,
         GROUP_CONCAT(DISTINCT c.category_id) as category_ids
       FROM Product p
       LEFT JOIN ProductVariant pv ON p.product_id = pv.product_id AND pv.is_default = 1
       LEFT JOIN ProductCategory pc ON p.product_id = pc.product_id
       LEFT JOIN Category c ON pc.category_id = c.category_id
-      GROUP BY p.product_id, p.name, p.brand, pv.variant_id, pv.price, pv.sku, pv.size, pv.color, pv.description
+      GROUP BY p.product_id, p.name, p.brand, pv.variant_id, pv.price, pv.sku, pv.size, pv.color, pv.description, pv.image_url
       ORDER BY p.product_id DESC
     `;
     
@@ -75,7 +76,8 @@ class ProductModel {
         size,
         color,
         description,
-        is_default
+        is_default,
+        image_url
       FROM ProductVariant
       WHERE product_id = ?
       ORDER BY is_default DESC, price ASC
@@ -121,12 +123,13 @@ class ProductModel {
         pv.sku,
         pv.size,
         pv.color,
-        pv.description
+        pv.description,
+        pv.image_url
       FROM Product p
       INNER JOIN ProductCategory pc ON p.product_id = pc.product_id
       LEFT JOIN ProductVariant pv ON p.product_id = pv.product_id AND pv.is_default = 1
       WHERE pc.category_id = ?
-      GROUP BY p.product_id, p.name, p.brand, pv.variant_id, pv.price, pv.sku, pv.size, pv.color, pv.description
+      GROUP BY p.product_id, p.name, p.brand, pv.variant_id, pv.price, pv.sku, pv.size, pv.color, pv.description, pv.image_url
       ORDER BY p.product_id DESC
     `;
     
@@ -151,13 +154,14 @@ class ProductModel {
         pv.size,
         pv.color,
         pv.description,
+        pv.image_url,
         GROUP_CONCAT(DISTINCT c.name) as categories
       FROM Product p
       LEFT JOIN ProductVariant pv ON p.product_id = pv.product_id AND pv.is_default = 1
       LEFT JOIN ProductCategory pc ON p.product_id = pc.product_id
       LEFT JOIN Category c ON pc.category_id = c.category_id
       WHERE p.name LIKE ? OR p.brand LIKE ?
-      GROUP BY p.product_id, p.name, p.brand, pv.variant_id, pv.price, pv.sku, pv.size, pv.color, pv.description
+      GROUP BY p.product_id, p.name, p.brand, pv.variant_id, pv.price, pv.sku, pv.size, pv.color, pv.description, pv.image_url
       ORDER BY p.product_id DESC
     `;
     
