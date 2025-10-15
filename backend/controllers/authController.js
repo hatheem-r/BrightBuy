@@ -1,10 +1,93 @@
 // backend/controllers/authController.js
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const db = require("../config/db"); // Your MySQL connection pool
+const db = require("../config/db");
 
-// @desc    Register a new user
-// @route   POST /api/auth/register
+// Login controller
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required",
+      });
+    }
+
+    // Check if user exists
+    const [users] = await db.query(
+      "SELECT user_id, name, email, password_hash, role, is_active FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (users.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    const user = users[0];
+
+    // Check if user is active
+    if (!user.is_active) {
+      return res.status(403).json({
+        success: false,
+        message: "Account is inactive. Please contact support.",
+      });
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    // Update last login
+    await db.query(
+      "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?",
+      [user.user_id]
+    );
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        userId: user.user_id,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET || "your-secret-key-change-in-production",
+      { expiresIn: "7d" }
+    );
+
+    // Return success response with token and user info
+    res.json({
+      success: true,
+      message: "Login successful",
+      token,
+      user: {
+        id: user.user_id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Please try again later.",
+    });
+  }
+};
+
+// Register controller
 exports.register = async (req, res) => {
   const { name, email, password, phone } = req.body;
 
