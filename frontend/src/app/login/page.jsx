@@ -44,7 +44,13 @@ export default function LoginPage() {
       if (response.success) {
         // Store token and user info
         localStorage.setItem("authToken", response.token);
+        localStorage.setItem("token", response.token); // Also store as 'token' for consistency
         localStorage.setItem("user", JSON.stringify(response.user));
+
+        // Store customer_id if available (for customers only)
+        if (response.user.customer_id) {
+          localStorage.setItem("customer_id", response.user.customer_id);
+        }
 
         // Role-based redirect
         switch (response.user.role) {

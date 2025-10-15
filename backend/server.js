@@ -5,7 +5,10 @@ const cors = require("cors");
 const path = require("path");
 const db = require("./config/db"); // initializes the DB connection
 
+// Load environment variables FIRST before requiring db
 dotenv.config();
+
+const db = require("./config/db"); // initializes the DB connection
 
 const app = express();
 
@@ -20,6 +23,7 @@ app.use('/assets', express.static(path.join(__dirname, '../assets')));
 app.use("/api/products", require("./routes/products"));
 app.use("/api/categories", require("./routes/categories"));
 app.use("/api/variants", require("./routes/variants"));
+app.use("/api/cart", require("./routes/cart"));
 app.use("/api/auth", require("./routes/auth"));
 // app.use('/api/orders', require('./routes/orders'));
 

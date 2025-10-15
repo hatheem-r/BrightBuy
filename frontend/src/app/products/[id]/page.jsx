@@ -2,13 +2,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
 import { productsAPI } from "@/services/api";
 
 export default function ProductDetailPage() {
   const params = useParams();
   const { id } = params;
+  const router = useRouter();
   const { addToCart } = useCart();
 
   const [product, setProduct] = useState(null);
@@ -38,7 +39,9 @@ export default function ProductDetailPage() {
   }, [id]);
 
   const handleVariantChange = (variantId) => {
-    setSelectedVariant(product.variants.find((v) => v.variant_id === variantId));
+    setSelectedVariant(
+      product.variants.find((v) => v.variant_id === variantId)
+    );
     setAddedToCart(false);
   };
 
@@ -71,6 +74,16 @@ export default function ProductDetailPage() {
   };
 
   const handleAddToCart = () => {
+    // Check if user is logged in
+    const token = localStorage.getItem("token");
+    const customerId = localStorage.getItem("customer_id");
+
+    if (!token || !customerId) {
+      // Redirect to login page if not logged in
+      router.push("/login");
+      return;
+    }
+
     if (selectedVariant) {
       addToCart(selectedVariant, 1);
       setAddedToCart(true);
@@ -85,7 +98,9 @@ export default function ProductDetailPage() {
       <div className="container mx-auto px-4 py-12">
         <div className="text-center">
           <div className="text-6xl mb-4">⏳</div>
-          <p className="text-text-primary text-xl">Loading product details...</p>
+          <p className="text-text-primary text-xl">
+            Loading product details...
+          </p>
         </div>
       </div>
     );
@@ -99,7 +114,9 @@ export default function ProductDetailPage() {
           <h3 className="text-xl font-semibold text-text-primary mb-2">
             Product Not Found
           </h3>
-          <p className="text-text-secondary">The product you're looking for doesn't exist.</p>
+          <p className="text-text-secondary">
+            The product you're looking for doesn't exist.
+          </p>
         </div>
       </div>
     );
@@ -224,8 +241,6 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-
-
               {/* Size Selection */}
               {getUniqueAttributes("size").length > 0 && (
                 <div className="mb-4">
@@ -305,7 +320,10 @@ export default function ProductDetailPage() {
 
           <div className="mb-6">
             <span className="text-4xl font-extrabold text-primary">
-              ${selectedVariant?.price ? parseFloat(selectedVariant.price).toFixed(2) : 'N/A'}
+              $
+              {selectedVariant?.price
+                ? parseFloat(selectedVariant.price).toFixed(2)
+                : "N/A"}
             </span>
           </div>
 
