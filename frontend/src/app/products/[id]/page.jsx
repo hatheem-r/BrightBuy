@@ -127,20 +127,41 @@ export default function ProductDetailPage() {
     ? "5-7 business days"
     : "8-10 business days";
 
+  const imageUrl = selectedVariant?.image_url 
+    ? `http://localhost:5001${selectedVariant.image_url}`
+    : null;
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Image Gallery */}
         <div className="flex flex-col gap-4">
-          <div className="bg-card border border-card-border rounded-lg h-96 flex items-center justify-center">
-            <div className="text-center">
-              <span className="text-text-secondary text-lg block">
-                {product.brand || "Product"}
-              </span>
-              <span className="text-text-secondary text-sm">
-                Image Placeholder
-              </span>
-            </div>
+          <div className="bg-card border border-card-border rounded-lg overflow-hidden">
+            {imageUrl ? (
+              <img 
+                src={imageUrl}
+                alt={`${product.name} - ${selectedVariant.color}`}
+                className="w-full h-96 object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.parentElement.innerHTML = `
+                    <div class="h-96 flex items-center justify-center">
+                      <div class="text-center">
+                        <span class="text-text-secondary text-lg block">${product.brand || "Product"}</span>
+                        <span class="text-text-secondary text-sm">Image Not Available</span>
+                      </div>
+                    </div>
+                  `;
+                }}
+              />
+            ) : (
+              <div className="h-96 flex items-center justify-center">
+                <div className="text-center">
+                  <span className="text-text-secondary text-lg block">{product.brand || "Product"}</span>
+                  <span className="text-text-secondary text-sm">Image Not Available</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

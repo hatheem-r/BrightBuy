@@ -2,6 +2,8 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const path = require("path");
+const db = require("./config/db"); // initializes the DB connection
 
 // Load environment variables FIRST before requiring db
 dotenv.config();
@@ -13,6 +15,9 @@ const app = express();
 // Middleware
 app.use(cors()); // Enable Cross-Origin Resource Sharing
 app.use(express.json()); // To accept JSON data in the body
+
+// Serve static assets (product images)
+app.use('/assets', express.static(path.join(__dirname, '../assets')));
 
 // --- API Routes ---
 app.use("/api/products", require("./routes/products"));

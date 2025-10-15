@@ -15,6 +15,8 @@ class ProductModel {
         pv.size,
         pv.color,
         pv.description,
+        pv.image_url,
+        
         COALESCE(i.quantity, 0) as stock_quantity,
         CASE 
           WHEN i.quantity > 10 THEN 'In Stock'
@@ -28,7 +30,7 @@ class ProductModel {
       LEFT JOIN Inventory i ON pv.variant_id = i.variant_id
       LEFT JOIN ProductCategory pc ON p.product_id = pc.product_id
       LEFT JOIN Category c ON pc.category_id = c.category_id
-      GROUP BY p.product_id, p.name, p.brand, pv.variant_id, pv.price, pv.sku, pv.size, pv.color, pv.description, i.quantity
+      GROUP BY p.product_id, p.name, p.brand, pv.variant_id, pv.price, pv.sku, pv.size, pv.color, pv.description, i.quantity, pv.image_url
       ORDER BY p.product_id DESC
     `;
 
@@ -83,6 +85,7 @@ class ProductModel {
         pv.color,
         pv.description,
         pv.is_default,
+        pv.image_url
         COALESCE(i.quantity, 0) as stock_quantity,
         CASE 
           WHEN i.quantity > 10 THEN 'In Stock'
@@ -136,6 +139,7 @@ class ProductModel {
         pv.size,
         pv.color,
         pv.description,
+        pv.image_url
         COALESCE(i.quantity, 0) as stock_quantity,
         CASE 
           WHEN i.quantity > 10 THEN 'In Stock'
@@ -147,7 +151,7 @@ class ProductModel {
       LEFT JOIN ProductVariant pv ON p.product_id = pv.product_id AND pv.is_default = 1
       LEFT JOIN Inventory i ON pv.variant_id = i.variant_id
       WHERE pc.category_id = ?
-      GROUP BY p.product_id, p.name, p.brand, pv.variant_id, pv.price, pv.sku, pv.size, pv.color, pv.description, i.quantity
+      GROUP BY p.product_id, p.name, p.brand, pv.variant_id, pv.price, pv.sku, pv.size, pv.color, pv.description, i.quantity, pv.image_url
       ORDER BY p.product_id DESC
     `;
 
@@ -172,6 +176,7 @@ class ProductModel {
         pv.size,
         pv.color,
         pv.description,
+        pv.image_url,
         COALESCE(i.quantity, 0) as stock_quantity,
         CASE 
           WHEN i.quantity > 10 THEN 'In Stock'
@@ -185,7 +190,7 @@ class ProductModel {
       LEFT JOIN ProductCategory pc ON p.product_id = pc.product_id
       LEFT JOIN Category c ON pc.category_id = c.category_id
       WHERE p.name LIKE ? OR p.brand LIKE ?
-      GROUP BY p.product_id, p.name, p.brand, pv.variant_id, pv.price, pv.sku, pv.size, pv.color, pv.description, i.quantity
+      GROUP BY p.product_id, p.name, p.brand, pv.variant_id, pv.price, pv.sku, pv.size, pv.color, pv.description, i.quantity, pv.image_url
       ORDER BY p.product_id DESC
     `;
 
