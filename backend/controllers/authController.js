@@ -16,11 +16,20 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Check if user exists and get customer_id if applicable
+    // Check if user exists and get name from Customer or Staff table
     const [users] = await db.query(
-      `SELECT u.user_id, u.name, u.email, u.password_hash, u.role, u.is_active, c.customer_id
+      `SELECT 
+        u.user_id, 
+        u.email, 
+        u.password_hash, 
+        u.role, 
+        u.is_active, 
+        u.customer_id,
+        u.staff_id,
+        COALESCE(CONCAT(c.first_name, ' ', c.last_name), s.user_name) as name
        FROM users u
-       LEFT JOIN Customer c ON u.email = c.email
+       LEFT JOIN Customer c ON u.customer_id = c.customer_id
+       LEFT JOIN Staff s ON u.staff_id = s.staff_id
        WHERE u.email = ?`,
       [email]
     );
@@ -94,64 +103,182 @@ exports.login = async (req, res) => {
 
 // Register controller
 exports.register = async (req, res) => {
+  console.log('\n=== SIGNUP/REGISTER REQUEST ===');
+  console.log('Request body received:', req.body);
+  
   try {
     const { name, email, password, phone } = req.body;
+    
+    console.log('Extracted data:');
+    console.log('  - Name:', name);
+    console.log('  - Email:', email);
+    console.log('  - Password:', password ? '***' + password.slice(-3) : 'undefined');
+    console.log('  - Phone:', phone || 'not provided');
 
     // Validate input
     if (!name || !email || !password) {
+      console.log('❌ Validation failed: Missing required fields');
       return res.status(400).json({
         success: false,
         message: "Name, email, and password are required",
       });
     }
+    
+    console.log('✓ Validation passed');
 
     // Check if user already exists
+    console.log('Checking if user exists with email:', email);
     const [existingUsers] = await db.query(
       "SELECT user_id FROM users WHERE email = ?",
       [email]
     );
 
     if (existingUsers.length > 0) {
+      console.log('❌ User already exists with this email');
       return res.status(409).json({
         success: false,
         message: "Email already registered",
       });
     }
+    
+    console.log('✓ Email is available');
 
     // Hash password
+    console.log('Hashing password...');
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
+    console.log('✓ Password hashed successfully');
 
-    // Insert new user
-    const [result] = await db.query(
-      "INSERT INTO users (name, email, password_hash, phone, role) VALUES (?, ?, ?, ?, ?)",
-      [name, email, passwordHash, phone || null, "customer"]
-    );
+    // Split name into first_name and last_name
+    const nameParts = name.trim().split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+    const userName = email.split('@')[0]; // Use email prefix as username
+    
+    console.log('Name processing:');
+    console.log('  - First name:', firstName);
+    console.log('  - Last name:', lastName);
+    console.log('  - Username:', userName);
 
-    // Generate JWT token
-    const token = jwt.sign(
-      {
-        userId: result.insertId,
-        email: email,
-        role: "customer",
-      },
-      process.env.JWT_SECRET || "your-secret-key-change-in-production",
-      { expiresIn: "7d" }
-    );
+    // Start transaction
+    console.log('Starting database transaction...');
+    await db.query('START TRANSACTION');
 
-    res.status(201).json({
-      success: true,
-      message: "Registration successful",
-      token,
-      user: {
-        id: result.insertId,
-        name,
-        email,
-        role: "customer",
-      },
-    });
+    try {
+      // Insert into Customer table first
+      console.log('Inserting into Customer table...');
+      const [customerResult] = await db.query(
+        "INSERT INTO Customer (first_name, last_name, user_name, password_hash, email, phone) VALUES (?, ?, ?, ?, ?, ?)",
+        [firstName, lastName, userName, passwordHash, email, phone || null]
+      );
+
+      const customerId = customerResult.insertId;
+      console.log('✓ Customer created with ID:', customerId);
+      
+      // VERIFY: Check if customer was actually saved
+      console.log('\n📊 VERIFYING Customer record in database...');
+      const [customerCheck] = await db.query(
+        "SELECT customer_id, first_name, last_name, email, user_name FROM Customer WHERE customer_id = ?",
+        [customerId]
+      );
+      console.log('Database: brightbuy | Table: Customer');
+      console.log('Customer record found:', customerCheck.length > 0 ? 'YES ✓' : 'NO ✗');
+      if (customerCheck.length > 0) {
+        console.log('Customer data:', customerCheck[0]);
+      }
+
+      // Insert into users table linking to customer
+      console.log('\nInserting into users table...');
+      const [userResult] = await db.query(
+        "INSERT INTO users (email, password_hash, role, customer_id, staff_id) VALUES (?, ?, ?, ?, ?)",
+        [email, passwordHash, "customer", customerId, null]
+      );
+      
+      console.log('✓ User created with ID:', userResult.insertId);
+      
+      // VERIFY: Check if user was actually saved
+      console.log('\n📊 VERIFYING User record in database...');
+      const [userCheck] = await db.query(
+        "SELECT user_id, email, role, customer_id, staff_id, is_active FROM users WHERE user_id = ?",
+        [userResult.insertId]
+      );
+      console.log('Database: brightbuy | Table: users');
+      console.log('User record found:', userCheck.length > 0 ? 'YES ✓' : 'NO ✗');
+      if (userCheck.length > 0) {
+        console.log('User data:', userCheck[0]);
+      }
+
+      // Commit transaction
+      await db.query('COMMIT');
+      console.log('\n✓ Transaction committed successfully');
+      
+      // FINAL VERIFICATION: Check both records after commit
+      console.log('\n📊 FINAL VERIFICATION after COMMIT...');
+      const [finalCustomerCheck] = await db.query(
+        "SELECT customer_id, first_name, last_name, email FROM Customer WHERE customer_id = ?",
+        [customerId]
+      );
+      const [finalUserCheck] = await db.query(
+        "SELECT user_id, email, role, customer_id FROM users WHERE user_id = ?",
+        [userResult.insertId]
+      );
+      console.log('Customer still in DB:', finalCustomerCheck.length > 0 ? 'YES ✓' : 'NO ✗');
+      console.log('User still in DB:', finalUserCheck.length > 0 ? 'YES ✓' : 'NO ✗');
+      
+      // Also check total count in tables
+      const [customerCount] = await db.query("SELECT COUNT(*) as count FROM Customer");
+      const [userCount] = await db.query("SELECT COUNT(*) as count FROM users");
+      console.log('Total Customers in DB:', customerCount[0].count);
+      console.log('Total Users in DB:', userCount[0].count);
+      console.log('');
+
+      // Generate JWT token
+      console.log('Generating JWT token...');
+      const token = jwt.sign(
+        {
+          userId: userResult.insertId,
+          email: email,
+          role: "customer",
+        },
+        process.env.JWT_SECRET || "your-secret-key-change-in-production",
+        { expiresIn: "7d" }
+      );
+      console.log('✓ JWT token generated');
+
+      const responseData = {
+        success: true,
+        message: "Registration successful",
+        token,
+        user: {
+          id: userResult.insertId,
+          name,
+          email,
+          role: "customer",
+        },
+      };
+      
+      console.log('✅ Registration successful! Sending response:', {
+        ...responseData,
+        token: 'JWT_TOKEN_' + token.slice(-10)
+      });
+      console.log('=== END SIGNUP REQUEST ===\n');
+
+      res.status(201).json(responseData);
+    } catch (err) {
+      // Rollback on error
+      console.log('❌ Error during transaction, rolling back...');
+      await db.query('ROLLBACK');
+      console.log('Transaction rolled back');
+      throw err;
+    }
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error('❌ Registration error:', error);
+    console.log('Error details:', {
+      message: error.message,
+      code: error.code,
+      sqlMessage: error.sqlMessage
+    });
+    console.log('=== END SIGNUP REQUEST (ERROR) ===\n');
     res.status(500).json({
       success: false,
       message: "Server error. Please try again later.",
@@ -165,7 +292,21 @@ exports.getMe = async (req, res) => {
     const userId = req.user.userId;
 
     const [users] = await db.query(
-      "SELECT user_id, name, email, role, phone, created_at, last_login FROM users WHERE user_id = ?",
+      `SELECT 
+        u.user_id, 
+        u.email, 
+        u.role, 
+        u.is_active, 
+        u.created_at, 
+        u.last_login,
+        u.customer_id,
+        u.staff_id,
+        COALESCE(CONCAT(c.first_name, ' ', c.last_name), s.user_name) as name,
+        COALESCE(c.phone, s.phone) as phone
+       FROM users u
+       LEFT JOIN Customer c ON u.customer_id = c.customer_id
+       LEFT JOIN Staff s ON u.staff_id = s.staff_id
+       WHERE u.user_id = ?`,
       [userId]
     );
 
