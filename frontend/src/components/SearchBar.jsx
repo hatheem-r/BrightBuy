@@ -19,7 +19,22 @@ const SearchBar = () => {
         const products = await productsAPI.getProductNames();
         setAllProducts(products);
       } catch (error) {
-        console.error("Error fetching product names:", error);
+        // Silently try fallback to getAllProducts
+        try {
+          const allProds = await productsAPI.getAllProducts();
+          // Extract just name, brand, and product_id for autocomplete
+          const simplified = allProds.map(p => ({
+            product_id: p.product_id,
+            name: p.name,
+            brand: p.brand || ''
+          }));
+          setAllProducts(simplified);
+          console.log("Using fallback product data for search autocomplete");
+        } catch (fallbackError) {
+          console.warn("Could not load product data for search autocomplete:", fallbackError.message);
+          // Set empty array to prevent further errors
+          setAllProducts([]);
+        }
       }
     };
 

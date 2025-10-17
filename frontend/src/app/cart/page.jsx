@@ -1,10 +1,10 @@
 // src/app/cart/page.jsx
 "use client";
 
-import React, { useState } from "react";
-import { useCart } from "@/contexts/CartContext";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import React, { useEffect } from 'react';
+import { useCart } from '@/contexts/CartContext';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const formatCurrency = (value) => {
   return `$${Number(value).toLocaleString("en-US", {
@@ -139,6 +139,35 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
 };
 
 export default function CartPage() {
+    const { cartItems, cartSubtotal, clearCart, cartCount } = useCart();
+    const router = useRouter();
+
+    const shippingEstimate = 500.00; // Placeholder
+    const total = cartSubtotal + shippingEstimate;
+
+    // Redirect staff users to dashboard
+    useEffect(() => {
+        const userData = localStorage.getItem("user");
+        if (userData) {
+            const user = JSON.parse(userData);
+            if (user.role === 'staff') {
+                router.push('/staff/dashboard');
+                return;
+            }
+        }
+    }, [router]);
+
+    if (cartCount === 0) {
+        return (
+            <div className="container mx-auto px-6 py-12 text-center">
+                <i className="fas fa-shopping-cart text-6xl text-gray-300 mb-4"></i>
+                <h1 className="text-3xl font-bold text-primary mb-2">Your cart is empty</h1>
+                <p className="text-text-secondary mb-6">Looks like you haven't added anything to your cart yet.</p>
+                <Link href="/" className="bg-primary text-white px-6 py-3 rounded-md font-semibold hover:bg-secondary transition-colors">
+                    Continue Shopping
+                </Link>
+            </div>
+        );
   const { cartItems, cartSubtotal, clearCart, cartCount } = useCart();
   const router = useRouter();
   
