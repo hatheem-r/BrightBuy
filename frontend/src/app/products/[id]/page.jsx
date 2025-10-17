@@ -93,6 +93,26 @@ export default function ProductDetailPage() {
     }
   };
 
+  const handleBuyNow = async () => {
+    // Check if user is logged in
+    const token = localStorage.getItem("token");
+    const customerId = localStorage.getItem("customer_id");
+
+    if (!token || !customerId) {
+      // Redirect to login page with return URL to checkout
+      router.push("/login?redirect=/checkout");
+      return;
+    }
+
+    if (selectedVariant) {
+      // Redirect to checkout with product variant ID and quantity as URL params
+      // This allows checkout page to show only this product, not the entire cart
+      router.push(
+        `/checkout?buyNow=true&variantId=${selectedVariant.variant_id}&quantity=1`
+      );
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12">
@@ -127,7 +147,7 @@ export default function ProductDetailPage() {
     ? "5-7 business days"
     : "8-10 business days";
 
-  const imageUrl = selectedVariant?.image_url 
+  const imageUrl = selectedVariant?.image_url
     ? `http://localhost:5001${selectedVariant.image_url}`
     : null;
 
@@ -138,7 +158,7 @@ export default function ProductDetailPage() {
         <div className="flex flex-col gap-4">
           <div className="bg-card border border-card-border rounded-lg overflow-hidden">
             {imageUrl ? (
-              <img 
+              <img
                 src={imageUrl}
                 alt={`${product.name} - ${selectedVariant.color}`}
                 className="w-full h-96 object-cover"
@@ -147,7 +167,9 @@ export default function ProductDetailPage() {
                   e.target.parentElement.innerHTML = `
                     <div class="h-96 flex items-center justify-center">
                       <div class="text-center">
-                        <span class="text-text-secondary text-lg block">${product.brand || "Product"}</span>
+                        <span class="text-text-secondary text-lg block">${
+                          product.brand || "Product"
+                        }</span>
                         <span class="text-text-secondary text-sm">Image Not Available</span>
                       </div>
                     </div>
@@ -157,8 +179,12 @@ export default function ProductDetailPage() {
             ) : (
               <div className="h-96 flex items-center justify-center">
                 <div className="text-center">
-                  <span className="text-text-secondary text-lg block">{product.brand || "Product"}</span>
-                  <span className="text-text-secondary text-sm">Image Not Available</span>
+                  <span className="text-text-secondary text-lg block">
+                    {product.brand || "Product"}
+                  </span>
+                  <span className="text-text-secondary text-sm">
+                    Image Not Available
+                  </span>
                 </div>
               </div>
             )}
@@ -336,6 +362,7 @@ export default function ProductDetailPage() {
               <i className="fas fa-shopping-cart mr-2"></i> Add to Cart
             </button>
             <button
+              onClick={handleBuyNow}
               disabled={!isInStock}
               className="w-full bg-primary text-white py-3 rounded-lg font-semibold text-lg hover:bg-secondary transition disabled:bg-gray-400 disabled:cursor-not-allowed"
             >

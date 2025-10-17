@@ -258,3 +258,127 @@ export const cartAPI = {
     return response.json();
   },
 };
+
+// Customer API
+export const customerAPI = {
+  // Get customer profile with addresses
+  getProfile: async (customerId) => {
+    const response = await fetch(
+      `${API_BASE_URL}/customers/${customerId}/profile`
+    );
+    if (!response.ok) throw new Error("Failed to fetch customer profile");
+    return response.json();
+  },
+
+  // Update customer basic info
+  updateInfo: async (customerId, data) => {
+    const response = await fetch(
+      `${API_BASE_URL}/customers/${customerId}/info`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
+    if (!response.ok) throw new Error("Failed to update customer info");
+    return response.json();
+  },
+
+  // Get default address
+  getDefaultAddress: async (customerId) => {
+    const response = await fetch(
+      `${API_BASE_URL}/customers/${customerId}/address/default`
+    );
+    if (!response.ok) throw new Error("Failed to fetch default address");
+    return response.json();
+  },
+
+  // Save address (create or update)
+  saveAddress: async (customerId, addressData) => {
+    const response = await fetch(
+      `${API_BASE_URL}/customers/${customerId}/address`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(addressData),
+      }
+    );
+    if (!response.ok) throw new Error("Failed to save address");
+    return response.json();
+  },
+
+  // Delete address
+  deleteAddress: async (customerId, addressId) => {
+    const response = await fetch(
+      `${API_BASE_URL}/customers/${customerId}/address/${addressId}`,
+      {
+        method: "DELETE",
+      }
+    );
+    if (!response.ok) throw new Error("Failed to delete address");
+    return response.json();
+  },
+};
+
+// Orders API
+export const ordersAPI = {
+  // Create a new order
+  createOrder: async (orderData, token) => {
+    const response = await fetch(`${API_BASE_URL}/orders`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(orderData),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.details || error.error || "Failed to create order");
+    }
+    return response.json();
+  },
+
+  // Get order by ID
+  getOrderById: async (orderId, token) => {
+    const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) throw new Error("Failed to fetch order");
+    return response.json();
+  },
+
+  // Get orders by customer ID
+  getOrdersByCustomer: async (customerId, token) => {
+    const response = await fetch(
+      `${API_BASE_URL}/orders/customer/${customerId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (!response.ok) throw new Error("Failed to fetch customer orders");
+    return response.json();
+  },
+
+  // Update order status
+  updateOrderStatus: async (orderId, status, token) => {
+    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    });
+    if (!response.ok) throw new Error("Failed to update order status");
+    return response.json();
+  },
+};
