@@ -12,15 +12,51 @@ const formatCurrency = (value) => {
 const CartItem = ({ item }) => {
     const { updateQuantity, removeFromCart } = useCart();
     
+    // Construct image URL similar to products page
+    const imageUrl = item.variant.image_url
+        ? `http://localhost:5001${item.variant.image_url}`
+        : null;
+    
     return (
         <div className="flex items-center py-4 border-b border-card-border">
-            <div className="w-24 h-24 bg-background rounded-md mr-4 flex-shrink-0">
-                {/* Image placeholder */}
+            <div className="w-24 h-24 bg-gray-100 rounded-md mr-4 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                {imageUrl ? (
+                    <img 
+                        src={imageUrl}
+                        alt={item.variant.product_name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "";
+                            e.target.style.display = "none";
+                            e.target.parentElement.innerHTML = `
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <span class="text-gray-400 text-xs text-center px-2">
+                                        ${item.variant.brand || "Product"}<br/>Image
+                                    </span>
+                                </div>
+                            `;
+                        }}
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-gray-400 text-xs text-center px-2">
+                            {item.variant.brand || "Product"}<br/>Image
+                        </span>
+                    </div>
+                )}
             </div>
             <div className="flex-grow">
-                <h3 className="font-semibold text-primary">{item.variant.name || "Product Name"}</h3>
-                <p className="text-sm text-text-secondary">Color: {item.variant.color}, Memory: {item.variant.memory}</p>
-                <button onClick={() => removeFromCart(item.variant.id)} className="text-red-500 text-sm hover:underline mt-1">
+                <h3 className="font-semibold text-primary">{item.variant.product_name || "Product Name"}</h3>
+                <p className="text-sm text-text-secondary">
+                    {item.variant.brand && <span>Brand: {item.variant.brand}</span>}
+                    {item.variant.brand && (item.variant.color || item.variant.size) && <span> • </span>}
+                    {item.variant.color && <span>Color: {item.variant.color}</span>}
+                    {item.variant.color && item.variant.size && <span> • </span>}
+                    {item.variant.size && <span>Size: {item.variant.size}</span>}
+                </p>
+                <p className="text-xs text-text-secondary mt-1">SKU: {item.variant.sku}</p>
+                <button onClick={() => removeFromCart(item.variant.variant_id)} className="text-red-500 text-sm hover:underline mt-1">
                     Remove
                 </button>
             </div>
@@ -28,7 +64,7 @@ const CartItem = ({ item }) => {
                 <input type="number"
                     className="w-full border border-card-border rounded-md p-2 text-center bg-background text-text-primary"
                     value={item.quantity}
-                    onChange={(e) => updateQuantity(item.variant.id, parseInt(e.target.value, 10))}
+                    onChange={(e) => updateQuantity(item.variant.variant_id, parseInt(e.target.value, 10))}
                     min="1"
                 />
             </div>
@@ -69,7 +105,7 @@ export default function CartPage() {
                         <button onClick={clearCart} className="text-text-secondary text-sm hover:text-red-500">Clear Cart</button>
                     </div>
                     {cartItems.map(item => (
-                        <CartItem key={item.variant.id} item={item} />
+                        <CartItem key={item.cart_item_id} item={item} />
                     ))}
                 </div>
 

@@ -1,11 +1,11 @@
 // controllers/cartController.js
 const CartModel = require("../models/cartModel");
 
-// @desc    Get or create cart
-// @route   GET /api/cart or POST /api/cart
-const getOrCreateCart = async (req, res) => {
+// @desc    Get cart details for customer
+// @route   GET /api/cart?customer_id=X or GET /api/cart/:customerId
+const getCartDetails = async (req, res) => {
   try {
-    const customerId = req.body.customer_id || req.query.customer_id;
+    const customerId = req.params.customerId || req.query.customer_id;
 
     if (!customerId) {
       return res
@@ -13,27 +13,13 @@ const getOrCreateCart = async (req, res) => {
         .json({ message: "Customer ID is required. Please login first." });
     }
 
-    const cartId = await CartModel.getOrCreateCart(customerId);
-    res.json({ cart_id: cartId });
-  } catch (error) {
-    console.error("Error getting/creating cart:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-// @desc    Get cart details
-// @route   GET /api/cart/:cartId
-const getCartDetails = async (req, res) => {
-  try {
-    const cartId = req.params.cartId;
-
     const [items, summary] = await Promise.all([
-      CartModel.getCartDetails(cartId),
-      CartModel.getCartSummary(cartId),
+      CartModel.getCartDetails(customerId),
+      CartModel.getCartSummary(customerId),
     ]);
 
     res.json({
-      cart_id: cartId,
+      customer_id: customerId,
       summary,
       items,
     });
@@ -43,12 +29,19 @@ const getCartDetails = async (req, res) => {
   }
 };
 
-// @desc    Get cart summary
-// @route   GET /api/cart/:cartId/summary
+// @desc    Get cart summary for customer
+// @route   GET /api/cart/:customerId/summary
 const getCartSummary = async (req, res) => {
   try {
-    const cartId = req.params.cartId;
-    const summary = await CartModel.getCartSummary(cartId);
+    const customerId = req.params.customerId || req.query.customer_id;
+
+    if (!customerId) {
+      return res
+        .status(401)
+        .json({ message: "Customer ID is required. Please login first." });
+    }
+
+    const summary = await CartModel.getCartSummary(customerId);
     res.json(summary);
   } catch (error) {
     console.error("Error fetching cart summary:", error);
@@ -57,11 +50,17 @@ const getCartSummary = async (req, res) => {
 };
 
 // @desc    Add item to cart
-// @route   POST /api/cart/:cartId/items
+// @route   POST /api/cart/:customerId/items or POST /api/cart/items
 const addToCart = async (req, res) => {
   try {
-    const cartId = req.params.cartId;
+    const customerId = req.params.customerId || req.body.customer_id;
     const { variant_id, quantity } = req.body;
+
+    if (!customerId) {
+      return res
+        .status(401)
+        .json({ message: "Customer ID is required. Please login first." });
+    }
 
     if (!variant_id || !quantity) {
       return res
@@ -73,15 +72,15 @@ const addToCart = async (req, res) => {
       return res.status(400).json({ message: "Quantity must be at least 1" });
     }
 
-    await CartModel.addToCart(cartId, variant_id, quantity);
+    await CartModel.addToCart(customerId, variant_id, quantity);
 
     // Get updated cart details
-    const items = await CartModel.getCartDetails(cartId);
-    const summary = await CartModel.getCartSummary(cartId);
+    const items = await CartModel.getCartDetails(customerId);
+    const summary = await CartModel.getCartSummary(customerId);
 
     res.json({
       message: "Item added to cart successfully",
-      cart_id: cartId,
+      customer_id: customerId,
       summary,
       items,
     });
@@ -92,21 +91,21 @@ const addToCart = async (req, res) => {
 };
 
 // @desc    Update cart item quantity
-// @route   PUT /api/cart/:cartId/items/:variantId
+// @route   PUT /api/cart/:customerId/items/:variantId
 const updateCartItem = async (req, res) => {
   try {
-    const { cartId, variantId } = req.params;
+    const { customerId, variantId } = req.params;
     const { quantity } = req.body;
 
     if (!quantity || quantity < 1) {
       return res.status(400).json({ message: "Valid quantity is required" });
     }
 
-    await CartModel.updateCartItemQuantity(cartId, variantId, quantity);
+    await CartModel.updateCartItemQuantity(customerId, variantId, quantity);
 
     // Get updated cart details
-    const items = await CartModel.getCartDetails(cartId);
-    const summary = await CartModel.getCartSummary(cartId);
+    const items = await CartModel.getCartDetails(customerId);
+    const summary = await CartModel.getCartSummary(customerId);
 
     res.json({
       message: "Cart item updated successfully",
@@ -125,16 +124,16 @@ const updateCartItem = async (req, res) => {
 };
 
 // @desc    Remove item from cart
-// @route   DELETE /api/cart/:cartId/items/:variantId
+// @route   DELETE /api/cart/:customerId/items/:variantId
 const removeCartItem = async (req, res) => {
   try {
-    const { cartId, variantId } = req.params;
+    const { customerId, variantId } = req.params;
 
-    await CartModel.removeCartItem(cartId, variantId);
+    await CartModel.removeCartItem(customerId, variantId);
 
     // Get updated cart details
-    const items = await CartModel.getCartDetails(cartId);
-    const summary = await CartModel.getCartSummary(cartId);
+    const items = await CartModel.getCartDetails(customerId);
+    const summary = await CartModel.getCartSummary(customerId);
 
     res.json({
       message: "Item removed from cart successfully",
@@ -152,43 +151,17 @@ const removeCartItem = async (req, res) => {
   }
 };
 
-// @desc    Decrease item quantity or remove
-// @route   POST /api/cart/:cartId/items/:variantId/decrease
-const decreaseCartItem = async (req, res) => {
-  try {
-    const { cartId, variantId } = req.params;
-    const { quantity } = req.body;
-
-    const decreaseAmount = quantity || 1;
-
-    await CartModel.removeFromCart(cartId, variantId, decreaseAmount);
-
-    // Get updated cart details
-    const items = await CartModel.getCartDetails(cartId);
-    const summary = await CartModel.getCartSummary(cartId);
-
-    res.json({
-      message: "Cart updated successfully",
-      summary,
-      items,
-    });
-  } catch (error) {
-    console.error("Error decreasing cart item:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
 // @desc    Clear cart
-// @route   DELETE /api/cart/:cartId
+// @route   DELETE /api/cart/:customerId
 const clearCart = async (req, res) => {
   try {
-    const cartId = req.params.cartId;
+    const customerId = req.params.customerId;
 
-    await CartModel.clearCart(cartId);
+    await CartModel.clearCart(customerId);
 
     res.json({
       message: "Cart cleared successfully",
-      cart_id: cartId,
+      customer_id: customerId,
     });
   } catch (error) {
     console.error("Error clearing cart:", error);
@@ -196,33 +169,19 @@ const clearCart = async (req, res) => {
   }
 };
 
-// @desc    Validate cart before checkout
-// @route   GET /api/cart/:cartId/validate
-const validateCart = async (req, res) => {
-  try {
-    const cartId = req.params.cartId;
-
-    const validationResults = await CartModel.validateCart(cartId);
-
-    const hasIssues = validationResults.some((item) => item.status !== "OK");
-
-    res.json({
-      cart_id: cartId,
-      is_valid: !hasIssues,
-      items: validationResults,
-    });
-  } catch (error) {
-    console.error("Error validating cart:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
 // @desc    Get cart item count
-// @route   GET /api/cart/:cartId/count
+// @route   GET /api/cart/:customerId/count
 const getCartItemCount = async (req, res) => {
   try {
-    const cartId = req.params.cartId;
-    const counts = await CartModel.getCartItemCount(cartId);
+    const customerId = req.params.customerId || req.query.customer_id;
+
+    if (!customerId) {
+      return res
+        .status(401)
+        .json({ message: "Customer ID is required. Please login first." });
+    }
+
+    const counts = await CartModel.getCartItemCount(customerId);
     res.json(counts);
   } catch (error) {
     console.error("Error getting cart count:", error);
@@ -230,46 +189,12 @@ const getCartItemCount = async (req, res) => {
   }
 };
 
-// @desc    Merge guest cart to customer cart
-// @route   POST /api/cart/merge
-const mergeGuestCart = async (req, res) => {
-  try {
-    const { guest_cart_id, customer_cart_id } = req.body;
-
-    if (!guest_cart_id || !customer_cart_id) {
-      return res.status(400).json({
-        message: "Both guest cart ID and customer cart ID are required",
-      });
-    }
-
-    await CartModel.mergeGuestCart(guest_cart_id, customer_cart_id);
-
-    // Get updated customer cart
-    const items = await CartModel.getCartDetails(customer_cart_id);
-    const summary = await CartModel.getCartSummary(customer_cart_id);
-
-    res.json({
-      message: "Carts merged successfully",
-      cart_id: customer_cart_id,
-      summary,
-      items,
-    });
-  } catch (error) {
-    console.error("Error merging carts:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
 module.exports = {
-  getOrCreateCart,
   getCartDetails,
   getCartSummary,
   addToCart,
   updateCartItem,
   removeCartItem,
-  decreaseCartItem,
   clearCart,
-  validateCart,
   getCartItemCount,
-  mergeGuestCart,
 };

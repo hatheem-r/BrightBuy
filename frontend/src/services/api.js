@@ -187,43 +187,30 @@ export const signup = authAPI.signup;
 
 // Cart API
 export const cartAPI = {
-  // Get or create cart
-  getOrCreateCart: async (customerId) => {
-    const response = await fetch(`${API_BASE_URL}/cart`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ customer_id: customerId }),
-    });
-    if (!response.ok) throw new Error("Failed to get/create cart");
-    return response.json();
-  },
-
-  // Get cart details
-  getCartDetails: async (cartId) => {
-    const response = await fetch(`${API_BASE_URL}/cart/${cartId}`);
+  // Get cart details for customer
+  getCartDetails: async (customerId) => {
+    const response = await fetch(`${API_BASE_URL}/cart/${customerId}`);
     if (!response.ok) throw new Error("Failed to fetch cart details");
     return response.json();
   },
 
-  // Get cart summary
-  getCartSummary: async (cartId) => {
-    const response = await fetch(`${API_BASE_URL}/cart/${cartId}/summary`);
+  // Get cart summary for customer
+  getCartSummary: async (customerId) => {
+    const response = await fetch(`${API_BASE_URL}/cart/${customerId}/summary`);
     if (!response.ok) throw new Error("Failed to fetch cart summary");
     return response.json();
   },
 
-  // Get cart item count
-  getCartItemCount: async (cartId) => {
-    const response = await fetch(`${API_BASE_URL}/cart/${cartId}/count`);
+  // Get cart item count for customer
+  getCartItemCount: async (customerId) => {
+    const response = await fetch(`${API_BASE_URL}/cart/${customerId}/count`);
     if (!response.ok) throw new Error("Failed to fetch cart count");
     return response.json();
   },
 
   // Add item to cart
-  addToCart: async (cartId, variantId, quantity = 1) => {
-    const response = await fetch(`${API_BASE_URL}/cart/${cartId}/items`, {
+  addToCart: async (customerId, variantId, quantity = 1) => {
+    const response = await fetch(`${API_BASE_URL}/cart/${customerId}/items`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -235,9 +222,9 @@ export const cartAPI = {
   },
 
   // Update cart item quantity
-  updateCartItem: async (cartId, variantId, quantity) => {
+  updateCartItem: async (customerId, variantId, quantity) => {
     const response = await fetch(
-      `${API_BASE_URL}/cart/${cartId}/items/${variantId}`,
+      `${API_BASE_URL}/cart/${customerId}/items/${variantId}`,
       {
         method: "PUT",
         headers: {
@@ -251,9 +238,9 @@ export const cartAPI = {
   },
 
   // Remove item from cart
-  removeCartItem: async (cartId, variantId) => {
+  removeCartItem: async (customerId, variantId) => {
     const response = await fetch(
-      `${API_BASE_URL}/cart/${cartId}/items/${variantId}`,
+      `${API_BASE_URL}/cart/${customerId}/items/${variantId}`,
       {
         method: "DELETE",
       }
@@ -262,51 +249,12 @@ export const cartAPI = {
     return response.json();
   },
 
-  // Decrease item quantity
-  decreaseCartItem: async (cartId, variantId, quantity = 1) => {
-    const response = await fetch(
-      `${API_BASE_URL}/cart/${cartId}/items/${variantId}/decrease`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ quantity }),
-      }
-    );
-    if (!response.ok) throw new Error("Failed to decrease cart item");
-    return response.json();
-  },
-
   // Clear cart
-  clearCart: async (cartId) => {
-    const response = await fetch(`${API_BASE_URL}/cart/${cartId}`, {
+  clearCart: async (customerId) => {
+    const response = await fetch(`${API_BASE_URL}/cart/${customerId}`, {
       method: "DELETE",
     });
     if (!response.ok) throw new Error("Failed to clear cart");
-    return response.json();
-  },
-
-  // Validate cart
-  validateCart: async (cartId) => {
-    const response = await fetch(`${API_BASE_URL}/cart/${cartId}/validate`);
-    if (!response.ok) throw new Error("Failed to validate cart");
-    return response.json();
-  },
-
-  // Merge guest cart to customer cart
-  mergeGuestCart: async (guestCartId, customerCartId) => {
-    const response = await fetch(`${API_BASE_URL}/cart/merge`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        guest_cart_id: guestCartId,
-        customer_cart_id: customerCartId,
-      }),
-    });
-    if (!response.ok) throw new Error("Failed to merge carts");
     return response.json();
   },
 };

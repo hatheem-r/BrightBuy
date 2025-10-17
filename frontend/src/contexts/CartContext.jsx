@@ -9,6 +9,7 @@ import React, {
   useMemo,
 } from "react";
 import { cartAPI } from "@/services/api";
+import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
 
@@ -17,31 +18,33 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
+  const { user } = useAuth();
   const [cartItems, setCartItems] = useState([]);
-  const [cartId, setCartId] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [customerId, setCustomerId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Initialize cart from localStorage on mount
+  // Initialize customer from localStorage on mount and when user changes
   useEffect(() => {
-    const storedCartId = localStorage.getItem("cart_id");
     const storedCustomerId = localStorage.getItem("customer_id");
+    
+    // Prefer customer_id from authenticated user object
+    const effectiveCustomerId = user?.customer_id || storedCustomerId;
 
-    if (storedCartId) {
-      setCartId(storedCartId);
-      loadCart(storedCartId);
+    if (effectiveCustomerId && effectiveCustomerId !== customerId) {
+      setCustomerId(effectiveCustomerId);
+      loadCart(effectiveCustomerId);
+    } else if (!effectiveCustomerId && customerId) {
+      // User logged out
+      setCustomerId(null);
+      setCartItems([]);
     }
-
-    if (storedCustomerId) {
-      setCustomerId(storedCustomerId);
-    }
-  }, []);
+  }, [user]);
 
   // Load cart from backend
-  const loadCart = async (id) => {
+  const loadCart = async (customerId) => {
     try {
       setLoading(true);
-      const response = await cartAPI.getCartDetails(id);
+      const response = await cartAPI.getCartDetails(customerId);
 
       // Transform backend data to match frontend format
       const items = response.items.map((item) => ({
@@ -52,6 +55,7 @@ export const CartProvider = ({ children }) => {
           price: parseFloat(item.price),
           size: item.size,
           color: item.color,
+          image_url: item.image_url,
           description: item.variant_description,
           stock_quantity: item.stock_quantity,
           product_id: item.product_id,
@@ -71,46 +75,19 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Get or create cart
-  const initializeCart = async (customerId = null) => {
-    try {
-      // If no cart ID, create a new cart
-      if (!cartId) {
-        // Get customer_id from localStorage if not provided
-        const storedCustomerId =
-          customerId || localStorage.getItem("customer_id");
-
-        if (!storedCustomerId) {
-          throw new Error("Customer ID required. Please login first.");
-        }
-
-        const response = await cartAPI.getOrCreateCart(storedCustomerId);
-        const newCartId = response.cart_id;
-        setCartId(newCartId);
-        localStorage.setItem("cart_id", newCartId);
-        return newCartId;
-      }
-      return cartId;
-    } catch (error) {
-      console.error("Error initializing cart:", error);
-      throw error;
-    }
-  };
-
   // Add to cart
   const addToCart = async (productVariant, quantity = 1) => {
     try {
       setLoading(true);
 
-      // Initialize cart if needed
-      let currentCartId = cartId;
-      if (!currentCartId) {
-        currentCartId = await initializeCart(customerId);
+      // Check if user is logged in
+      if (!customerId) {
+        throw new Error("Please login to add items to cart");
       }
 
       // Add item to backend
       const response = await cartAPI.addToCart(
-        currentCartId,
+        customerId,
         productVariant.variant_id,
         quantity
       );
@@ -124,6 +101,7 @@ export const CartProvider = ({ children }) => {
           price: parseFloat(item.price),
           size: item.size,
           color: item.color,
+          image_url: item.image_url,
           description: item.variant_description,
           stock_quantity: item.stock_quantity,
           product_id: item.product_id,
@@ -152,12 +130,12 @@ export const CartProvider = ({ children }) => {
     try {
       setLoading(true);
 
-      if (!cartId) {
-        console.error("No cart ID available");
+      if (!customerId) {
+        console.error("No customer ID available");
         return;
       }
 
-      const response = await cartAPI.removeCartItem(cartId, variantId);
+      const response = await cartAPI.removeCartItem(customerId, variantId);
 
       // Update local state
       const items = response.items.map((item) => ({
@@ -168,6 +146,7 @@ export const CartProvider = ({ children }) => {
           price: parseFloat(item.price),
           size: item.size,
           color: item.color,
+          image_url: item.image_url,
           description: item.variant_description,
           stock_quantity: item.stock_quantity,
           product_id: item.product_id,
@@ -194,8 +173,8 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       const quantity = parseInt(newQuantity, 10);
 
-      if (!cartId) {
-        console.error("No cart ID available");
+      if (!customerId) {
+        console.error("No customer ID available");
         return;
       }
 
@@ -205,7 +184,7 @@ export const CartProvider = ({ children }) => {
       }
 
       const response = await cartAPI.updateCartItem(
-        cartId,
+        customerId,
         variantId,
         quantity
       );
@@ -219,6 +198,7 @@ export const CartProvider = ({ children }) => {
           price: parseFloat(item.price),
           size: item.size,
           color: item.color,
+          image_url: item.image_url,
           description: item.variant_description,
           stock_quantity: item.stock_quantity,
           product_id: item.product_id,
@@ -244,8 +224,8 @@ export const CartProvider = ({ children }) => {
     try {
       setLoading(true);
 
-      if (cartId) {
-        await cartAPI.clearCart(cartId);
+      if (customerId) {
+        await cartAPI.clearCart(customerId);
       }
 
       setCartItems([]);
@@ -262,8 +242,11 @@ export const CartProvider = ({ children }) => {
     setCustomerId(id);
     if (id) {
       localStorage.setItem("customer_id", id);
+      // Load cart when customer is set
+      loadCart(id);
     } else {
       localStorage.removeItem("customer_id");
+      setCartItems([]);
     }
   };
 
@@ -281,7 +264,7 @@ export const CartProvider = ({ children }) => {
 
   const value = {
     cartItems,
-    cartId,
+    customerId,
     addToCart,
     removeFromCart,
     updateQuantity,
@@ -290,7 +273,7 @@ export const CartProvider = ({ children }) => {
     cartSubtotal,
     loading,
     setCustomer,
-    refreshCart: () => cartId && loadCart(cartId),
+    refreshCart: () => customerId && loadCart(customerId),
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
