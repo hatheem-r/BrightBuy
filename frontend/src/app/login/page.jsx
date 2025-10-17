@@ -3,11 +3,13 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { login } from "@/lib/api";
+import { login } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 import styles from "./Auth.module.css";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login: authLogin } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -42,9 +44,18 @@ export default function LoginPage() {
       const response = await login(formData.email, formData.password);
 
       if (response.success) {
-        // Store token and user info
+        // Store token and user info using AuthContext
+        authLogin(response.token, response.user);
+
+        // Also store in localStorage for backward compatibility
         localStorage.setItem("authToken", response.token);
+        localStorage.setItem("token", response.token);
         localStorage.setItem("user", JSON.stringify(response.user));
+
+        // Store customer_id if available (for customers only)
+        if (response.user.customer_id) {
+          localStorage.setItem("customer_id", response.user.customer_id);
+        }
 
         // Role-based redirect
         switch (response.user.role) {
