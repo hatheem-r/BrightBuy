@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { productsAPI, categoriesAPI } from "@/services/api";
 
 const ProductCard = ({ product }) => {
@@ -85,6 +85,7 @@ const ProductCard = ({ product }) => {
 export default function ProductsPage() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search");
+  const router = useRouter();
 
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [products, setProducts] = useState([]);

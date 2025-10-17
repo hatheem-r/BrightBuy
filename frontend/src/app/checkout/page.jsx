@@ -18,6 +18,16 @@ export default function CheckoutPage() {
     const [paymentMethod, setPaymentMethod] = useState('Card Payment');
 
     useEffect(() => {
+        // Redirect staff users to dashboard
+        const userData = localStorage.getItem("user");
+        if (userData) {
+            const user = JSON.parse(userData);
+            if (user.role === 'staff') {
+                router.push('/staff/dashboard');
+                return;
+            }
+        }
+
         const token = localStorage.getItem('userToken');
         setIsLoggedIn(!!token);
         setLoadingAuth(false);

@@ -16,6 +16,17 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+
+  // Check if user is staff
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      const user = JSON.parse(userData);
+      setUserRole(user.role);
+      // Allow staff to view product details, just hide buy buttons
+    }
+  }, [router]);
 
   useEffect(() => {
     if (id) {
@@ -327,21 +338,34 @@ export default function ProductDetailPage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleAddToCart}
-              disabled={!isInStock}
-              className="w-full bg-secondary text-white py-3 rounded-lg font-semibold text-lg hover:opacity-90 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              <i className="fas fa-shopping-cart mr-2"></i> Add to Cart
-            </button>
-            <button
-              disabled={!isInStock}
-              className="w-full bg-primary text-white py-3 rounded-lg font-semibold text-lg hover:bg-secondary transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              Buy Now
-            </button>
-          </div>
+          {/* Hide Add to Cart and Buy Now buttons for staff */}
+          {userRole !== 'staff' && (
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleAddToCart}
+                disabled={!isInStock}
+                className="w-full bg-secondary text-white py-3 rounded-lg font-semibold text-lg hover:opacity-90 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                <i className="fas fa-shopping-cart mr-2"></i> Add to Cart
+              </button>
+              <button
+                disabled={!isInStock}
+                className="w-full bg-primary text-white py-3 rounded-lg font-semibold text-lg hover:bg-secondary transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                Buy Now
+              </button>
+            </div>
+          )}
+
+          {/* Message for staff users */}
+          {userRole === 'staff' && (
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-lg text-center">
+              <i className="fas fa-info-circle text-blue-600 dark:text-blue-400 mr-2"></i>
+              <span className="text-blue-800 dark:text-blue-300 font-medium">
+                Product information view only. Staff members cannot make purchases.
+              </span>
+            </div>
+          )}
 
           {addedToCart && (
             <div className="mt-4 p-3 bg-green-100 border border-green-300 text-green-800 rounded-md text-center">

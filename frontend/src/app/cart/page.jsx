@@ -1,9 +1,10 @@
 // src/app/cart/page.jsx
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const formatCurrency = (value) => {
     return `Rs. ${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -77,9 +78,22 @@ const CartItem = ({ item }) => {
 
 export default function CartPage() {
     const { cartItems, cartSubtotal, clearCart, cartCount } = useCart();
+    const router = useRouter();
 
     const shippingEstimate = 500.00; // Placeholder
     const total = cartSubtotal + shippingEstimate;
+
+    // Redirect staff users to dashboard
+    useEffect(() => {
+        const userData = localStorage.getItem("user");
+        if (userData) {
+            const user = JSON.parse(userData);
+            if (user.role === 'staff') {
+                router.push('/staff/dashboard');
+                return;
+            }
+        }
+    }, [router]);
 
     if (cartCount === 0) {
         return (
