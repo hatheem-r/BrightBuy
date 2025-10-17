@@ -148,7 +148,7 @@ export default function CustomerManagement() {
               <div>
                 <h3 className="font-semibold text-text-primary mb-3">Personal Information</h3>
                 <div className="space-y-2 text-sm">
-                  <p><span className="font-medium">Name:</span> {selectedCustomer.full_name}</p>
+                  <p><span className="font-medium">Name:</span> {selectedCustomer.first_name} {selectedCustomer.last_name}</p>
                   <p><span className="font-medium">Email:</span> {selectedCustomer.email}</p>
                   <p><span className="font-medium">Phone:</span> {selectedCustomer.phone || 'N/A'}</p>
                   <p><span className="font-medium">Username:</span> {selectedCustomer.user_name}</p>
@@ -159,9 +159,9 @@ export default function CustomerManagement() {
               <div>
                 <h3 className="font-semibold text-text-primary mb-3">Order Statistics</h3>
                 <div className="space-y-2 text-sm">
-                  <p><span className="font-medium">Total Orders:</span> {selectedCustomer.total_orders}</p>
-                  <p><span className="font-medium">Total Spent:</span> Rs. {parseFloat(selectedCustomer.total_spent || 0).toLocaleString()}</p>
-                  <p><span className="font-medium">Average Order Value:</span> Rs. {parseFloat(selectedCustomer.avg_order_value || 0).toLocaleString()}</p>
+                  <p><span className="font-medium">Total Orders:</span> {selectedCustomer.totalOrders}</p>
+                  <p><span className="font-medium">Total Spent:</span> Rs. {parseFloat(selectedCustomer.totalSpent || 0).toLocaleString()}</p>
+                  <p><span className="font-medium">Average Order Value:</span> Rs. {parseFloat(selectedCustomer.avgOrderValue || 0).toLocaleString()}</p>
                 </div>
               </div>
               

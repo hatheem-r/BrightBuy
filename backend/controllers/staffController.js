@@ -200,9 +200,19 @@ exports.getInventory = async (req, res) => {
 
 // Update inventory
 exports.updateInventory = async (req, res) => {
+  const requestId = Math.random().toString(36).substring(7);
+  console.log(`[${requestId}] ===== NEW UPDATE REQUEST =====`);
+
   try {
     const { variantId, quantityChange, notes } = req.body;
-    const staffId = req.user.staffId;
+    // Handle both staffId and staff_id for backwards compatibility
+    const staffId =
+      req.user.staffId || req.user.staff_id || req.user.id || req.user.userId;
+
+    console.log(`[${requestId}] Update inventory request:`);
+    console.log(`[${requestId}] - Body:`, { variantId, quantityChange, notes });
+    console.log(`[${requestId}] - User from token:`, req.user);
+    console.log(`[${requestId}] - Extracted staffId:`, staffId);
 
     if (!variantId || quantityChange === undefined) {
       return res.status(400).json({
@@ -211,11 +221,25 @@ exports.updateInventory = async (req, res) => {
       });
     }
 
+    if (!staffId) {
+      console.error(
+        `[${requestId}] Staff ID not found! Token content:`,
+        JSON.stringify(req.user)
+      );
+      return res.status(401).json({
+        success: false,
+        message: "Staff ID not found in token. Please login again.",
+        debug: { tokenContent: req.user },
+      });
+    }
+
     // Get current inventory
     const [currentInventory] = await db.query(
-      "SELECT inventory_id, quantity FROM Inventory WHERE variant_id = ?",
+      "SELECT quantity FROM Inventory WHERE variant_id = ?",
       [variantId]
     );
+
+    console.log(`[${requestId}] Current inventory:`, currentInventory);
 
     if (currentInventory.length === 0) {
       return res.status(404).json({
@@ -227,6 +251,10 @@ exports.updateInventory = async (req, res) => {
     const currentQuantity = currentInventory[0].quantity;
     const newQuantity = currentQuantity + parseInt(quantityChange);
 
+    console.log(
+      `[${requestId}] Calculation: ${currentQuantity} + ${quantityChange} = ${newQuantity}`
+    );
+
     if (newQuantity < 0) {
       return res.status(400).json({
         success: false,
@@ -234,42 +262,45 @@ exports.updateInventory = async (req, res) => {
       });
     }
 
+    console.log(`[${requestId}] Starting transaction...`);
     await db.query("START TRANSACTION");
 
     try {
       // Update Inventory table
+      console.log(`[${requestId}] Updating Inventory table...`);
       await db.query("UPDATE Inventory SET quantity = ? WHERE variant_id = ?", [
         newQuantity,
         variantId,
       ]);
 
       // Insert into Inventory_updates table for tracking
+      console.log(`[${requestId}] Inserting into Inventory_updates...`);
       await db.query(
-        "INSERT INTO Inventory_updates (inventory_id, staff_id, quantity_changed, notes) VALUES (?, ?, ?, ?)",
-        [
-          currentInventory[0].inventory_id,
-          staffId,
-          quantityChange,
-          notes || null,
-        ]
+        "INSERT INTO Inventory_updates (variant_id, staff_id, old_quantity, added_quantity, note) VALUES (?, ?, ?, ?, ?)",
+        [variantId, staffId, currentQuantity, quantityChange, notes || null]
       );
 
+      console.log(`[${requestId}] Committing transaction...`);
       await db.query("COMMIT");
 
+      console.log(`[${requestId}] ===== UPDATE SUCCESS =====`);
       res.json({
         success: true,
         message: "Inventory updated successfully",
         newQuantity,
       });
     } catch (err) {
+      console.error(`[${requestId}] Transaction error:`, err);
       await db.query("ROLLBACK");
       throw err;
     }
   } catch (error) {
-    console.error("Update inventory error:", error);
+    console.error(`[${requestId}] Update inventory error:`, error);
+    console.error(`[${requestId}] Error stack:`, error.stack);
     res.status(500).json({
       success: false,
       message: "Server error. Please try again later.",
+      error: error.message,
     });
   }
 };
@@ -286,10 +317,10 @@ exports.getCustomers = async (req, res) => {
         c.phone,
         c.created_at,
         COUNT(DISTINCT o.order_id) as total_orders,
-        COALESCE(SUM(oi.quantity * oi.price), 0) as total_spent
+        COALESCE(SUM(oi.quantity * oi.unit_price), 0) as total_spent
       FROM Customer c
-      LEFT JOIN \`Order\` o ON c.customer_id = o.customer_id
-      LEFT JOIN OrderItem oi ON o.order_id = oi.order_id
+      LEFT JOIN Orders o ON c.customer_id = o.customer_id
+      LEFT JOIN Order_item oi ON o.order_id = oi.order_id
       GROUP BY c.customer_id
       ORDER BY total_spent DESC, c.created_at DESC`
     );
@@ -332,9 +363,9 @@ exports.getCustomerDetails = async (req, res) => {
         o.order_date,
         o.total_price,
         o.status,
-        COUNT(oi.item_id) as item_count
-      FROM \`Order\` o
-      LEFT JOIN OrderItem oi ON o.order_id = oi.order_id
+        COUNT(oi.order_item_id) as item_count
+      FROM Orders o
+      LEFT JOIN Order_item oi ON o.order_id = oi.order_id
       WHERE o.customer_id = ?
       GROUP BY o.order_id
       ORDER BY o.order_date DESC`,

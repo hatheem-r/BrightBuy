@@ -8,13 +8,14 @@ export default function InventoryManagement() {
   const [user, setUser] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [stockFilter, setStockFilter] = useState("all");
   const [expandedProducts, setExpandedProducts] = useState(new Set());
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [updateData, setUpdateData] = useState({
     addedQuantity: 0,
-    note: ""
+    note: "",
   });
   const [message, setMessage] = useState({ type: "", text: "" });
 
@@ -42,11 +43,14 @@ export default function InventoryManagement() {
 
   const fetchInventory = async () => {
     try {
-      const response = await fetch("http://localhost:5001/api/staff/inventory", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        },
-      });
+      const response = await fetch(
+        "http://localhost:5001/api/staff/inventory",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -64,18 +68,18 @@ export default function InventoryManagement() {
   // Group variants by product and calculate total stock
   const groupVariantsByProduct = (inventory) => {
     const grouped = {};
-    
-    inventory.forEach(item => {
+
+    inventory.forEach((item) => {
       if (!grouped[item.product_id]) {
         grouped[item.product_id] = {
           product_id: item.product_id,
           product_name: item.product_name,
           brand: item.brand,
           total_stock: 0,
-          variants: []
+          variants: [],
         };
       }
-      
+
       grouped[item.product_id].total_stock += item.stock;
       grouped[item.product_id].variants.push({
         variant_id: item.variant_id,
@@ -83,15 +87,15 @@ export default function InventoryManagement() {
         color: item.color,
         size: item.size,
         price: item.price,
-        stock: item.stock
+        stock: item.stock,
       });
     });
-    
+
     return Object.values(grouped);
   };
 
   const toggleProductExpand = (productId) => {
-    setExpandedProducts(prev => {
+    setExpandedProducts((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(productId)) {
         newSet.delete(productId);
@@ -104,36 +108,53 @@ export default function InventoryManagement() {
 
   const handleUpdateInventory = async (e) => {
     e.preventDefault();
+
+    // Prevent double submission
+    if (updating) return;
+
     setMessage({ type: "", text: "" });
 
     if (!selectedVariant) return;
 
+    setUpdating(true);
+
     try {
-      const response = await fetch("http://localhost:5001/api/staff/inventory/update", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        },
-        body: JSON.stringify({
-          variantId: selectedVariant.variant_id,
-          quantityChange: parseInt(updateData.addedQuantity),
-          notes: updateData.note || null,
-        }),
-      });
+      const response = await fetch(
+        "http://localhost:5001/api/staff/inventory/update",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+          body: JSON.stringify({
+            variantId: selectedVariant.variant_id,
+            quantityChange: parseInt(updateData.addedQuantity),
+            notes: updateData.note || null,
+          }),
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({ type: "success", text: "Inventory updated successfully!" });
+        setMessage({
+          type: "success",
+          text: "Inventory updated successfully!",
+        });
         setUpdateData({ addedQuantity: 0, note: "" });
         setSelectedVariant(null);
         fetchInventory();
       } else {
-        setMessage({ type: "error", text: data.message || "Failed to update inventory" });
+        setMessage({
+          type: "error",
+          text: data.message || "Failed to update inventory",
+        });
       }
     } catch (error) {
       setMessage({ type: "error", text: "Server error. Please try again." });
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -143,7 +164,8 @@ export default function InventoryManagement() {
       product.brand.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStock = stockFilter === "all" || product.total_stock <= 10;
     return matchesSearch && matchesStock;
-  });  if (loading || !user) {
+  });
+  if (loading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -167,8 +189,18 @@ export default function InventoryManagement() {
               ← Back to Dashboard
             </Link>
             <h1 className="text-3xl font-bold text-text-primary flex items-center">
-              <svg className="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              <svg
+                className="w-8 h-8 mr-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                />
               </svg>
               Inventory Management
             </h1>
@@ -180,7 +212,13 @@ export default function InventoryManagement() {
 
         {/* Messages */}
         {message.text && (
-          <div className={`mb-6 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'}`}>
+          <div
+            className={`mb-6 p-4 rounded-lg ${
+              message.type === "success"
+                ? "bg-green-100 text-green-800 border border-green-300"
+                : "bg-red-100 text-red-800 border border-red-300"
+            }`}
+          >
             {message.text}
           </div>
         )}
@@ -220,83 +258,17 @@ export default function InventoryManagement() {
           </button>
         </div>
 
-        {/* Update Form - Shows when variant selected */}
-        {selectedVariant && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-lg p-6 mb-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h2 className="text-xl font-bold text-text-primary">Update Inventory</h2>
-                <p className="text-text-secondary">
-                  {selectedVariant.product_name} - {selectedVariant.sku}
-                </p>
-                <p className="text-sm text-text-secondary">
-                  Variant: {selectedVariant.color} / {selectedVariant.size}
-                </p>
-                <p className="text-sm text-text-secondary">
-                  Current Stock: <span className="font-bold">{selectedVariant.stock}</span>
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setSelectedVariant(null);
-                  setUpdateData({ addedQuantity: 0, note: "" });
-                }}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </button>
-            </div>
-            
-            <form onSubmit={handleUpdateInventory} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-2">
-                  Quantity Change (+ to add, - to reduce)
-                </label>
-                <input
-                  type="number"
-                  value={updateData.addedQuantity}
-                  onChange={(e) => setUpdateData({ ...updateData, addedQuantity: e.target.value })}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary"
-                  placeholder="e.g., 50 or -10"
-                />
-                <p className="text-xs text-text-secondary mt-1">
-                  New stock will be: {selectedVariant.stock + parseInt(updateData.addedQuantity || 0)}
-                </p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-2">
-                  Note (optional)
-                </label>
-                <input
-                  type="text"
-                  value={updateData.note}
-                  onChange={(e) => setUpdateData({ ...updateData, note: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary"
-                  placeholder="Reason for update..."
-                />
-              </div>
-              
-              <div className="flex items-end">
-                <button
-                  type="submit"
-                  className="w-full px-6 py-2 bg-primary text-white rounded-md hover:opacity-90 transition-opacity"
-                >
-                  Update Stock
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
         {/* Inventory Table */}
         <div className="bg-card border border-card-border rounded-lg overflow-hidden">
           <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-card-border">
-            <h2 className="text-xl font-bold text-text-primary">All Products</h2>
-            <p className="text-sm text-text-secondary">Total: {filteredProducts.length} items</p>
+            <h2 className="text-xl font-bold text-text-primary">
+              All Products
+            </h2>
+            <p className="text-sm text-text-secondary">
+              Total: {filteredProducts.length} items
+            </p>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-100 dark:bg-gray-700">
@@ -318,7 +290,10 @@ export default function InventoryManagement() {
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="px-6 py-4 text-center text-text-secondary">
+                    <td
+                      colSpan="4"
+                      className="px-6 py-4 text-center text-text-secondary"
+                    >
                       No products found
                     </td>
                   </tr>
@@ -330,10 +305,14 @@ export default function InventoryManagement() {
                         <td className="px-6 py-4">
                           <div className="flex items-center">
                             <button
-                              onClick={() => toggleProductExpand(product.product_id)}
+                              onClick={() =>
+                                toggleProductExpand(product.product_id)
+                              }
                               className="mr-3 text-primary hover:text-primary-dark transition-colors"
                             >
-                              {expandedProducts.has(product.product_id) ? '▼' : '▶'}
+                              {expandedProducts.has(product.product_id)
+                                ? "▼"
+                                : "▶"}
                             </button>
                             <div className="text-sm font-medium text-text-primary">
                               {product.product_name}
@@ -341,62 +320,188 @@ export default function InventoryManagement() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-text-primary">{product.brand}</div>
+                          <div className="text-sm text-text-primary">
+                            {product.brand}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-3 py-1 inline-flex text-sm font-bold rounded-full ${
-                            product.total_stock === 0 
-                              ? 'bg-red-100 text-red-800' 
-                              : product.total_stock <= 10 
-                              ? 'bg-orange-100 text-orange-800'
-                              : 'bg-green-100 text-green-800'
-                          }`}>
+                          <span
+                            className={`px-3 py-1 inline-flex text-sm font-bold rounded-full ${
+                              product.total_stock === 0
+                                ? "bg-red-100 text-red-800"
+                                : product.total_stock <= 10
+                                ? "bg-orange-100 text-orange-800"
+                                : "bg-green-100 text-green-800"
+                            }`}
+                          >
                             {product.total_stock}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
-                          {expandedProducts.has(product.product_id) ? 'Expand to update variants' : 'Click arrow to view variants'}
+                          {expandedProducts.has(product.product_id)
+                            ? "Expand to update variants"
+                            : "Click arrow to view variants"}
                         </td>
                       </tr>
 
                       {/* Variant Rows (when expanded) */}
-                      {expandedProducts.has(product.product_id) && product.variants.map((variant) => (
-                        <tr key={variant.variant_id} className="bg-gray-50 dark:bg-gray-800/50">
-                          <td className="px-6 py-4 pl-16">
-                            <div className="text-sm text-text-secondary font-mono">
-                              {variant.sku}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-text-primary">
-                              {variant.color && <span className="mr-2">🎨 {variant.color}</span>}
-                              {variant.size && <span>📏 {variant.size}</span>}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-3 py-1 inline-flex text-sm font-bold rounded-full ${
-                              variant.stock === 0 
-                                ? 'bg-red-100 text-red-800' 
-                                : variant.stock <= 10 
-                                ? 'bg-orange-100 text-orange-800'
-                                : 'bg-green-100 text-green-800'
-                            }`}>
-                              {variant.stock}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <button
-                              onClick={() => setSelectedVariant({
-                                ...variant,
-                                product_name: product.product_name
-                              })}
-                              className="px-4 py-2 bg-primary text-white text-sm rounded hover:opacity-90"
-                            >
-                              Update Stock
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {expandedProducts.has(product.product_id) &&
+                        product.variants.map((variant) => (
+                          <React.Fragment key={variant.variant_id}>
+                            <tr className="bg-gray-50 dark:bg-gray-800/50">
+                              <td className="px-6 py-4 pl-16">
+                                <div className="text-sm text-text-secondary font-mono">
+                                  {variant.sku}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="text-sm text-text-primary">
+                                  {variant.color && (
+                                    <span className="mr-2">
+                                      🎨 {variant.color}
+                                    </span>
+                                  )}
+                                  {variant.size && (
+                                    <span>📏 {variant.size}</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span
+                                  className={`px-3 py-1 inline-flex text-sm font-bold rounded-full ${
+                                    variant.stock === 0
+                                      ? "bg-red-100 text-red-800"
+                                      : variant.stock <= 10
+                                      ? "bg-orange-100 text-orange-800"
+                                      : "bg-green-100 text-green-800"
+                                  }`}
+                                >
+                                  {variant.stock}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <button
+                                  onClick={() =>
+                                    setSelectedVariant(
+                                      selectedVariant?.variant_id ===
+                                        variant.variant_id
+                                        ? null
+                                        : {
+                                            ...variant,
+                                            product_name: product.product_name,
+                                          }
+                                    )
+                                  }
+                                  className={`px-4 py-2 text-sm rounded transition-colors ${
+                                    selectedVariant?.variant_id ===
+                                    variant.variant_id
+                                      ? "bg-gray-500 text-white hover:bg-gray-600"
+                                      : "bg-primary text-white hover:opacity-90"
+                                  }`}
+                                >
+                                  {selectedVariant?.variant_id ===
+                                  variant.variant_id
+                                    ? "Cancel"
+                                    : "Update Stock"}
+                                </button>
+                              </td>
+                            </tr>
+
+                            {/* Inline Update Form */}
+                            {selectedVariant?.variant_id ===
+                              variant.variant_id && (
+                              <tr className="bg-blue-50 dark:bg-blue-900/20">
+                                <td colSpan="4" className="px-6 py-4">
+                                  <div className="border-2 border-blue-300 dark:border-blue-700 rounded-lg p-4">
+                                    <div className="mb-3">
+                                      <h3 className="text-lg font-bold text-text-primary">
+                                        Update Inventory
+                                      </h3>
+                                      <p className="text-sm text-text-secondary">
+                                        {selectedVariant.product_name} -{" "}
+                                        {selectedVariant.sku} (
+                                        {selectedVariant.color} /{" "}
+                                        {selectedVariant.size})
+                                      </p>
+                                      <p className="text-sm text-text-secondary">
+                                        Current Stock:{" "}
+                                        <span className="font-bold">
+                                          {selectedVariant.stock}
+                                        </span>
+                                      </p>
+                                    </div>
+
+                                    <form
+                                      onSubmit={handleUpdateInventory}
+                                      className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                                    >
+                                      <div>
+                                        <label className="block text-sm font-medium text-text-primary mb-2">
+                                          Quantity Change (+ to add, - to
+                                          reduce)
+                                        </label>
+                                        <input
+                                          type="number"
+                                          value={updateData.addedQuantity}
+                                          onChange={(e) =>
+                                            setUpdateData({
+                                              ...updateData,
+                                              addedQuantity: e.target.value,
+                                            })
+                                          }
+                                          required
+                                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary"
+                                          placeholder="e.g., 50 or -10"
+                                        />
+                                        <p className="text-xs text-text-secondary mt-1">
+                                          New stock will be:{" "}
+                                          {selectedVariant.stock +
+                                            parseInt(
+                                              updateData.addedQuantity || 0
+                                            )}
+                                        </p>
+                                      </div>
+
+                                      <div>
+                                        <label className="block text-sm font-medium text-text-primary mb-2">
+                                          Note (optional)
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={updateData.note}
+                                          onChange={(e) =>
+                                            setUpdateData({
+                                              ...updateData,
+                                              note: e.target.value,
+                                            })
+                                          }
+                                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary"
+                                          placeholder="Reason for update..."
+                                        />
+                                      </div>
+
+                                      <div className="flex items-end">
+                                        <button
+                                          type="submit"
+                                          disabled={updating}
+                                          className={`w-full px-6 py-2 bg-primary text-white rounded-md transition-opacity ${
+                                            updating
+                                              ? "opacity-50 cursor-not-allowed"
+                                              : "hover:opacity-90"
+                                          }`}
+                                        >
+                                          {updating
+                                            ? "Updating..."
+                                            : "Update Stock"}
+                                        </button>
+                                      </div>
+                                    </form>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        ))}
                     </React.Fragment>
                   ))
                 )}
