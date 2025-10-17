@@ -104,6 +104,26 @@ export default function ProductDetailPage() {
     }
   };
 
+  const handleBuyNow = async () => {
+    // Check if user is logged in
+    const token = localStorage.getItem("token");
+    const customerId = localStorage.getItem("customer_id");
+
+    if (!token || !customerId) {
+      // Redirect to login page with return URL to checkout
+      router.push("/login?redirect=/checkout");
+      return;
+    }
+
+    if (selectedVariant) {
+      // Redirect to checkout with product variant ID and quantity as URL params
+      // This allows checkout page to show only this product, not the entire cart
+      router.push(
+        `/checkout?buyNow=true&variantId=${selectedVariant.variant_id}&quantity=1`
+      );
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12">
@@ -138,7 +158,7 @@ export default function ProductDetailPage() {
     ? "5-7 business days"
     : "8-10 business days";
 
-  const imageUrl = selectedVariant?.image_url 
+  const imageUrl = selectedVariant?.image_url
     ? `http://localhost:5001${selectedVariant.image_url}`
     : null;
 
@@ -149,7 +169,7 @@ export default function ProductDetailPage() {
         <div className="flex flex-col gap-4">
           <div className="bg-card border border-card-border rounded-lg overflow-hidden">
             {imageUrl ? (
-              <img 
+              <img
                 src={imageUrl}
                 alt={`${product.name} - ${selectedVariant.color}`}
                 className="w-full h-96 object-cover"
@@ -158,7 +178,9 @@ export default function ProductDetailPage() {
                   e.target.parentElement.innerHTML = `
                     <div class="h-96 flex items-center justify-center">
                       <div class="text-center">
-                        <span class="text-text-secondary text-lg block">${product.brand || "Product"}</span>
+                        <span class="text-text-secondary text-lg block">${
+                          product.brand || "Product"
+                        }</span>
                         <span class="text-text-secondary text-sm">Image Not Available</span>
                       </div>
                     </div>
@@ -168,8 +190,12 @@ export default function ProductDetailPage() {
             ) : (
               <div className="h-96 flex items-center justify-center">
                 <div className="text-center">
-                  <span className="text-text-secondary text-lg block">{product.brand || "Product"}</span>
-                  <span className="text-text-secondary text-sm">Image Not Available</span>
+                  <span className="text-text-secondary text-lg block">
+                    {product.brand || "Product"}
+                  </span>
+                  <span className="text-text-secondary text-sm">
+                    Image Not Available
+                  </span>
                 </div>
               </div>
             )}
@@ -338,34 +364,22 @@ export default function ProductDetailPage() {
             </span>
           </div>
 
-          {/* Hide Add to Cart and Buy Now buttons for staff */}
-          {userRole !== 'staff' && (
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleAddToCart}
-                disabled={!isInStock}
-                className="w-full bg-secondary text-white py-3 rounded-lg font-semibold text-lg hover:opacity-90 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                <i className="fas fa-shopping-cart mr-2"></i> Add to Cart
-              </button>
-              <button
-                disabled={!isInStock}
-                className="w-full bg-primary text-white py-3 rounded-lg font-semibold text-lg hover:bg-secondary transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                Buy Now
-              </button>
-            </div>
-          )}
-
-          {/* Message for staff users */}
-          {userRole === 'staff' && (
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-lg text-center">
-              <i className="fas fa-info-circle text-blue-600 dark:text-blue-400 mr-2"></i>
-              <span className="text-blue-800 dark:text-blue-300 font-medium">
-                Product information view only. Staff members cannot make purchases.
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleAddToCart}
+              disabled={!isInStock}
+              className="w-full bg-secondary text-white py-3 rounded-lg font-semibold text-lg hover:opacity-90 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              <i className="fas fa-shopping-cart mr-2"></i> Add to Cart
+            </button>
+            <button
+              onClick={handleBuyNow}
+              disabled={!isInStock}
+              className="w-full bg-primary text-white py-3 rounded-lg font-semibold text-lg hover:bg-secondary transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              Buy Now
+            </button>
+          </div>
 
           {addedToCart && (
             <div className="mt-4 p-3 bg-green-100 border border-green-300 text-green-800 rounded-md text-center">
