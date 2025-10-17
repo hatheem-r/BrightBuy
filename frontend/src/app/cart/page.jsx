@@ -1,9 +1,10 @@
 // src/app/cart/page.jsx
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useCart } from "@/contexts/CartContext";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const formatCurrency = (value) => {
   return `$${Number(value).toLocaleString("en-US", {
@@ -12,16 +13,43 @@ const formatCurrency = (value) => {
   })}`;
 };
 
-const CartItem = ({ item }) => {
+const CartItem = ({ item, isSelected, onToggleSelect }) => {
   const { updateQuantity, removeFromCart } = useCart();
+  const router = useRouter();
 
   // Construct image URL similar to products page
   const imageUrl = item.variant.image_url
     ? `http://localhost:5001${item.variant.image_url}`
     : null;
 
+  const handleBuyNow = (e) => {
+    e.stopPropagation(); // Prevent triggering the card click
+    // Navigate to checkout with this specific item
+    router.push(`/checkout?buyNow=true&variantId=${item.variant.variant_id}&quantity=${item.quantity}&fromCart=true`);
+  };
+
+  const handleCardClick = () => {
+    // Navigate to product detail page
+    if (item.variant.product_id) {
+      router.push(`/products/${item.variant.product_id}`);
+    }
+  };
+
   return (
-    <div className="flex items-center py-4 border-b border-card-border">
+    <div 
+      className="flex items-center py-4 border-b border-card-border hover:bg-background/50 transition-colors rounded-lg px-2 cursor-pointer"
+      onClick={handleCardClick}
+    >
+      {/* Checkbox for selection */}
+      <div className="flex items-center mr-3" onClick={(e) => e.stopPropagation()}>
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => onToggleSelect(item.variant.variant_id)}
+          className="w-5 h-5 text-secondary border-card-border rounded focus:ring-secondary cursor-pointer"
+        />
+      </div>
+      
       <div className="w-24 h-24 bg-gray-100 rounded-md mr-4 flex-shrink-0 overflow-hidden flex items-center justify-center">
         {imageUrl ? (
           <img
@@ -54,7 +82,7 @@ const CartItem = ({ item }) => {
         )}
       </div>
       <div className="flex-grow">
-        <h3 className="font-semibold text-primary">
+        <h3 className="font-semibold text-primary hover:text-secondary transition-colors">
           {item.variant.product_name || "Product Name"}
         </h3>
         <p className="text-sm text-text-secondary">
@@ -69,24 +97,37 @@ const CartItem = ({ item }) => {
         <p className="text-xs text-text-secondary mt-1">
           SKU: {item.variant.sku}
         </p>
-        <button
-          onClick={() => removeFromCart(item.variant.variant_id)}
-          className="text-red-500 text-sm hover:underline mt-1"
-        >
-          Remove
-        </button>
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              removeFromCart(item.variant.variant_id);
+            }}
+            className="text-red-500 text-sm hover:underline"
+          >
+            Remove
+          </button>
+          <button
+            onClick={handleBuyNow}
+            className="text-secondary text-sm font-semibold hover:underline"
+          >
+            Buy This Now
+          </button>
+        </div>
       </div>
       <div className="w-20 mx-4">
         <input
           type="number"
           className="w-full border border-card-border rounded-md p-2 text-center bg-background text-text-primary"
           value={item.quantity}
-          onChange={(e) =>
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => {
+            e.stopPropagation();
             updateQuantity(
               item.variant.variant_id,
               parseInt(e.target.value, 10)
-            )
-          }
+            );
+          }}
           min="1"
         />
       </div>
@@ -99,9 +140,58 @@ const CartItem = ({ item }) => {
 
 export default function CartPage() {
   const { cartItems, cartSubtotal, clearCart, cartCount } = useCart();
+  const router = useRouter();
+  
+  // State for selected items
+  const [selectedItems, setSelectedItems] = useState(new Set());
+
+  // Select all items by default when cart loads
+  React.useEffect(() => {
+    if (cartItems.length > 0) {
+      const allVariantIds = new Set(cartItems.map(item => item.variant.variant_id));
+      setSelectedItems(allVariantIds);
+    }
+  }, [cartItems]);
+
+  const toggleSelectItem = (variantId) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(variantId)) {
+        newSet.delete(variantId);
+      } else {
+        newSet.add(variantId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedItems.size === cartItems.length) {
+      setSelectedItems(new Set());
+    } else {
+      const allVariantIds = new Set(cartItems.map(item => item.variant.variant_id));
+      setSelectedItems(allVariantIds);
+    }
+  };
+
+  // Calculate totals for selected items only
+  const selectedCartItems = cartItems.filter(item => selectedItems.has(item.variant.variant_id));
+  const selectedSubtotal = selectedCartItems.reduce((sum, item) => sum + (item.variant.price * item.quantity), 0);
+  const selectedCount = selectedCartItems.length;
 
   const shippingEstimate = 9.99; // Standard shipping
-  const total = cartSubtotal + shippingEstimate;
+  const total = selectedSubtotal + shippingEstimate;
+
+  const handleProceedToCheckout = () => {
+    if (selectedCount === 0) {
+      alert("Please select at least one item to checkout");
+      return;
+    }
+    
+    // Pass selected variant IDs to checkout
+    const selectedIds = Array.from(selectedItems).join(',');
+    router.push(`/checkout?selectedItems=${selectedIds}`);
+  };
 
   if (cartCount === 0) {
     return (
@@ -132,9 +222,17 @@ export default function CartPage() {
         {/* Cart Items List */}
         <div className="lg:col-span-2 bg-card p-6 rounded-lg shadow-sm border border-card-border">
           <div className="flex justify-between items-center border-b border-card-border pb-4 mb-4">
-            <h2 className="text-xl font-semibold text-text-primary">
-              Products
-            </h2>
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={selectedItems.size === cartItems.length && cartItems.length > 0}
+                onChange={toggleSelectAll}
+                className="w-5 h-5 text-secondary border-card-border rounded focus:ring-secondary cursor-pointer"
+              />
+              <h2 className="text-xl font-semibold text-text-primary">
+                Products {selectedCount > 0 && `(${selectedCount} selected)`}
+              </h2>
+            </div>
             <button
               onClick={clearCart}
               className="text-text-secondary text-sm hover:text-red-500"
@@ -143,7 +241,12 @@ export default function CartPage() {
             </button>
           </div>
           {cartItems.map((item) => (
-            <CartItem key={item.cart_item_id} item={item} />
+            <CartItem 
+              key={item.cart_item_id} 
+              item={item}
+              isSelected={selectedItems.has(item.variant.variant_id)}
+              onToggleSelect={toggleSelectItem}
+            />
           ))}
         </div>
 
@@ -154,9 +257,9 @@ export default function CartPage() {
           </h2>
           <div className="space-y-3 text-text-secondary">
             <div className="flex justify-between">
-              <span>Subtotal</span>
+              <span>Subtotal ({selectedCount} items)</span>
               <span className="text-text-primary">
-                {formatCurrency(cartSubtotal)}
+                {formatCurrency(selectedSubtotal)}
               </span>
             </div>
             <div className="flex justify-between">
@@ -170,12 +273,22 @@ export default function CartPage() {
               <span>{formatCurrency(total)}</span>
             </div>
           </div>
-          <Link
-            href="/checkout"
-            className="mt-6 w-full block text-center bg-secondary text-white py-3 rounded-md font-semibold hover:bg-opacity-90 transition"
+          <button
+            onClick={handleProceedToCheckout}
+            disabled={selectedCount === 0}
+            className={`mt-6 w-full block text-center py-3 rounded-md font-semibold transition ${
+              selectedCount === 0 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                : 'bg-secondary text-white hover:bg-opacity-90'
+            }`}
           >
-            Proceed to Checkout
-          </Link>
+            Proceed to Checkout {selectedCount > 0 && `(${selectedCount})`}
+          </button>
+          {selectedCount === 0 && (
+            <p className="text-xs text-text-secondary text-center mt-2">
+              Select at least one item to checkout
+            </p>
+          )}
         </div>
       </div>
     </div>

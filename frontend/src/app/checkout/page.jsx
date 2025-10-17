@@ -14,7 +14,7 @@ const formatCurrency = (value) =>
   })}`;
 
 export default function CheckoutPage() {
-  const { cartItems, cartSubtotal, cartCount, clearCart } = useCart();
+  const { cartItems, cartSubtotal, cartCount, clearCart, removeFromCart } = useCart();
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -23,6 +23,13 @@ export default function CheckoutPage() {
   const isBuyNow = searchParams.get("buyNow") === "true";
   const buyNowVariantId = searchParams.get("variantId");
   const buyNowQuantity = parseInt(searchParams.get("quantity") || "1", 10);
+  const isFromCart = searchParams.get("fromCart") === "true";
+  
+  // Get selected items from URL (for cart checkout)
+  const selectedItemsParam = searchParams.get("selectedItems");
+  const selectedVariantIds = selectedItemsParam 
+    ? selectedItemsParam.split(',').map(id => parseInt(id, 10))
+    : [];
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loadingAuth, setLoadingAuth] = useState(true);
@@ -57,6 +64,8 @@ export default function CheckoutPage() {
   const checkoutItems =
     isBuyNow && buyNowProduct
       ? [{ variant: buyNowProduct, quantity: buyNowQuantity }]
+      : selectedVariantIds.length > 0
+      ? cartItems.filter(item => selectedVariantIds.includes(item.variant.variant_id))
       : cartItems;
 
   // Calculate totals based on checkout items
@@ -328,10 +337,22 @@ export default function CheckoutPage() {
         }\n\nYour shipping information has been saved for future orders.`
       );
 
-      // Clear cart after successful order (only if not buy now)
-      // if (!isBuyNow) {
-      //   clearCart();
-      // }
+      // Remove items from cart based on checkout type
+      if (isBuyNow && isFromCart && buyNowVariantId) {
+        // Single item from cart - remove it
+        await removeFromCart(buyNowVariantId);
+      } else if (!isBuyNow) {
+        // Cart checkout - remove all checked out items
+        if (selectedVariantIds.length > 0) {
+          // Remove only selected items
+          for (const variantId of selectedVariantIds) {
+            await removeFromCart(variantId);
+          }
+        } else {
+          // If no selection (shouldn't happen), clear entire cart
+          clearCart();
+        }
+      }
 
       // Redirect to order confirmation or home
       router.push("/");
@@ -407,6 +428,11 @@ export default function CheckoutPage() {
                 <strong>Quick Checkout:</strong> You're purchasing{" "}
                 <strong>{buyNowProduct.product_name}</strong> only. Items in
                 your cart are not included.
+                {isFromCart && (
+                  <span className="block mt-1 text-sm">
+                    ✓ This item will be automatically removed from your cart after purchase.
+                  </span>
+                )}
               </span>
             </p>
           </div>
