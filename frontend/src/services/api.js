@@ -166,7 +166,7 @@ export const authAPI = {
 
   // Get current user profile
   getProfile: async (token) => {
-    const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
