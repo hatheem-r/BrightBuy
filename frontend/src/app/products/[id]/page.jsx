@@ -16,6 +16,17 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+
+  // Check if user is staff
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      const user = JSON.parse(userData);
+      setUserRole(user.role);
+      // Allow staff to view product details, just hide buy buttons
+    }
+  }, [router]);
 
   useEffect(() => {
     if (id) {

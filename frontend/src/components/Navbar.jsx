@@ -28,30 +28,45 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Search Bar */}
-          <SearchBar />
+          {/* Search Bar - Hidden for staff */}
+          {user?.role !== 'staff' && <SearchBar />}
 
           <div className="flex items-center space-x-4">
             <ThemeSwitcher />
-            <Link
-              href="/cart"
-              className="text-text-secondary hover:text-secondary relative"
-            >
-              <i className="fas fa-shopping-cart text-xl"></i>
-              {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-secondary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-            {user ? (
+            
+            {/* Cart Icon - Hidden for staff */}
+            {user?.role !== 'staff' && (
               <Link
-                href="/profile"
-                className="bg-primary text-white px-4 py-2 rounded-md hover:bg-secondary transition-colors flex items-center space-x-2"
+                href="/cart"
+                className="text-text-secondary hover:text-secondary relative"
               >
-                <i className="fas fa-user-circle"></i>
-                <span>{user.name || "User"}</span>
+                <i className="fas fa-shopping-cart text-xl"></i>
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-secondary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
               </Link>
+            )}
+            
+            {user ? (
+              user.role === 'staff' ? (
+                <Link
+                  href="/staff/dashboard"
+                  className="bg-primary text-white px-4 py-2 rounded-md hover:bg-secondary transition-colors flex items-center space-x-2"
+                >
+                  <i className="fas fa-user-tie"></i>
+                  <span>Staff Dashboard</span>
+                </Link>
+              ) : (
+                <Link
+                  href="/profile"
+                  className="bg-primary text-white px-4 py-2 rounded-md hover:bg-secondary transition-colors flex items-center space-x-2"
+                >
+                  <i className="fas fa-user-circle"></i>
+                  <span>{user.name || "User"}</span>
+                </Link>
+              )
             ) : (
               <Link
                 href="/login"
