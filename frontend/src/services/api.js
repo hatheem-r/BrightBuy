@@ -258,3 +258,68 @@ export const cartAPI = {
     return response.json();
   },
 };
+
+// Customer API
+export const customerAPI = {
+  // Get customer profile with addresses
+  getProfile: async (customerId) => {
+    const response = await fetch(
+      `${API_BASE_URL}/customers/${customerId}/profile`
+    );
+    if (!response.ok) throw new Error("Failed to fetch customer profile");
+    return response.json();
+  },
+
+  // Update customer basic info
+  updateInfo: async (customerId, data) => {
+    const response = await fetch(
+      `${API_BASE_URL}/customers/${customerId}/info`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
+    if (!response.ok) throw new Error("Failed to update customer info");
+    return response.json();
+  },
+
+  // Get default address
+  getDefaultAddress: async (customerId) => {
+    const response = await fetch(
+      `${API_BASE_URL}/customers/${customerId}/address/default`
+    );
+    if (!response.ok) throw new Error("Failed to fetch default address");
+    return response.json();
+  },
+
+  // Save address (create or update)
+  saveAddress: async (customerId, addressData) => {
+    const response = await fetch(
+      `${API_BASE_URL}/customers/${customerId}/address`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(addressData),
+      }
+    );
+    if (!response.ok) throw new Error("Failed to save address");
+    return response.json();
+  },
+
+  // Delete address
+  deleteAddress: async (customerId, addressId) => {
+    const response = await fetch(
+      `${API_BASE_URL}/customers/${customerId}/address/${addressId}`,
+      {
+        method: "DELETE",
+      }
+    );
+    if (!response.ok) throw new Error("Failed to delete address");
+    return response.json();
+  },
+};
