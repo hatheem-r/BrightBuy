@@ -51,7 +51,7 @@ const ProductCard = ({ product }) => (
             <i className="fas fa-star mr-1"></i> {product.rating}
           </span>
           <span className="font-bold text-lg text-primary">
-            Rs. {product.price}
+            ${product.price}
           </span>
         </div>
       </div>
