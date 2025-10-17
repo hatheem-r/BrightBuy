@@ -1,4 +1,4 @@
-# Quick Reference - BrightBuy API Integration (Updated Oct 15, 2025)
+# 🔐 BrightBuy Authentication System - Quick Reference
 
 ## 📋 Quick Start Checklist
 

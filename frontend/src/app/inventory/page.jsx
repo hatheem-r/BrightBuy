@@ -30,7 +30,7 @@ export default function InventoryPage() {
   // Filter products based on search and status
   const filteredProducts = useMemo(() => {
     if (!inventoryData?.products) return [];
-
+    
     const q = query.trim().toLowerCase();
     let filtered = inventoryData.products;
 
@@ -57,11 +57,9 @@ export default function InventoryPage() {
   // Filter orders based on status
   const filteredOrders = useMemo(() => {
     if (!inventoryData?.orders) return [];
-
+    
     if (orderStatusFilter === "all") return inventoryData.orders;
-    return inventoryData.orders.filter(
-      (o) => o.order_status.toLowerCase() === orderStatusFilter
-    );
+    return inventoryData.orders.filter(o => o.order_status.toLowerCase() === orderStatusFilter);
   }, [orderStatusFilter, inventoryData]);
 
   // Calculate statistics
@@ -69,23 +67,11 @@ export default function InventoryPage() {
     if (!inventoryData?.products) return null;
 
     const totalProducts = inventoryData.products.length;
-    const inStock = inventoryData.products.filter(
-      (p) => p.stockStatus === "in-stock"
-    ).length;
-    const lowStock = inventoryData.products.filter(
-      (p) => p.stockStatus === "low-stock"
-    ).length;
-    const outOfStock = inventoryData.products.filter(
-      (p) => p.stockStatus === "out-of-stock"
-    ).length;
-    const totalStock = inventoryData.products.reduce(
-      (sum, p) => sum + p.totalStock,
-      0
-    );
-    const totalValue = inventoryData.products.reduce(
-      (sum, p) => sum + p.totalStock * p.avgPrice,
-      0
-    );
+    const inStock = inventoryData.products.filter(p => p.stockStatus === "in-stock").length;
+    const lowStock = inventoryData.products.filter(p => p.stockStatus === "low-stock").length;
+    const outOfStock = inventoryData.products.filter(p => p.stockStatus === "out-of-stock").length;
+    const totalStock = inventoryData.products.reduce((sum, p) => sum + p.totalStock, 0);
+    const totalValue = inventoryData.products.reduce((sum, p) => sum + (p.totalStock * p.avgPrice), 0);
 
     return {
       totalProducts,
@@ -96,48 +82,30 @@ export default function InventoryPage() {
       totalValue,
       totalSold: inventoryData.summary?.totalSold || 0,
       totalRevenue: inventoryData.summary?.totalRevenue || 0,
-      pendingOrders:
-        inventoryData.orders?.filter((o) => o.order_status === "Pending")
-          .length || 0,
-      processingOrders:
-        inventoryData.orders?.filter((o) => o.order_status === "Processing")
-          .length || 0,
-      shippedOrders:
-        inventoryData.orders?.filter((o) => o.order_status === "Shipped")
-          .length || 0,
-      deliveredOrders:
-        inventoryData.orders?.filter((o) => o.order_status === "Delivered")
-          .length || 0,
+      pendingOrders: inventoryData.orders?.filter(o => o.order_status === "Pending").length || 0,
+      processingOrders: inventoryData.orders?.filter(o => o.order_status === "Processing").length || 0,
+      shippedOrders: inventoryData.orders?.filter(o => o.order_status === "Shipped").length || 0,
+      deliveredOrders: inventoryData.orders?.filter(o => o.order_status === "Delivered").length || 0,
     };
   }, [inventoryData]);
 
   const getStockStatusColor = (status) => {
     switch (status) {
-      case "in-stock":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "low-stock":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "out-of-stock":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+      case "in-stock": return "bg-green-100 text-green-800 border-green-200";
+      case "low-stock": return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "out-of-stock": return "bg-red-100 text-red-800 border-red-200";
+      default: return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const getOrderStatusColor = (status) => {
     switch (status) {
-      case "Pending":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "Processing":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "Shipped":
-        return "bg-purple-100 text-purple-800 border-purple-200";
-      case "Delivered":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "Cancelled":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+      case "Pending": return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "Processing": return "bg-blue-100 text-blue-800 border-blue-200";
+      case "Shipped": return "bg-purple-100 text-purple-800 border-purple-200";
+      case "Delivered": return "bg-green-100 text-green-800 border-green-200";
+      case "Cancelled": return "bg-red-100 text-red-800 border-red-200";
+      default: return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -157,9 +125,7 @@ export default function InventoryPage() {
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-text-primary">
-            Inventory Dashboard
-          </h1>
+          <h1 className="text-3xl font-bold text-text-primary">Inventory Dashboard</h1>
           <p className="text-text-secondary mt-1">
             Staff dashboard for product inventory, sales, and order management
           </p>
@@ -172,12 +138,8 @@ export default function InventoryPage() {
             <div className="bg-card border border-card-border rounded-lg p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-text-secondary font-medium">
-                    Total Products
-                  </p>
-                  <p className="text-3xl font-bold text-text-primary mt-1">
-                    {stats.totalProducts}
-                  </p>
+                  <p className="text-sm text-text-secondary font-medium">Total Products</p>
+                  <p className="text-3xl font-bold text-text-primary mt-1">{stats.totalProducts}</p>
                   <p className="text-xs text-text-secondary mt-1">
                     {stats.totalStock.toLocaleString()} units in stock
                   </p>
@@ -192,9 +154,7 @@ export default function InventoryPage() {
             <div className="bg-card border border-card-border rounded-lg p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-text-secondary font-medium">
-                    Inventory Value
-                  </p>
+                  <p className="text-sm text-text-secondary font-medium">Inventory Value</p>
                   <p className="text-3xl font-bold text-text-primary mt-1">
                     Rs. {(stats.totalValue / 1000).toFixed(1)}K
                   </p>
@@ -212,12 +172,8 @@ export default function InventoryPage() {
             <div className="bg-card border border-card-border rounded-lg p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-text-secondary font-medium">
-                    Total Sold
-                  </p>
-                  <p className="text-3xl font-bold text-text-primary mt-1">
-                    {stats.totalSold}
-                  </p>
+                  <p className="text-sm text-text-secondary font-medium">Total Sold</p>
+                  <p className="text-3xl font-bold text-text-primary mt-1">{stats.totalSold}</p>
                   <p className="text-xs text-text-secondary mt-1">
                     Rs. {(stats.totalRevenue / 1000).toFixed(1)}K revenue
                   </p>
@@ -232,13 +188,9 @@ export default function InventoryPage() {
             <div className="bg-card border border-card-border rounded-lg p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-text-secondary font-medium">
-                    Active Orders
-                  </p>
+                  <p className="text-sm text-text-secondary font-medium">Active Orders</p>
                   <p className="text-3xl font-bold text-text-primary mt-1">
-                    {stats.pendingOrders +
-                      stats.processingOrders +
-                      stats.shippedOrders}
+                    {stats.pendingOrders + stats.processingOrders + stats.shippedOrders}
                   </p>
                   <p className="text-xs text-text-secondary mt-1">
                     {stats.deliveredOrders} delivered
@@ -259,9 +211,7 @@ export default function InventoryPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-green-800">In Stock</p>
-                  <p className="text-2xl font-bold text-green-900 mt-1">
-                    {stats.inStock}
-                  </p>
+                  <p className="text-2xl font-bold text-green-900 mt-1">{stats.inStock}</p>
                 </div>
                 <span className="text-3xl">✅</span>
               </div>
@@ -270,12 +220,8 @@ export default function InventoryPage() {
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-yellow-800">
-                    Low Stock
-                  </p>
-                  <p className="text-2xl font-bold text-yellow-900 mt-1">
-                    {stats.lowStock}
-                  </p>
+                  <p className="text-sm font-medium text-yellow-800">Low Stock</p>
+                  <p className="text-2xl font-bold text-yellow-900 mt-1">{stats.lowStock}</p>
                 </div>
                 <span className="text-3xl">⚠️</span>
               </div>
@@ -284,12 +230,8 @@ export default function InventoryPage() {
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-red-800">
-                    Out of Stock
-                  </p>
-                  <p className="text-2xl font-bold text-red-900 mt-1">
-                    {stats.outOfStock}
-                  </p>
+                  <p className="text-sm font-medium text-red-800">Out of Stock</p>
+                  <p className="text-2xl font-bold text-red-900 mt-1">{stats.outOfStock}</p>
                 </div>
                 <span className="text-3xl">❌</span>
               </div>
@@ -336,32 +278,22 @@ export default function InventoryPage() {
           <div className="space-y-6">
             {/* Order Status Breakdown */}
             <div className="bg-card border border-card-border rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-text-primary mb-4">
-                Order Status Breakdown
-              </h3>
+              <h3 className="text-lg font-semibold text-text-primary mb-4">Order Status Breakdown</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                  <p className="text-3xl font-bold text-yellow-800">
-                    {stats.pendingOrders}
-                  </p>
+                  <p className="text-3xl font-bold text-yellow-800">{stats.pendingOrders}</p>
                   <p className="text-sm text-yellow-600 mt-1">Pending</p>
                 </div>
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <p className="text-3xl font-bold text-blue-800">
-                    {stats.processingOrders}
-                  </p>
+                  <p className="text-3xl font-bold text-blue-800">{stats.processingOrders}</p>
                   <p className="text-sm text-blue-600 mt-1">Processing</p>
                 </div>
                 <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <p className="text-3xl font-bold text-purple-800">
-                    {stats.shippedOrders}
-                  </p>
+                  <p className="text-3xl font-bold text-purple-800">{stats.shippedOrders}</p>
                   <p className="text-sm text-purple-600 mt-1">Shipped</p>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <p className="text-3xl font-bold text-green-800">
-                    {stats.deliveredOrders}
-                  </p>
+                  <p className="text-3xl font-bold text-green-800">{stats.deliveredOrders}</p>
                   <p className="text-sm text-green-600 mt-1">Delivered</p>
                 </div>
               </div>
@@ -369,43 +301,27 @@ export default function InventoryPage() {
 
             {/* Recent Activity */}
             <div className="bg-card border border-card-border rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-text-primary mb-4">
-                Quick Stats
-              </h3>
+              <h3 className="text-lg font-semibold text-text-primary mb-4">Quick Stats</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between py-2 border-b border-card-border">
                   <span className="text-text-secondary">Total Products</span>
-                  <span className="font-semibold text-text-primary">
-                    {stats.totalProducts}
-                  </span>
+                  <span className="font-semibold text-text-primary">{stats.totalProducts}</span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-card-border">
-                  <span className="text-text-secondary">
-                    Total Units in Stock
-                  </span>
-                  <span className="font-semibold text-text-primary">
-                    {stats.totalStock.toLocaleString()}
-                  </span>
+                  <span className="text-text-secondary">Total Units in Stock</span>
+                  <span className="font-semibold text-text-primary">{stats.totalStock.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-card-border">
-                  <span className="text-text-secondary">
-                    Total Inventory Value
-                  </span>
-                  <span className="font-semibold text-text-primary">
-                    Rs. {stats.totalValue.toLocaleString()}
-                  </span>
+                  <span className="text-text-secondary">Total Inventory Value</span>
+                  <span className="font-semibold text-text-primary">Rs. {stats.totalValue.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-card-border">
                   <span className="text-text-secondary">Total Units Sold</span>
-                  <span className="font-semibold text-green-600">
-                    {stats.totalSold.toLocaleString()}
-                  </span>
+                  <span className="font-semibold text-green-600">{stats.totalSold.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between py-2">
                   <span className="text-text-secondary">Total Revenue</span>
-                  <span className="font-semibold text-green-600">
-                    Rs. {stats.totalRevenue.toLocaleString()}
-                  </span>
+                  <span className="font-semibold text-green-600">Rs. {stats.totalRevenue.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -478,34 +394,21 @@ export default function InventoryPage() {
                   </thead>
                   <tbody className="bg-white divide-y divide-card-border">
                     {filteredProducts.map((product) => (
-                      <tr
-                        key={product.product_id}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
+                      <tr key={product.product_id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-4">
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center mr-3">
                               <span className="text-xs">📦</span>
                             </div>
                             <div>
-                              <p className="font-medium text-text-primary">
-                                {product.name}
-                              </p>
-                              <p className="text-xs text-text-secondary">
-                                {product.variants} variant(s)
-                              </p>
+                              <p className="font-medium text-text-primary">{product.name}</p>
+                              <p className="text-xs text-text-secondary">{product.variants} variant(s)</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-sm text-text-secondary font-mono">
-                          {product.sku}
-                        </td>
-                        <td className="px-4 py-4 text-sm text-text-secondary">
-                          {product.category || "—"}
-                        </td>
-                        <td className="px-4 py-4 text-sm text-text-secondary">
-                          {product.brand || "—"}
-                        </td>
+                        <td className="px-4 py-4 text-sm text-text-secondary font-mono">{product.sku}</td>
+                        <td className="px-4 py-4 text-sm text-text-secondary">{product.category || "—"}</td>
+                        <td className="px-4 py-4 text-sm text-text-secondary">{product.brand || "—"}</td>
                         <td className="px-4 py-4 text-sm text-text-primary text-right font-semibold">
                           {product.totalStock.toLocaleString()}
                         </td>
@@ -516,15 +419,10 @@ export default function InventoryPage() {
                           Rs. {product.avgPrice.toLocaleString()}
                         </td>
                         <td className="px-4 py-4 text-center">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStockStatusColor(
-                              product.stockStatus
-                            )}`}
-                          >
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStockStatusColor(product.stockStatus)}`}>
                             {product.stockStatus === "in-stock" && "In Stock"}
                             {product.stockStatus === "low-stock" && "Low Stock"}
-                            {product.stockStatus === "out-of-stock" &&
-                              "Out of Stock"}
+                            {product.stockStatus === "out-of-stock" && "Out of Stock"}
                           </span>
                         </td>
                       </tr>
@@ -594,29 +492,19 @@ export default function InventoryPage() {
                   </thead>
                   <tbody className="bg-white divide-y divide-card-border">
                     {filteredOrders.map((order) => (
-                      <tr
-                        key={order.order_id}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
+                      <tr key={order.order_id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-4">
                           <div>
-                            <p className="font-semibold text-primary">
-                              {order.order_number}
-                            </p>
-                            <p className="text-xs text-text-secondary">
-                              {order.courier_service || "—"}
-                            </p>
+                            <p className="font-semibold text-primary">{order.order_number}</p>
+                            <p className="text-xs text-text-secondary">{order.courier_service || "—"}</p>
                           </div>
                         </td>
                         <td className="px-4 py-4">
                           <div>
                             <p className="text-sm font-medium text-text-primary">
-                              {order.shipping_first_name}{" "}
-                              {order.shipping_last_name}
+                              {order.shipping_first_name} {order.shipping_last_name}
                             </p>
-                            <p className="text-xs text-text-secondary">
-                              {order.shipping_city}
-                            </p>
+                            <p className="text-xs text-text-secondary">{order.shipping_city}</p>
                           </div>
                         </td>
                         <td className="px-4 py-4 text-sm text-text-secondary">
@@ -629,35 +517,22 @@ export default function InventoryPage() {
                           Rs. {parseFloat(order.total_amount).toLocaleString()}
                         </td>
                         <td className="px-4 py-4 text-center">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              order.payment_status === "Paid"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }`}
-                          >
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            order.payment_status === "Paid" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                          }`}>
                             {order.payment_status}
                           </span>
                         </td>
                         <td className="px-4 py-4 text-center">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getOrderStatusColor(
-                              order.order_status
-                            )}`}
-                          >
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getOrderStatusColor(order.order_status)}`}>
                             {order.order_status}
                           </span>
                         </td>
                         <td className="px-4 py-4">
-                          <p className="text-xs text-text-secondary font-mono">
-                            {order.tracking_number || "—"}
-                          </p>
+                          <p className="text-xs text-text-secondary font-mono">{order.tracking_number || "—"}</p>
                           {order.estimated_delivery_date && (
                             <p className="text-xs text-text-secondary mt-1">
-                              ETA:{" "}
-                              {new Date(
-                                order.estimated_delivery_date
-                              ).toLocaleDateString()}
+                              ETA: {new Date(order.estimated_delivery_date).toLocaleDateString()}
                             </p>
                           )}
                         </td>

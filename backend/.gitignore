@@ -18,9 +18,6 @@ lerna-debug.log*
 .env
 .env.local
 .env.test
-# Ignore any other environment files but keep examples
-*.env
-!.env.example
 
 # Editor & IDE Directories
 .vscode/
