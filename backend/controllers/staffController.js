@@ -170,15 +170,16 @@ exports.getInventory = async (req, res) => {
       `SELECT 
         p.product_id,
         p.name as product_name,
-        p.sku,
+        p.brand,
         pv.variant_id,
+        pv.sku,
         pv.color,
         pv.size,
         pv.price,
-        i.quantity as stock,
-        i.inventory_id
+        COALESCE(i.quantity, 0) as stock,
+        i.variant_id as inventory_variant_id
       FROM Product p
-      LEFT JOIN ProductVariant pv ON p.product_id = pv.product_id
+      INNER JOIN ProductVariant pv ON p.product_id = pv.product_id
       LEFT JOIN Inventory i ON pv.variant_id = i.variant_id
       ORDER BY p.name, pv.color, pv.size`
     );
@@ -192,6 +193,7 @@ exports.getInventory = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server error. Please try again later.",
+      error: error.message,
     });
   }
 };
@@ -236,15 +238,20 @@ exports.updateInventory = async (req, res) => {
 
     try {
       // Update Inventory table
-      await db.query(
-        "UPDATE Inventory SET quantity = ? WHERE variant_id = ?",
-        [newQuantity, variantId]
-      );
+      await db.query("UPDATE Inventory SET quantity = ? WHERE variant_id = ?", [
+        newQuantity,
+        variantId,
+      ]);
 
       // Insert into Inventory_updates table for tracking
       await db.query(
         "INSERT INTO Inventory_updates (inventory_id, staff_id, quantity_changed, notes) VALUES (?, ?, ?, ?)",
-        [currentInventory[0].inventory_id, staffId, quantityChange, notes || null]
+        [
+          currentInventory[0].inventory_id,
+          staffId,
+          quantityChange,
+          notes || null,
+        ]
       );
 
       await db.query("COMMIT");
@@ -342,7 +349,10 @@ exports.getCustomerDetails = async (req, res) => {
 
     // Calculate stats
     const totalOrders = orders.length;
-    const totalSpent = orders.reduce((sum, order) => sum + parseFloat(order.total_price || 0), 0);
+    const totalSpent = orders.reduce(
+      (sum, order) => sum + parseFloat(order.total_price || 0),
+      0
+    );
     const avgOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
 
     res.json({
