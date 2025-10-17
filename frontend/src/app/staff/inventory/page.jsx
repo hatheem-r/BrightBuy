@@ -9,7 +9,9 @@ export default function InventoryManagement() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [stockFilter, setStockFilter] = useState("all");
+  const [expandedProducts, setExpandedProducts] = useState(new Set());
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [updateData, setUpdateData] = useState({
     addedQuantity: 0,
     note: ""
@@ -48,7 +50,9 @@ export default function InventoryManagement() {
 
       if (response.ok) {
         const data = await response.json();
-        setProducts(data.inventory || []);
+        // Group variants by product
+        const groupedProducts = groupVariantsByProduct(data.inventory || []);
+        setProducts(groupedProducts);
       }
     } catch (error) {
       console.error("Error fetching inventory:", error);
@@ -57,11 +61,52 @@ export default function InventoryManagement() {
     }
   };
 
+  // Group variants by product and calculate total stock
+  const groupVariantsByProduct = (inventory) => {
+    const grouped = {};
+    
+    inventory.forEach(item => {
+      if (!grouped[item.product_id]) {
+        grouped[item.product_id] = {
+          product_id: item.product_id,
+          product_name: item.product_name,
+          brand: item.brand,
+          total_stock: 0,
+          variants: []
+        };
+      }
+      
+      grouped[item.product_id].total_stock += item.stock;
+      grouped[item.product_id].variants.push({
+        variant_id: item.variant_id,
+        sku: item.sku,
+        color: item.color,
+        size: item.size,
+        price: item.price,
+        stock: item.stock
+      });
+    });
+    
+    return Object.values(grouped);
+  };
+
+  const toggleProductExpand = (productId) => {
+    setExpandedProducts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      return newSet;
+    });
+  };
+
   const handleUpdateInventory = async (e) => {
     e.preventDefault();
     setMessage({ type: "", text: "" });
 
-    if (!selectedProduct) return;
+    if (!selectedVariant) return;
 
     try {
       const response = await fetch("http://localhost:5001/api/staff/inventory/update", {
@@ -71,7 +116,7 @@ export default function InventoryManagement() {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
         body: JSON.stringify({
-          variantId: selectedProduct.variant_id,
+          variantId: selectedVariant.variant_id,
           quantityChange: parseInt(updateData.addedQuantity),
           notes: updateData.note || null,
         }),
@@ -82,7 +127,7 @@ export default function InventoryManagement() {
       if (response.ok) {
         setMessage({ type: "success", text: "Inventory updated successfully!" });
         setUpdateData({ addedQuantity: 0, note: "" });
-        setSelectedProduct(null);
+        setSelectedVariant(null);
         fetchInventory();
       } else {
         setMessage({ type: "error", text: data.message || "Failed to update inventory" });
@@ -92,13 +137,13 @@ export default function InventoryManagement() {
     }
   };
 
-  const filteredProducts = products.filter(
-    (p) =>
-      p.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.sku.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  if (loading || !user) {
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.brand.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStock = stockFilter === "all" || product.total_stock <= 10;
+    return matchesSearch && matchesStock;
+  });  if (loading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -151,22 +196,49 @@ export default function InventoryManagement() {
           />
         </div>
 
-        {/* Update Form - Shows when product selected */}
-        {selectedProduct && (
+        {/* Stock Filter */}
+        <div className="mb-6 flex gap-4">
+          <button
+            onClick={() => setStockFilter("all")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              stockFilter === "all"
+                ? "bg-primary text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            All Products
+          </button>
+          <button
+            onClick={() => setStockFilter("low")}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              stockFilter === "low"
+                ? "bg-orange-600 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            Low Stock (≤10)
+          </button>
+        </div>
+
+        {/* Update Form - Shows when variant selected */}
+        {selectedVariant && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-lg p-6 mb-6">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-xl font-bold text-text-primary">Update Inventory</h2>
                 <p className="text-text-secondary">
-                  {selectedProduct.product_name} - {selectedProduct.sku}
+                  {selectedVariant.product_name} - {selectedVariant.sku}
                 </p>
                 <p className="text-sm text-text-secondary">
-                  Current Stock: <span className="font-bold">{selectedProduct.quantity}</span>
+                  Variant: {selectedVariant.color} / {selectedVariant.size}
+                </p>
+                <p className="text-sm text-text-secondary">
+                  Current Stock: <span className="font-bold">{selectedVariant.stock}</span>
                 </p>
               </div>
               <button
                 onClick={() => {
-                  setSelectedProduct(null);
+                  setSelectedVariant(null);
                   setUpdateData({ addedQuantity: 0, note: "" });
                 }}
                 className="text-gray-500 hover:text-gray-700"
@@ -189,7 +261,7 @@ export default function InventoryManagement() {
                   placeholder="e.g., 50 or -10"
                 />
                 <p className="text-xs text-text-secondary mt-1">
-                  New stock will be: {selectedProduct.quantity + parseInt(updateData.addedQuantity || 0)}
+                  New stock will be: {selectedVariant.stock + parseInt(updateData.addedQuantity || 0)}
                 </p>
               </div>
               
@@ -233,16 +305,10 @@ export default function InventoryManagement() {
                     Product
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase">
-                    SKU
+                    Brand
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase">
-                    Variant
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase">
-                    Current Stock
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase">
-                    Price
+                    Total Stock
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase">
                     Actions
@@ -252,49 +318,86 @@ export default function InventoryManagement() {
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-4 text-center text-text-secondary">
+                    <td colSpan="4" className="px-6 py-4 text-center text-text-secondary">
                       No products found
                     </td>
                   </tr>
                 ) : (
                   filteredProducts.map((product) => (
-                    <tr key={product.variant_id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-text-primary">{product.product_name}</div>
-                        <div className="text-xs text-text-secondary">{product.brand}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-text-primary font-mono">{product.sku}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-text-primary">
-                          {product.color && <span className="mr-2">🎨 {product.color}</span>}
-                          {product.size && <span>📏 {product.size}</span>}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 inline-flex text-sm font-bold rounded-full ${
-                          product.quantity === 0 
-                            ? 'bg-red-100 text-red-800' 
-                            : product.quantity < 10 
-                            ? 'bg-orange-100 text-orange-800'
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {product.quantity}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary">
-                        Rs. {parseFloat(product.price).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => setSelectedProduct(product)}
-                          className="px-4 py-2 bg-primary text-white text-sm rounded hover:opacity-90"
-                        >
-                          Update Stock
-                        </button>
-                      </td>
-                    </tr>
+                    <React.Fragment key={product.product_id}>
+                      {/* Product Row */}
+                      <tr className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            <button
+                              onClick={() => toggleProductExpand(product.product_id)}
+                              className="mr-3 text-primary hover:text-primary-dark transition-colors"
+                            >
+                              {expandedProducts.has(product.product_id) ? '▼' : '▶'}
+                            </button>
+                            <div className="text-sm font-medium text-text-primary">
+                              {product.product_name}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-text-primary">{product.brand}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-3 py-1 inline-flex text-sm font-bold rounded-full ${
+                            product.total_stock === 0 
+                              ? 'bg-red-100 text-red-800' 
+                              : product.total_stock <= 10 
+                              ? 'bg-orange-100 text-orange-800'
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {product.total_stock}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                          {expandedProducts.has(product.product_id) ? 'Expand to update variants' : 'Click arrow to view variants'}
+                        </td>
+                      </tr>
+
+                      {/* Variant Rows (when expanded) */}
+                      {expandedProducts.has(product.product_id) && product.variants.map((variant) => (
+                        <tr key={variant.variant_id} className="bg-gray-50 dark:bg-gray-800/50">
+                          <td className="px-6 py-4 pl-16">
+                            <div className="text-sm text-text-secondary font-mono">
+                              {variant.sku}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-text-primary">
+                              {variant.color && <span className="mr-2">🎨 {variant.color}</span>}
+                              {variant.size && <span>📏 {variant.size}</span>}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-3 py-1 inline-flex text-sm font-bold rounded-full ${
+                              variant.stock === 0 
+                                ? 'bg-red-100 text-red-800' 
+                                : variant.stock <= 10 
+                                ? 'bg-orange-100 text-orange-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}>
+                              {variant.stock}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <button
+                              onClick={() => setSelectedVariant({
+                                ...variant,
+                                product_name: product.product_name
+                              })}
+                              className="px-4 py-2 bg-primary text-white text-sm rounded hover:opacity-90"
+                            >
+                              Update Stock
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </React.Fragment>
                   ))
                 )}
               </tbody>

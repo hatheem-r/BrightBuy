@@ -1,10 +1,10 @@
 // src/app/cart/page.jsx
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useCart } from "@/contexts/CartContext";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from 'react';
+import { useCart } from '@/contexts/CartContext';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const formatCurrency = (value) => {
   return `$${Number(value).toLocaleString("en-US", {
