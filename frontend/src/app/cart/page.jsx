@@ -25,7 +25,9 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
   const handleBuyNow = (e) => {
     e.stopPropagation(); // Prevent triggering the card click
     // Navigate to checkout with this specific item
-    router.push(`/checkout?buyNow=true&variantId=${item.variant.variant_id}&quantity=${item.quantity}&fromCart=true`);
+    router.push(
+      `/checkout?buyNow=true&variantId=${item.variant.variant_id}&quantity=${item.quantity}&fromCart=true`
+    );
   };
 
   const handleCardClick = () => {
@@ -36,12 +38,15 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
   };
 
   return (
-    <div 
+    <div
       className="flex items-center py-4 border-b border-card-border hover:bg-background/50 transition-colors rounded-lg px-2 cursor-pointer"
       onClick={handleCardClick}
     >
       {/* Checkbox for selection */}
-      <div className="flex items-center mr-3" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="flex items-center mr-3"
+        onClick={(e) => e.stopPropagation()}
+      >
         <input
           type="checkbox"
           checked={isSelected}
@@ -49,7 +54,7 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
           className="w-5 h-5 text-secondary border-card-border rounded focus:ring-secondary cursor-pointer"
         />
       </div>
-      
+
       <div className="w-24 h-24 bg-gray-100 rounded-md mr-4 flex-shrink-0 overflow-hidden flex items-center justify-center">
         {imageUrl ? (
           <img
@@ -141,20 +146,22 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
 export default function CartPage() {
   const { cartItems, cartSubtotal, clearCart, cartCount } = useCart();
   const router = useRouter();
-  
+
   // State for selected items
   const [selectedItems, setSelectedItems] = useState(new Set());
 
   // Select all items by default when cart loads
   React.useEffect(() => {
     if (cartItems.length > 0) {
-      const allVariantIds = new Set(cartItems.map(item => item.variant.variant_id));
+      const allVariantIds = new Set(
+        cartItems.map((item) => item.variant.variant_id)
+      );
       setSelectedItems(allVariantIds);
     }
   }, [cartItems]);
 
   const toggleSelectItem = (variantId) => {
-    setSelectedItems(prev => {
+    setSelectedItems((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(variantId)) {
         newSet.delete(variantId);
@@ -169,14 +176,21 @@ export default function CartPage() {
     if (selectedItems.size === cartItems.length) {
       setSelectedItems(new Set());
     } else {
-      const allVariantIds = new Set(cartItems.map(item => item.variant.variant_id));
+      const allVariantIds = new Set(
+        cartItems.map((item) => item.variant.variant_id)
+      );
       setSelectedItems(allVariantIds);
     }
   };
 
   // Calculate totals for selected items only
-  const selectedCartItems = cartItems.filter(item => selectedItems.has(item.variant.variant_id));
-  const selectedSubtotal = selectedCartItems.reduce((sum, item) => sum + (item.variant.price * item.quantity), 0);
+  const selectedCartItems = cartItems.filter((item) =>
+    selectedItems.has(item.variant.variant_id)
+  );
+  const selectedSubtotal = selectedCartItems.reduce(
+    (sum, item) => sum + item.variant.price * item.quantity,
+    0
+  );
   const selectedCount = selectedCartItems.length;
 
   const shippingEstimate = 9.99; // Standard shipping
@@ -187,9 +201,9 @@ export default function CartPage() {
       alert("Please select at least one item to checkout");
       return;
     }
-    
+
     // Pass selected variant IDs to checkout
-    const selectedIds = Array.from(selectedItems).join(',');
+    const selectedIds = Array.from(selectedItems).join(",");
     router.push(`/checkout?selectedItems=${selectedIds}`);
   };
 
@@ -225,7 +239,10 @@ export default function CartPage() {
             <div className="flex items-center gap-3">
               <input
                 type="checkbox"
-                checked={selectedItems.size === cartItems.length && cartItems.length > 0}
+                checked={
+                  selectedItems.size === cartItems.length &&
+                  cartItems.length > 0
+                }
                 onChange={toggleSelectAll}
                 className="w-5 h-5 text-secondary border-card-border rounded focus:ring-secondary cursor-pointer"
               />
@@ -241,8 +258,8 @@ export default function CartPage() {
             </button>
           </div>
           {cartItems.map((item) => (
-            <CartItem 
-              key={item.cart_item_id} 
+            <CartItem
+              key={item.cart_item_id}
               item={item}
               isSelected={selectedItems.has(item.variant.variant_id)}
               onToggleSelect={toggleSelectItem}
@@ -277,9 +294,9 @@ export default function CartPage() {
             onClick={handleProceedToCheckout}
             disabled={selectedCount === 0}
             className={`mt-6 w-full block text-center py-3 rounded-md font-semibold transition ${
-              selectedCount === 0 
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                : 'bg-secondary text-white hover:bg-opacity-90'
+              selectedCount === 0
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-secondary text-white hover:bg-opacity-90"
             }`}
           >
             Proceed to Checkout {selectedCount > 0 && `(${selectedCount})`}
