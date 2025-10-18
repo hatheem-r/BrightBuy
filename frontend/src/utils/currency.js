@@ -1,7 +1,7 @@
-// Utility function to format currency as Rupees (Rs.)
+// Utility function to format currency as Dollars ($)
 export const formatCurrency = (value) => {
   const numValue = Number(value || 0);
-  return `Rs. ${numValue.toLocaleString("en-IN", {
+  return `$${numValue.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
@@ -10,5 +10,5 @@ export const formatCurrency = (value) => {
 // Alternative compact format for smaller spaces
 export const formatCurrencyCompact = (value) => {
   const numValue = Number(value || 0);
-  return `Rs. ${numValue.toFixed(2)}`;
+  return `$${numValue.toFixed(2)}`;
 };

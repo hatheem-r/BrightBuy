@@ -73,7 +73,7 @@ export default function CheckoutPage() {
   );
   const itemCount = checkoutItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const SHIPPING_COST = 50; // Rs. 50.00
+  const SHIPPING_COST = 5.00; // $5.00
   const TAX_RATE = 0.08; // 8% tax
   const taxAmount = subtotal * TAX_RATE;
   const totalAmount = subtotal + SHIPPING_COST + taxAmount;
@@ -339,7 +339,7 @@ export default function CheckoutPage() {
           paymentMethod === "card" ? "Card Payment" : "Cash on Delivery",
         items: orderItems,
         sub_total: subtotal,
-        delivery_fee: SHIPPING_COST, // Rs. 50.00
+        delivery_fee: SHIPPING_COST, // $5.00
         total: totalAmount,
       };
 

@@ -68,7 +68,7 @@ const ProductCard = ({ product }) => {
               {product.color && <span>{product.color}</span>}
             </div>
             <span className="font-bold text-lg text-primary">
-              Rs. {product.price ? parseFloat(product.price).toFixed(2) : "N/A"}
+              ${product.price ? parseFloat(product.price).toFixed(2) : "N/A"}
             </span>
           </div>
           {stockQuantity > 0 && stockQuantity <= 10 && (

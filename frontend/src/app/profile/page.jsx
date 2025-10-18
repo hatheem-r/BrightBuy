@@ -402,12 +402,6 @@ export default function ProfilePage() {
                             >
                               Track Order
                             </Link>
-                            <Link
-                              href={`/orders/${order.order_id}`}
-                              className="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-colors text-sm font-medium"
-                            >
-                              Details
-                            </Link>
                           </div>
                         </div>
 
