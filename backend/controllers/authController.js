@@ -347,6 +347,8 @@ exports.getMe = async (req, res) => {
         email: users[0].email,
         role: users[0].role,
         phone: users[0].phone,
+        customer_id: users[0].customer_id,
+        staff_id: users[0].staff_id,
         createdAt: users[0].created_at,
         lastLogin: users[0].last_login,
       },

@@ -5,13 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
-const formatCurrency = (value) => {
-  return `$${Number(value).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-};
+import { formatCurrency } from '@/utils/currency';
 
 const CartItem = ({ item, isSelected, onToggleSelect }) => {
   const { updateQuantity, removeFromCart } = useCart();
