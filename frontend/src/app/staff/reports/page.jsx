@@ -221,6 +221,64 @@ export default function StaffReports() {
     }
   };
 
+  // Export Function
+  const handleExport = async (reportType) => {
+    const token = localStorage.getItem("token");
+    let url = "";
+
+    switch(reportType) {
+      case "sales-summary":
+        url = `http://localhost:5001/api/reports/export/sales-summary?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`;
+        break;
+      case "top-products":
+        url = `http://localhost:5001/api/reports/export/top-selling-products?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}&limit=10`;
+        break;
+      case "quarterly-sales":
+        url = `http://localhost:5001/api/reports/export/quarterly-sales?year=${selectedYear}`;
+        break;
+      case "customer-summary":
+        url = `http://localhost:5001/api/reports/export/customer-order-summary?limit=50&minOrders=1`;
+        break;
+      case "inventory-report":
+        const statusParam = inventoryFilter !== 'all' ? `&status=${inventoryFilter}` : '';
+        url = `http://localhost:5001/api/reports/export/inventory?limit=100${statusParam}`;
+        break;
+      case "category-orders":
+        url = `http://localhost:5001/api/reports/export/category-orders`;
+        break;
+      case "inventory-updates":
+        url = `http://localhost:5001/api/reports/export/inventory-updates?days=30&limit=50`;
+        break;
+      case "delivery-estimates":
+        const cityParam = selectedCity !== 'all' ? `&city=${selectedCity}` : '';
+        url = `http://localhost:5001/api/reports/export/order-delivery-estimate?limit=50${cityParam}`;
+        break;
+    }
+
+    try {
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = response.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || 'report.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(downloadUrl);
+      } else {
+        alert('Failed to export report');
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Failed to export report');
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -364,6 +422,15 @@ export default function StaffReports() {
                         onChange={(e) => setDateRange({...dateRange, endDate: e.target.value})}
                         className="px-3 py-2 border rounded-lg"
                       />
+                      <button
+                        onClick={() => handleExport("sales-summary")}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Export XLSX
+                      </button>
                     </div>
                   </div>
                   
@@ -452,6 +519,15 @@ export default function StaffReports() {
                         onChange={(e) => setDateRange({...dateRange, endDate: e.target.value})}
                         className="px-3 py-2 border rounded-lg"
                       />
+                      <button
+                        onClick={() => handleExport("top-products")}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Export XLSX
+                      </button>
                     </div>
                   </div>
                   
@@ -501,15 +577,26 @@ export default function StaffReports() {
                 <div>
                   <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">Quarterly Sales</h2>
-                    <select
-                      value={selectedYear}
-                      onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                      className="px-4 py-2 border rounded-lg"
-                    >
-                      {availableYears.map(year => (
-                        <option key={year} value={year}>{year}</option>
-                      ))}
-                    </select>
+                    <div className="flex gap-3">
+                      <select
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                        className="px-4 py-2 border rounded-lg"
+                      >
+                        {availableYears.map(year => (
+                          <option key={year} value={year}>{year}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => handleExport("quarterly-sales")}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Export XLSX
+                      </button>
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -543,7 +630,18 @@ export default function StaffReports() {
               {/* Customer Summary Report */}
               {activeReport === "customer-summary" && (
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Customer Order Summary</h2>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Customer Order Summary</h2>
+                    <button
+                      onClick={() => handleExport("customer-summary")}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Export XLSX
+                    </button>
+                  </div>
                   
                   <div className="overflow-x-auto">
                     <table className="min-w-full">
