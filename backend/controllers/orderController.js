@@ -238,19 +238,41 @@ const getOrdersByCustomer = async (req, res) => {
   try {
     const { customer_id } = req.params;
 
+    // Get orders with full details
     const [orders] = await db.execute(
-      `SELECT o.*, 
+      `SELECT o.order_id,
+              o.customer_id,
+              o.address_id,
+              o.payment_id,
+              o.delivery_mode,
+              o.delivery_zip,
+              o.status,
+              o.sub_total,
+              o.delivery_fee,
+              o.total,
+              o.estimated_delivery_days,
+              o.created_at,
+              o.updated_at,
               p.method as payment_method, 
               p.status as payment_status,
-              COUNT(oi.order_item_id) as item_count
+              p.amount as payment_amount,
+              p.transaction_id,
+              COUNT(DISTINCT oi.order_item_id) as item_count,
+              SUM(oi.quantity * oi.unit_price) as items_total
        FROM Orders o
        LEFT JOIN Payment p ON o.payment_id = p.payment_id
        LEFT JOIN Order_item oi ON o.order_id = oi.order_id
        WHERE o.customer_id = ?
-       GROUP BY o.order_id
+       GROUP BY o.order_id, o.customer_id, o.address_id, o.payment_id, 
+                o.delivery_mode, o.delivery_zip, o.status, o.sub_total, 
+                o.delivery_fee, o.total, o.estimated_delivery_days, 
+                o.created_at, o.updated_at, p.method, p.status, 
+                p.amount, p.transaction_id
        ORDER BY o.created_at DESC`,
       [customer_id]
     );
+
+    console.log(`Found ${orders.length} orders for customer ${customer_id}`);
 
     res.json({ orders });
   } catch (error) {
