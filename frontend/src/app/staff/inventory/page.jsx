@@ -1,14 +1,15 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 export default function InventoryManagement() {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [activeSection, setActiveSection] = useState("update-stocks");
+  
+  // States for Update Stocks
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [stockFilter, setStockFilter] = useState("all");
   const [expandedProducts, setExpandedProducts] = useState(new Set());
@@ -17,7 +18,31 @@ export default function InventoryManagement() {
     addedQuantity: 0,
     note: "",
   });
+  
+  // States for Add Variants
+  const [addVariantProducts, setAddVariantProducts] = useState([]);
+  const [selectedProductForVariant, setSelectedProductForVariant] = useState(null);
+  const [newVariant, setNewVariant] = useState({
+    color: "",
+    size: "",
+    price: "",
+    stock: 0
+  });
+  
+  // States for Remove Variants
+  const [removeVariantProducts, setRemoveVariantProducts] = useState([]);
+  
+  // States for Add/Remove Products
+  const [allProducts, setAllProducts] = useState([]);
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    brand: "",
+    category: "",
+    variants: [{ color: "", size: "", price: "", stock: 0 }]
+  });
+  
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     // Check authentication
@@ -31,7 +56,6 @@ export default function InventoryManagement() {
 
     const parsedUser = JSON.parse(userData);
 
-    // Check if user is staff
     if (parsedUser.role !== "staff") {
       router.push("/");
       return;
@@ -54,9 +78,11 @@ export default function InventoryManagement() {
 
       if (response.ok) {
         const data = await response.json();
-        // Group variants by product
         const groupedProducts = groupVariantsByProduct(data.inventory || []);
         setProducts(groupedProducts);
+        setAddVariantProducts(groupedProducts);
+        setRemoveVariantProducts(groupedProducts);
+        setAllProducts(groupedProducts);
       }
     } catch (error) {
       console.error("Error fetching inventory:", error);
@@ -65,7 +91,6 @@ export default function InventoryManagement() {
     }
   };
 
-  // Group variants by product and calculate total stock
   const groupVariantsByProduct = (inventory) => {
     const grouped = {};
 
@@ -106,18 +131,16 @@ export default function InventoryManagement() {
     });
   };
 
-  const handleUpdateInventory = async (e) => {
-    e.preventDefault();
-
-    // Prevent double submission
-    if (updating) return;
-
-    setMessage({ type: "", text: "" });
-
-    if (!selectedVariant) return;
+  const handleUpdateStock = async () => {
+    if (!selectedVariant || updateData.addedQuantity === 0) {
+      setMessage({
+        type: "error",
+        text: "Please select a variant and enter a quantity",
+      });
+      return;
+    }
 
     setUpdating(true);
-
     try {
       const response = await fetch(
         "http://localhost:5001/api/staff/inventory/update",
@@ -128,9 +151,9 @@ export default function InventoryManagement() {
             Authorization: `Bearer ${localStorage.getItem("authToken")}`,
           },
           body: JSON.stringify({
-            variantId: selectedVariant.variant_id,
-            quantityChange: parseInt(updateData.addedQuantity),
-            notes: updateData.note || null,
+            variant_id: selectedVariant.variant_id,
+            added_quantity: parseInt(updateData.addedQuantity),
+            note: updateData.note,
           }),
         }
       );
@@ -138,376 +161,813 @@ export default function InventoryManagement() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({
-          type: "success",
-          text: "Inventory updated successfully!",
-        });
-        setUpdateData({ addedQuantity: 0, note: "" });
+        setMessage({ type: "success", text: data.message });
         setSelectedVariant(null);
+        setUpdateData({ addedQuantity: 0, note: "" });
         fetchInventory();
       } else {
-        setMessage({
-          type: "error",
-          text: data.message || "Failed to update inventory",
-        });
+        setMessage({ type: "error", text: data.message });
       }
     } catch (error) {
-      setMessage({ type: "error", text: "Server error. Please try again." });
+      setMessage({ type: "error", text: "Failed to update inventory" });
     } finally {
       setUpdating(false);
     }
+  };
+
+  const handleAddVariant = async () => {
+    if (!selectedProductForVariant) {
+      setMessage({ type: "error", text: "Please select a product" });
+      return;
+    }
+
+    if (!newVariant.color || !newVariant.size || !newVariant.price) {
+      setMessage({ type: "error", text: "Please fill all variant fields" });
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      const response = await fetch(
+        "http://localhost:5001/api/staff/product-variants",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+          body: JSON.stringify({
+            product_id: selectedProductForVariant,
+            color: newVariant.color,
+            size: newVariant.size,
+            price: parseFloat(newVariant.price),
+            stock: parseInt(newVariant.stock),
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage({ type: "success", text: "Variant added successfully!" });
+        setNewVariant({ color: "", size: "", price: "", stock: 0 });
+        setSelectedProductForVariant(null);
+        fetchInventory();
+      } else {
+        setMessage({ type: "error", text: data.message || "Failed to add variant" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "Failed to add variant" });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleRemoveVariant = async (variantId) => {
+    if (!confirm("Are you sure you want to remove this variant?")) return;
+
+    setUpdating(true);
+    try {
+      const response = await fetch(
+        `http://localhost:5001/api/staff/product-variants/${variantId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage({ type: "success", text: "Variant removed successfully!" });
+        fetchInventory();
+      } else {
+        setMessage({ type: "error", text: data.message || "Failed to remove variant" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "Failed to remove variant" });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleAddProduct = async () => {
+    if (!newProduct.name || !newProduct.brand || !newProduct.category) {
+      setMessage({ type: "error", text: "Please fill all product fields" });
+      return;
+    }
+
+    if (newProduct.variants.length === 0 || !newProduct.variants[0].color) {
+      setMessage({ type: "error", text: "Please add at least one variant" });
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      const response = await fetch(
+        "http://localhost:5001/api/staff/products",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+          body: JSON.stringify(newProduct),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage({ type: "success", text: "Product added successfully!" });
+        setNewProduct({
+          name: "",
+          brand: "",
+          category: "",
+          variants: [{ color: "", size: "", price: "", stock: 0 }]
+        });
+        fetchInventory();
+      } else {
+        setMessage({ type: "error", text: data.message || "Failed to add product" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "Failed to add product" });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleRemoveProduct = async (productId) => {
+    if (!confirm("Are you sure you want to remove this product and all its variants?")) return;
+
+    setUpdating(true);
+    try {
+      const response = await fetch(
+        `http://localhost:5001/api/staff/products/${productId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage({ type: "success", text: "Product removed successfully!" });
+        fetchInventory();
+      } else {
+        setMessage({ type: "error", text: data.message || "Failed to remove product" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "Failed to remove product" });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const addNewProductVariantRow = () => {
+    setNewProduct({
+      ...newProduct,
+      variants: [...newProduct.variants, { color: "", size: "", price: "", stock: 0 }]
+    });
   };
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.brand.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStock = stockFilter === "all" || product.total_stock <= 10;
+
+    const matchesStock =
+      stockFilter === "all" ||
+      (stockFilter === "low" && product.total_stock < 10) ||
+      (stockFilter === "out" && product.total_stock === 0);
+
     return matchesSearch && matchesStock;
   });
-  if (loading || !user) {
+
+  if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-text-secondary">Loading inventory...</p>
+          <p className="text-text-secondary">Loading...</p>
         </div>
       </div>
     );
   }
 
+  const sections = [
+    {
+      id: "update-stocks",
+      name: "Update Stocks",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      ),
+    },
+    {
+      id: "add-variants",
+      name: "Add Variants",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+      ),
+    },
+    {
+      id: "remove-variants",
+      name: "Remove Variants",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+        </svg>
+      ),
+    },
+    {
+      id: "manage-products",
+      name: "Add/Remove Products",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+      ),
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <div>
-            <Link
-              href="/staff/dashboard"
-              className="text-primary hover:underline mb-2 inline-block"
+    <div className="flex min-h-screen bg-background">
+      {/* Left Sidebar for Inventory Sections */}
+      <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 fixed h-full">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+          Inventory Management
+        </h2>
+        <nav className="space-y-2">
+          {sections.map((section) => (
+            <button
+              key={section.id}
+              onClick={() => {
+                setActiveSection(section.id);
+                setMessage({ type: "", text: "" });
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
+                activeSection === section.id
+                  ? "bg-primary text-white"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              }`}
             >
-              ← Back to Dashboard
-            </Link>
-            <h1 className="text-3xl font-bold text-text-primary flex items-center">
-              <svg
-                className="w-8 h-8 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                />
-              </svg>
-              Inventory Management
-            </h1>
-            <p className="text-text-secondary mt-2">
-              Update product stock levels and track inventory changes
-            </p>
-          </div>
-        </div>
+              {section.icon}
+              <span className="text-sm font-medium">{section.name}</span>
+            </button>
+          ))}
+        </nav>
+      </div>
 
-        {/* Messages */}
-        {message.text && (
-          <div
-            className={`mb-6 p-4 rounded-lg ${
-              message.type === "success"
-                ? "bg-green-100 text-green-800 border border-green-300"
-                : "bg-red-100 text-red-800 border border-red-300"
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
+      {/* Main Content */}
+      <div className="flex-1 ml-64 p-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Message Display */}
+          {message.text && (
+            <div
+              className={`mb-6 p-4 rounded-lg ${
+                message.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-800"
+                  : "bg-red-50 border border-red-200 text-red-800"
+              }`}
+            >
+              <div className="flex justify-between items-center">
+                <span>{message.text}</span>
+                <button
+                  onClick={() => setMessage({ type: "", text: "" })}
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
 
-        {/* Search */}
-        <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Search products by name or SKU..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
-        {/* Stock Filter */}
-        <div className="mb-6 flex gap-4">
-          <button
-            onClick={() => setStockFilter("all")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              stockFilter === "all"
-                ? "bg-primary text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            All Products
-          </button>
-          <button
-            onClick={() => setStockFilter("low")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              stockFilter === "low"
-                ? "bg-orange-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            Low Stock (≤10)
-          </button>
-        </div>
-
-        {/* Inventory Table */}
-        <div className="bg-card border border-card-border rounded-lg overflow-hidden">
-          <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-card-border">
-            <h2 className="text-xl font-bold text-text-primary">
-              All Products
-            </h2>
-            <p className="text-sm text-text-secondary">
-              Total: {filteredProducts.length} items
-            </p>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-100 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase">
-                    Product
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase">
-                    Brand
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase">
-                    Total Stock
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredProducts.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="px-6 py-4 text-center text-text-secondary"
+          {/* Update Stocks Section */}
+          {activeSection === "update-stocks" && (
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+                Update Stocks
+              </h1>
+              
+              {/* Filters */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Search Products
+                    </label>
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Search by name or brand..."
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Stock Status
+                    </label>
+                    <select
+                      value={stockFilter}
+                      onChange={(e) => setStockFilter(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
                     >
-                      No products found
-                    </td>
-                  </tr>
-                ) : (
-                  filteredProducts.map((product) => (
-                    <React.Fragment key={product.product_id}>
-                      {/* Product Row */}
-                      <tr className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center">
-                            <button
-                              onClick={() =>
-                                toggleProductExpand(product.product_id)
-                              }
-                              className="mr-3 text-primary hover:text-primary-dark transition-colors"
-                            >
-                              {expandedProducts.has(product.product_id)
-                                ? "▼"
-                                : "▶"}
-                            </button>
-                            <div className="text-sm font-medium text-text-primary">
+                      <option value="all">All Products</option>
+                      <option value="low">Low Stock (&lt; 10)</option>
+                      <option value="out">Out of Stock</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Products List */}
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredProducts.map((product) => (
+                    <div
+                      key={product.product_id}
+                      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+                    >
+                      <div
+                        className="p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                        onClick={() => toggleProductExpand(product.product_id)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                               {product.product_name}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {product.brand}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Total Stock
+                            </p>
+                            <p
+                              className={`text-2xl font-bold ${
+                                product.total_stock === 0
+                                  ? "text-red-600"
+                                  : product.total_stock < 10
+                                  ? "text-orange-600"
+                                  : "text-green-600"
+                              }`}
+                            >
+                              {product.total_stock}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Expanded Variants */}
+                      {expandedProducts.has(product.product_id) && (
+                        <div className="border-t border-gray-200 dark:border-gray-700 p-6 bg-gray-50 dark:bg-gray-900/50">
+                          <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
+                            Product Variants
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {product.variants.map((variant) => (
+                              <div
+                                key={variant.variant_id}
+                                className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                                  selectedVariant?.variant_id === variant.variant_id
+                                    ? "border-primary bg-primary/10"
+                                    : "border-gray-200 dark:border-gray-700 hover:border-primary"
+                                }`}
+                                onClick={() => setSelectedVariant(variant)}
+                              >
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <p className="font-medium text-gray-900 dark:text-white">
+                                      {variant.color} - {variant.size}
+                                    </p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                      SKU: {variant.sku}
+                                    </p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                      Price: Rs. {variant.price}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                      Stock
+                                    </p>
+                                    <p
+                                      className={`text-xl font-bold ${
+                                        variant.stock === 0
+                                          ? "text-red-600"
+                                          : variant.stock < 5
+                                          ? "text-orange-600"
+                                          : "text-green-600"
+                                      }`}
+                                    >
+                                      {variant.stock}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Update Form */}
+              {selectedVariant && (
+                <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg p-6 border-2 border-primary">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                    Update Stock for: {selectedVariant.color} - {selectedVariant.size}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Quantity to Add/Remove
+                      </label>
+                      <input
+                        type="number"
+                        value={updateData.addedQuantity}
+                        onChange={(e) =>
+                          setUpdateData({
+                            ...updateData,
+                            addedQuantity: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                        placeholder="Enter quantity (use negative for removal)"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Use positive numbers to add, negative to remove
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Note (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={updateData.note}
+                        onChange={(e) =>
+                          setUpdateData({ ...updateData, note: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                        placeholder="Reason for update..."
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={handleUpdateStock}
+                      disabled={updating}
+                      className="px-6 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                    >
+                      {updating ? "Updating..." : "Update Stock"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedVariant(null);
+                        setUpdateData({ addedQuantity: 0, note: "" });
+                      }}
+                      className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Add Variants Section */}
+          {activeSection === "add-variants" && (
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+                Add New Variants
+              </h1>
+              
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Select Product
+                  </label>
+                  <select
+                    value={selectedProductForVariant || ""}
+                    onChange={(e) => setSelectedProductForVariant(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="">Choose a product...</option>
+                    {addVariantProducts.map((product) => (
+                      <option key={product.product_id} value={product.product_id}>
+                        {product.product_name} - {product.brand}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Color
+                    </label>
+                    <input
+                      type="text"
+                      value={newVariant.color}
+                      onChange={(e) => setNewVariant({ ...newVariant, color: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                      placeholder="e.g., Black, Blue, Red"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Size
+                    </label>
+                    <input
+                      type="text"
+                      value={newVariant.size}
+                      onChange={(e) => setNewVariant({ ...newVariant, size: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                      placeholder="e.g., S, M, L, XL"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Price (Rs.)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={newVariant.price}
+                      onChange={(e) => setNewVariant({ ...newVariant, price: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Initial Stock
+                    </label>
+                    <input
+                      type="number"
+                      value={newVariant.stock}
+                      onChange={(e) => setNewVariant({ ...newVariant, stock: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleAddVariant}
+                  disabled={updating}
+                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  {updating ? "Adding..." : "Add Variant"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Remove Variants Section */}
+          {activeSection === "remove-variants" && (
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+                Remove Variants
+              </h1>
+              
+              <div className="space-y-4">
+                {removeVariantProducts.map((product) => (
+                  <div
+                    key={product.product_id}
+                    className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
+                  >
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      {product.product_name} - {product.brand}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {product.variants.map((variant) => (
+                        <div
+                          key={variant.variant_id}
+                          className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white">
+                                {variant.color} - {variant.size}
+                              </p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                SKU: {variant.sku}
+                              </p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Stock: {variant.stock}
+                              </p>
                             </div>
                           </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-text-primary">
-                            {product.brand}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-3 py-1 inline-flex text-sm font-bold rounded-full ${
-                              product.total_stock === 0
-                                ? "bg-red-100 text-red-800"
-                                : product.total_stock <= 10
-                                ? "bg-orange-100 text-orange-800"
-                                : "bg-green-100 text-green-800"
-                            }`}
+                          <button
+                            onClick={() => handleRemoveVariant(variant.variant_id)}
+                            disabled={updating}
+                            className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                           >
-                            {product.total_stock}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
-                          {expandedProducts.has(product.product_id)
-                            ? "Expand to update variants"
-                            : "Click arrow to view variants"}
-                        </td>
-                      </tr>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-                      {/* Variant Rows (when expanded) */}
-                      {expandedProducts.has(product.product_id) &&
-                        product.variants.map((variant) => (
-                          <React.Fragment key={variant.variant_id}>
-                            <tr className="bg-gray-50 dark:bg-gray-800/50">
-                              <td className="px-6 py-4 pl-16">
-                                <div className="text-sm text-text-secondary font-mono">
-                                  {variant.sku}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="text-sm text-text-primary">
-                                  {variant.color && (
-                                    <span className="mr-2">
-                                      🎨 {variant.color}
-                                    </span>
-                                  )}
-                                  {variant.size && (
-                                    <span>📏 {variant.size}</span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span
-                                  className={`px-3 py-1 inline-flex text-sm font-bold rounded-full ${
-                                    variant.stock === 0
-                                      ? "bg-red-100 text-red-800"
-                                      : variant.stock <= 10
-                                      ? "bg-orange-100 text-orange-800"
-                                      : "bg-green-100 text-green-800"
-                                  }`}
-                                >
-                                  {variant.stock}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <button
-                                  onClick={() =>
-                                    setSelectedVariant(
-                                      selectedVariant?.variant_id ===
-                                        variant.variant_id
-                                        ? null
-                                        : {
-                                            ...variant,
-                                            product_name: product.product_name,
-                                          }
-                                    )
-                                  }
-                                  className={`px-4 py-2 text-sm rounded transition-colors ${
-                                    selectedVariant?.variant_id ===
-                                    variant.variant_id
-                                      ? "bg-gray-500 text-white hover:bg-gray-600"
-                                      : "bg-primary text-white hover:opacity-90"
-                                  }`}
-                                >
-                                  {selectedVariant?.variant_id ===
-                                  variant.variant_id
-                                    ? "Cancel"
-                                    : "Update Stock"}
-                                </button>
-                              </td>
-                            </tr>
+          {/* Add/Remove Products Section */}
+          {activeSection === "manage-products" && (
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+                Add/Remove Products
+              </h1>
+              
+              {/* Add Product Form */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 mb-8">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add New Product
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Product Name
+                    </label>
+                    <input
+                      type="text"
+                      value={newProduct.name}
+                      onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                      placeholder="Product name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Brand
+                    </label>
+                    <input
+                      type="text"
+                      value={newProduct.brand}
+                      onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                      placeholder="Brand name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Category
+                    </label>
+                    <input
+                      type="text"
+                      value={newProduct.category}
+                      onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                      placeholder="Category"
+                    />
+                  </div>
+                </div>
 
-                            {/* Inline Update Form */}
-                            {selectedVariant?.variant_id ===
-                              variant.variant_id && (
-                              <tr className="bg-blue-50 dark:bg-blue-900/20">
-                                <td colSpan="4" className="px-6 py-4">
-                                  <div className="border-2 border-blue-300 dark:border-blue-700 rounded-lg p-4">
-                                    <div className="mb-3">
-                                      <h3 className="text-lg font-bold text-text-primary">
-                                        Update Inventory
-                                      </h3>
-                                      <p className="text-sm text-text-secondary">
-                                        {selectedVariant.product_name} -{" "}
-                                        {selectedVariant.sku} (
-                                        {selectedVariant.color} /{" "}
-                                        {selectedVariant.size})
-                                      </p>
-                                      <p className="text-sm text-text-secondary">
-                                        Current Stock:{" "}
-                                        <span className="font-bold">
-                                          {selectedVariant.stock}
-                                        </span>
-                                      </p>
-                                    </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                  Product Variants
+                </h3>
+                {newProduct.variants.map((variant, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
+                    <input
+                      type="text"
+                      value={variant.color}
+                      onChange={(e) => {
+                        const newVariants = [...newProduct.variants];
+                        newVariants[index].color = e.target.value;
+                        setNewProduct({ ...newProduct, variants: newVariants });
+                      }}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                      placeholder="Color"
+                    />
+                    <input
+                      type="text"
+                      value={variant.size}
+                      onChange={(e) => {
+                        const newVariants = [...newProduct.variants];
+                        newVariants[index].size = e.target.value;
+                        setNewProduct({ ...newProduct, variants: newVariants });
+                      }}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                      placeholder="Size"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={variant.price}
+                      onChange={(e) => {
+                        const newVariants = [...newProduct.variants];
+                        newVariants[index].price = e.target.value;
+                        setNewProduct({ ...newProduct, variants: newVariants });
+                      }}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                      placeholder="Price"
+                    />
+                    <input
+                      type="number"
+                      value={variant.stock}
+                      onChange={(e) => {
+                        const newVariants = [...newProduct.variants];
+                        newVariants[index].stock = e.target.value;
+                        setNewProduct({ ...newProduct, variants: newVariants });
+                      }}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                      placeholder="Stock"
+                    />
+                  </div>
+                ))}
 
-                                    <form
-                                      onSubmit={handleUpdateInventory}
-                                      className="grid grid-cols-1 md:grid-cols-3 gap-4"
-                                    >
-                                      <div>
-                                        <label className="block text-sm font-medium text-text-primary mb-2">
-                                          Quantity Change (+ to add, - to
-                                          reduce)
-                                        </label>
-                                        <input
-                                          type="number"
-                                          value={updateData.addedQuantity}
-                                          onChange={(e) =>
-                                            setUpdateData({
-                                              ...updateData,
-                                              addedQuantity: e.target.value,
-                                            })
-                                          }
-                                          required
-                                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary"
-                                          placeholder="e.g., 50 or -10"
-                                        />
-                                        <p className="text-xs text-text-secondary mt-1">
-                                          New stock will be:{" "}
-                                          {selectedVariant.stock +
-                                            parseInt(
-                                              updateData.addedQuantity || 0
-                                            )}
-                                        </p>
-                                      </div>
+                <div className="flex gap-4 mt-4">
+                  <button
+                    onClick={addNewProductVariantRow}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Add Another Variant
+                  </button>
+                  <button
+                    onClick={handleAddProduct}
+                    disabled={updating}
+                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                  >
+                    {updating ? "Adding..." : "Add Product"}
+                  </button>
+                </div>
+              </div>
 
-                                      <div>
-                                        <label className="block text-sm font-medium text-text-primary mb-2">
-                                          Note (optional)
-                                        </label>
-                                        <input
-                                          type="text"
-                                          value={updateData.note}
-                                          onChange={(e) =>
-                                            setUpdateData({
-                                              ...updateData,
-                                              note: e.target.value,
-                                            })
-                                          }
-                                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary"
-                                          placeholder="Reason for update..."
-                                        />
-                                      </div>
-
-                                      <div className="flex items-end">
-                                        <button
-                                          type="submit"
-                                          disabled={updating}
-                                          className={`w-full px-6 py-2 bg-primary text-white rounded-md transition-opacity ${
-                                            updating
-                                              ? "opacity-50 cursor-not-allowed"
-                                              : "hover:opacity-90"
-                                          }`}
-                                        >
-                                          {updating
-                                            ? "Updating..."
-                                            : "Update Stock"}
-                                        </button>
-                                      </div>
-                                    </form>
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-                          </React.Fragment>
-                        ))}
-                    </React.Fragment>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+              {/* Remove Products List */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Remove Existing Products
+                </h2>
+                
+                <div className="space-y-4">
+                  {allProducts.map((product) => (
+                    <div
+                      key={product.product_id}
+                      className="flex justify-between items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-red-300 dark:hover:border-red-700 transition-colors"
+                    >
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                          {product.product_name}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {product.brand} • {product.variants.length} variants • Total Stock: {product.total_stock}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveProduct(product.product_id)}
+                        disabled={updating}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Remove Product
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -72,29 +72,21 @@ export default function StaffDashboard() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary">
-              Staff Dashboard
-            </h1>
-            <p className="text-text-secondary mt-2">
-              Welcome back, {user.name}!
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-text-primary">
+            Staff Dashboard
+          </h1>
+          <p className="text-text-secondary mt-2">
+            Welcome back, {user.name}!
+          </p>
+          <p className="text-sm text-text-secondary">
+            Staff ID: {user.staff_id || 'N/A'} | Level: {user.staff_level || 'N/A'}
+          </p>
+          {user.staff_level === 'Level01' && (
+            <p className="text-xs text-primary font-semibold mt-1">
+              ⭐ Senior Staff - Staff Management Access
             </p>
-            <p className="text-sm text-text-secondary">
-              Staff ID: {user.staff_id || 'N/A'} | Level: {user.staff_level || 'N/A'}
-            </p>
-            {user.staff_level === 'Level01' && (
-              <p className="text-xs text-primary font-semibold mt-1">
-                ⭐ Senior Staff - Staff Management Access
-              </p>
-            )}
-          </div>
-          <button
-            onClick={handleLogout}
-            className="px-6 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-          >
-            Logout
-          </button>
+          )}
         </div>
 
         {/* Stats Grid */}
@@ -173,92 +165,26 @@ export default function StaffDashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Staff Controls */}
+          {/* Quick Overview - Now uses full width with Recent Activity */}
           <div className="lg:col-span-2 bg-card border border-card-border rounded-lg p-6">
             <h2 className="text-xl font-bold text-text-primary mb-6 flex items-center">
               <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
-              Staff Controls & Actions
+              Quick Overview
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Staff Management - Only for Level01 */}
-              {user.staff_level === 'Level01' && (
-                <Link 
-                  href="/staff/manage"
-                  className="p-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:opacity-90 transition-opacity flex items-center justify-between group"
-                >
-                  <div className="flex items-center">
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    <span className="font-medium">Staff Management ⭐</span>
-                  </div>
-                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
+            <div className="space-y-4">
+              <p className="text-text-secondary">
+                Use the sidebar to navigate between different sections of the staff portal.
+                All your tools are available in the left panel.
+              </p>
+              {stats.productsNeedingUpdate > 0 && (
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                  <p className="text-yellow-800 dark:text-yellow-300">
+                    📦 {stats.productsNeedingUpdate} products need attention
+                  </p>
+                </div>
               )}
-              
-              <Link 
-                href="/staff/orders"
-                className="p-4 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity flex items-center justify-between group"
-              >
-                <span className="font-medium">Process Orders</span>
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-
-              <Link 
-                href="/staff/inventory"
-                className="p-4 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity flex items-center justify-between group"
-              >
-                <span className="font-medium">Update Inventory</span>
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-
-              <Link 
-                href="/staff/customers"
-                className="p-4 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity flex items-center justify-between group"
-              >
-                <span className="font-medium">Customer Management</span>
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-
-              <Link 
-                href="/staff/products"
-                className="p-4 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity flex items-center justify-between group"
-              >
-                <span className="font-medium">Product Information</span>
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-
-              <Link 
-                href="/staff/support"
-                className="p-4 bg-secondary text-white rounded-lg hover:opacity-90 transition-opacity flex items-center justify-between group"
-              >
-                <span className="font-medium">Customer Support</span>
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-
-              <Link 
-                href="/staff/reports"
-                className="p-4 bg-secondary text-white rounded-lg hover:opacity-90 transition-opacity flex items-center justify-between group"
-              >
-                <span className="font-medium">View Reports</span>
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
             </div>
           </div>
 
