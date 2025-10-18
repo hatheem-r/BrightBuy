@@ -6,12 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { variantsAPI, customerAPI, ordersAPI } from "@/services/api";
-
-const formatCurrency = (value) =>
-  `$${Number(value || 0).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+import { formatCurrency } from "@/utils/currency";
 
 export default function CheckoutPage() {
   const { cartItems, cartSubtotal, cartCount, clearCart, removeFromCart } =
@@ -78,7 +73,7 @@ export default function CheckoutPage() {
   );
   const itemCount = checkoutItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const SHIPPING_COST = 500; // $5.00
+  const SHIPPING_COST = 5.00; // $5.00
   const TAX_RATE = 0.08; // 8% tax
   const taxAmount = subtotal * TAX_RATE;
   const totalAmount = subtotal + SHIPPING_COST + taxAmount;
@@ -344,7 +339,7 @@ export default function CheckoutPage() {
           paymentMethod === "card" ? "Card Payment" : "Cash on Delivery",
         items: orderItems,
         sub_total: subtotal,
-        delivery_fee: SHIPPING_COST / 100, // Convert cents to dollars
+        delivery_fee: SHIPPING_COST, // $5.00
         total: totalAmount,
       };
 

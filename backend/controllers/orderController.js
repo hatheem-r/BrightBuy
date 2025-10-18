@@ -72,7 +72,8 @@ const createOrder = async (req, res) => {
 
     const order_id = orderResult.insertId;
 
-    // 2. Insert order items
+    // 2. Check stock status for all items (to determine delivery delay)
+    let hasOutOfStockItems = false;
     for (const item of items) {
       if (!item.variant_id || !item.quantity || !item.unit_price) {
         throw new Error(
@@ -80,21 +81,7 @@ const createOrder = async (req, res) => {
         );
       }
 
-      await connection.execute(
-        `INSERT INTO Order_item (order_id, variant_id, quantity, unit_price) 
-         VALUES (?, ?, ?, ?)`,
-        [order_id, item.variant_id, item.quantity, item.unit_price]
-      );
-
-      // 3. Deduct from inventory
-      await connection.execute(
-        `UPDATE Inventory 
-         SET quantity = quantity - ? 
-         WHERE variant_id = ? AND quantity >= ?`,
-        [item.quantity, item.variant_id, item.quantity]
-      );
-
-      // Check if inventory was successfully updated
+      // Check current stock
       const [inventoryCheck] = await connection.execute(
         `SELECT quantity FROM Inventory WHERE variant_id = ?`,
         [item.variant_id]
@@ -104,11 +91,27 @@ const createOrder = async (req, res) => {
         throw new Error(`Variant ${item.variant_id} not found in inventory`);
       }
 
-      if (inventoryCheck[0].quantity < 0) {
-        throw new Error(
-          `Insufficient inventory for variant ${item.variant_id}`
-        );
+      // Check if any item is out of stock
+      if (inventoryCheck[0].quantity < item.quantity) {
+        hasOutOfStockItems = true;
       }
+    }
+
+    // 3. Insert order items and update inventory
+    for (const item of items) {
+      await connection.execute(
+        `INSERT INTO Order_item (order_id, variant_id, quantity, unit_price) 
+         VALUES (?, ?, ?, ?)`,
+        [order_id, item.variant_id, item.quantity, item.unit_price]
+      );
+
+      // Deduct from inventory (allow negative stock for backorders)
+      await connection.execute(
+        `UPDATE Inventory 
+         SET quantity = quantity - ? 
+         WHERE variant_id = ?`,
+        [item.quantity, item.variant_id]
+      );
     }
 
     // 4. Create payment record
@@ -126,19 +129,33 @@ const createOrder = async (req, res) => {
       [payment_id, order_id]
     );
 
-    // 6. Get estimated delivery days from ZipDeliveryZone
-    if (delivery_zip) {
+    // 6. Calculate estimated delivery days based on stock and location
+    if (delivery_mode === "Standard Delivery" && delivery_zip) {
       const [deliveryInfo] = await connection.execute(
         `SELECT base_days FROM ZipDeliveryZone WHERE zip_code = ?`,
         [delivery_zip]
       );
 
+      let estimatedDays = 7; // Default 7 days if zip not found
       if (deliveryInfo.length > 0) {
-        await connection.execute(
-          `UPDATE Orders SET estimated_delivery_days = ? WHERE order_id = ?`,
-          [deliveryInfo[0].base_days, order_id]
-        );
+        estimatedDays = deliveryInfo[0].base_days; // 5 days for main cities, 7 for others
       }
+
+      // Add 3 days if any item is out of stock at time of order
+      if (hasOutOfStockItems) {
+        estimatedDays += 3;
+      }
+
+      await connection.execute(
+        `UPDATE Orders SET estimated_delivery_days = ? WHERE order_id = ?`,
+        [estimatedDays, order_id]
+      );
+    } else if (delivery_mode === "Store Pickup") {
+      // Store pickup doesn't need delivery days
+      await connection.execute(
+        `UPDATE Orders SET estimated_delivery_days = NULL WHERE order_id = ?`,
+        [order_id]
+      );
     }
 
     await connection.commit();
@@ -238,19 +255,41 @@ const getOrdersByCustomer = async (req, res) => {
   try {
     const { customer_id } = req.params;
 
+    // Get orders with full details
     const [orders] = await db.execute(
-      `SELECT o.*, 
+      `SELECT o.order_id,
+              o.customer_id,
+              o.address_id,
+              o.payment_id,
+              o.delivery_mode,
+              o.delivery_zip,
+              o.status,
+              o.sub_total,
+              o.delivery_fee,
+              o.total,
+              o.estimated_delivery_days,
+              o.created_at,
+              o.updated_at,
               p.method as payment_method, 
               p.status as payment_status,
-              COUNT(oi.order_item_id) as item_count
+              p.amount as payment_amount,
+              p.transaction_id,
+              COUNT(DISTINCT oi.order_item_id) as item_count,
+              SUM(oi.quantity * oi.unit_price) as items_total
        FROM Orders o
        LEFT JOIN Payment p ON o.payment_id = p.payment_id
        LEFT JOIN Order_item oi ON o.order_id = oi.order_id
        WHERE o.customer_id = ?
-       GROUP BY o.order_id
+       GROUP BY o.order_id, o.customer_id, o.address_id, o.payment_id, 
+                o.delivery_mode, o.delivery_zip, o.status, o.sub_total, 
+                o.delivery_fee, o.total, o.estimated_delivery_days, 
+                o.created_at, o.updated_at, p.method, p.status, 
+                p.amount, p.transaction_id
        ORDER BY o.created_at DESC`,
       [customer_id]
     );
+
+    console.log(`Found ${orders.length} orders for customer ${customer_id}`);
 
     res.json({ orders });
   } catch (error) {

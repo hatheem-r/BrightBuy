@@ -357,7 +357,7 @@ export default function ProductDetailPage() {
 
           <div className="mb-6">
             <span className="text-4xl font-extrabold text-primary">
-              $
+              ${" "}
               {selectedVariant?.price
                 ? parseFloat(selectedVariant.price).toFixed(2)
                 : "N/A"}
