@@ -5,16 +5,12 @@ import { useCart } from "@/contexts/CartContext";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { variantsAPI, customerAPI } from "@/services/api";
-
-const formatCurrency = (value) =>
-  `$${Number(value || 0).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+import { variantsAPI, customerAPI, ordersAPI } from "@/services/api";
+import { formatCurrency } from "@/utils/currency";
 
 export default function CheckoutPage() {
-  const { cartItems, cartSubtotal, cartCount, clearCart, removeFromCart } = useCart();
+  const { cartItems, cartSubtotal, cartCount, clearCart, removeFromCart } =
+    useCart();
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -24,11 +20,11 @@ export default function CheckoutPage() {
   const buyNowVariantId = searchParams.get("variantId");
   const buyNowQuantity = parseInt(searchParams.get("quantity") || "1", 10);
   const isFromCart = searchParams.get("fromCart") === "true";
-  
+
   // Get selected items from URL (for cart checkout)
   const selectedItemsParam = searchParams.get("selectedItems");
-  const selectedVariantIds = selectedItemsParam 
-    ? selectedItemsParam.split(',').map(id => parseInt(id, 10))
+  const selectedVariantIds = selectedItemsParam
+    ? selectedItemsParam.split(",").map((id) => parseInt(id, 10))
     : [];
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -65,7 +61,9 @@ export default function CheckoutPage() {
     isBuyNow && buyNowProduct
       ? [{ variant: buyNowProduct, quantity: buyNowQuantity }]
       : selectedVariantIds.length > 0
-      ? cartItems.filter(item => selectedVariantIds.includes(item.variant.variant_id))
+      ? cartItems.filter((item) =>
+          selectedVariantIds.includes(item.variant.variant_id)
+        )
       : cartItems;
 
   // Calculate totals based on checkout items
@@ -75,7 +73,7 @@ export default function CheckoutPage() {
   );
   const itemCount = checkoutItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const SHIPPING_COST = 500; // $5.00
+  const SHIPPING_COST = 5.00; // $5.00
   const TAX_RATE = 0.08; // 8% tax
   const taxAmount = subtotal * TAX_RATE;
   const totalAmount = subtotal + SHIPPING_COST + taxAmount;
@@ -318,21 +316,41 @@ export default function CheckoutPage() {
         }
       }
 
-      // Step 3: Simulate order placement
-      // In a real application, you would:
-      // - Send order data to backend
-      // - Process payment
-      // - Create order record
-      // - Clear cart if not buy now
-      // - Redirect to order confirmation
+      // Step 3: Create order with items
+      const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("bb_token") ||
+        localStorage.getItem("authToken");
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Prepare order items
+      const orderItems = checkoutItems.map((item) => ({
+        variant_id: item.variant.variant_id,
+        quantity: item.quantity,
+        unit_price: item.variant.price,
+      }));
 
-      // For now, just simulate success
+      // Prepare order data
+      const orderData = {
+        customer_id: parseInt(customerId),
+        address_id: savedAddressId || addressResult?.address_id,
+        delivery_mode: "Standard Delivery",
+        delivery_zip: shippingInfo.postalCode,
+        payment_method:
+          paymentMethod === "card" ? "Card Payment" : "Cash on Delivery",
+        items: orderItems,
+        sub_total: subtotal,
+        delivery_fee: SHIPPING_COST, // $5.00
+        total: totalAmount,
+      };
+
+      // Create the order
+      const orderResult = await ordersAPI.createOrder(orderData, token);
+
+      // Success message
       alert(
-        `Order placed successfully!\n\nTotal: ${formatCurrency(
-          totalAmount
-        )}\nPayment: ${
+        `Order placed successfully!\n\nOrder ID: ${
+          orderResult.order.order_id
+        }\nTotal: ${formatCurrency(totalAmount)}\nPayment: ${
           paymentMethod === "card" ? "Card Payment" : "Cash on Delivery"
         }\n\nYour shipping information has been saved for future orders.`
       );
@@ -430,7 +448,8 @@ export default function CheckoutPage() {
                 your cart are not included.
                 {isFromCart && (
                   <span className="block mt-1 text-sm">
-                    ✓ This item will be automatically removed from your cart after purchase.
+                    ✓ This item will be automatically removed from your cart
+                    after purchase.
                   </span>
                 )}
               </span>

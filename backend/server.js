@@ -34,7 +34,7 @@ app.use("/api/cart", require("./routes/cart"));
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/staff", require("./routes/staff"));
 app.use("/api/customers", require("./routes/customer"));
-// app.use('/api/orders', require('./routes/orders'));
+app.use("/api/orders", require("./routes/orders"));
 
 // Basic Test Route
 app.get("/", (req, res) => {
