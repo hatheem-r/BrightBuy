@@ -73,20 +73,38 @@ export default function StaffDashboard() {
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text-primary">
-            Staff Dashboard
-          </h1>
-          <p className="text-text-secondary mt-2">
-            Welcome back, {user.name}!
-          </p>
-          <p className="text-sm text-text-secondary">
-            Staff ID: {user.staff_id || 'N/A'} | Level: {user.staff_level || 'N/A'}
-          </p>
-          {user.staff_level === 'Level01' && (
-            <p className="text-xs text-primary font-semibold mt-1">
-              ⭐ Senior Staff - Staff Management Access
-            </p>
-          )}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-text-primary">
+                Staff Dashboard
+              </h1>
+              <p className="text-text-secondary mt-2">
+                Welcome back, {user.name}!
+              </p>
+              <p className="text-sm text-text-secondary">
+                Staff ID: {user.staff_id || 'N/A'} | Level: {user.staff_level || 'N/A'}
+              </p>
+              {user.staff_level === 'Level01' && (
+                <p className="text-xs text-primary font-semibold mt-1">
+                  ⭐ Senior Staff - Staff Management Access
+                </p>
+              )}
+            </div>
+            <button
+              onClick={handleLogout}
+              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2 shadow-lg"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+              Logout
+            </button>
+          </div>
         </div>
 
         {/* Stats Grid */}
