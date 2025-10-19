@@ -188,7 +188,7 @@ export default function CartPage() {
   );
   const selectedCount = selectedCartItems.length;
 
-  const shippingEstimate = 9.99; // Standard shipping
+  const shippingEstimate = 5.00; // Standard delivery
   const total = selectedSubtotal + shippingEstimate;
 
   const handleProceedToCheckout = () => {
@@ -279,16 +279,41 @@ export default function CartPage() {
                 {formatCurrency(selectedSubtotal)}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span>Shipping (Estimated)</span>
+            <div className="flex justify-between items-center">
+              <div className="flex flex-col">
+                <span>Standard Delivery</span>
+                <span className="text-xs text-text-secondary">Or choose Store Pickup at checkout</span>
+              </div>
               <span className="text-text-primary">
                 {formatCurrency(shippingEstimate)}
               </span>
             </div>
+            
+            {/* Store Pickup Info */}
+            <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3 text-sm">
+              <div className="flex items-center gap-2 text-purple-800 dark:text-purple-300">
+                <i className="fas fa-store text-lg"></i>
+                <div>
+                  <div className="font-semibold">
+                    Store Pickup Available 
+                    <span className="ml-2 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs rounded">
+                      FREE
+                    </span>
+                  </div>
+                  <div className="text-xs mt-1">
+                    Save ${shippingEstimate.toFixed(2)} on delivery! Select at checkout.
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <div className="flex justify-between font-bold text-lg border-t border-card-border pt-3 mt-3 text-text-primary">
-              <span>Total</span>
+              <span>Total (with delivery)</span>
               <span>{formatCurrency(total)}</span>
             </div>
+            <p className="text-xs text-center text-text-secondary italic">
+              Final total depends on delivery option chosen at checkout
+            </p>
           </div>
           <button
             onClick={handleProceedToCheckout}
