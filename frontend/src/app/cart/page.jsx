@@ -6,6 +6,7 @@ import { useCart } from '@/contexts/CartContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/utils/currency';
+import BackButton from '@/components/BackButton';
 
 const CartItem = ({ item, isSelected, onToggleSelect }) => {
   const { updateQuantity, removeFromCart } = useCart();
@@ -223,6 +224,11 @@ export default function CartPage() {
 
   return (
     <div className="container mx-auto px-6 py-8">
+      {/* Back Button */}
+      <div className="mb-6">
+        <BackButton variant="outline" label="Continue Shopping" />
+      </div>
+
       <h1 className="text-3xl font-bold text-text-primary mb-6">
         Your Shopping Cart
       </h1>

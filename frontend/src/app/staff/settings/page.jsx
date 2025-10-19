@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import BackButton from "@/components/BackButton";
 
 const BACKEND_URL = "http://localhost:5001";
 
@@ -191,6 +192,11 @@ export default function StaffSettingsPage() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-8">
         <div className="max-w-4xl mx-auto">
+          {/* Back Button */}
+          <div className="mb-6">
+            <BackButton variant="outline" label="Back to Dashboard" />
+          </div>
+
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-text-primary flex items-center">
               <svg className="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { variantsAPI, customerAPI, ordersAPI } from "@/services/api";
 import { formatCurrency } from "@/utils/currency";
+import BackButton from "@/components/BackButton";
 
 export default function CheckoutPage() {
   const { cartItems, cartSubtotal, cartCount, clearCart, removeFromCart } =
@@ -402,7 +403,11 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="container mx-auto px-4 max-w-7xl">
-        {/* Header */}
+        {/* Back Button and Header */}
+        <div className="mb-6">
+          <BackButton variant="outline" label={isBuyNow ? "Back to Product" : "Back to Cart"} />
+        </div>
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-text-primary mb-2">
             Checkout
