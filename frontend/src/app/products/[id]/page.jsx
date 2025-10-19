@@ -2,13 +2,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
-import { getProductById } from "@/lib/api";
+import { productsAPI } from "@/services/api";
 
 export default function ProductDetailPage() {
   const params = useParams();
   const { id } = params;
+  const router = useRouter();
   const { addToCart } = useCart();
 
   const [product, setProduct] = useState(null);
@@ -19,20 +20,28 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (id) {
       const fetchProduct = async () => {
-        setLoading(true);
-        const data = await getProductById(id);
-        setProduct(data);
-        setSelectedVariant(
-          data.variants.find((v) => v.default) || data.variants[0]
-        );
-        setLoading(false);
+        try {
+          setLoading(true);
+          const data = await productsAPI.getProductById(id);
+          setProduct(data);
+          // Set default variant (is_default = 1) or first variant
+          setSelectedVariant(
+            data.variants?.find((v) => v.is_default === 1) || data.variants?.[0]
+          );
+          setLoading(false);
+        } catch (error) {
+          console.error("Error fetching product:", error);
+          setLoading(false);
+        }
       };
       fetchProduct();
     }
   }, [id]);
 
   const handleVariantChange = (variantId) => {
-    setSelectedVariant(product.variants.find((v) => v.id === variantId));
+    setSelectedVariant(
+      product.variants.find((v) => v.variant_id === variantId)
+    );
     setAddedToCart(false);
   };
 
@@ -50,23 +59,31 @@ export default function ProductDetailPage() {
       (v) => v[attributeType] === attributeValue
     );
 
-    if (candidates.length === 1) return candidates[0].id;
+    if (candidates.length === 1) return candidates[0].variant_id;
 
     // Try to match other attributes from current selection
     const bestMatch = candidates.find((v) => {
       if (attributeType !== "color" && v.color === selectedVariant?.color)
-        return true;
-      if (attributeType !== "memory" && v.memory === selectedVariant?.memory)
         return true;
       if (attributeType !== "size" && v.size === selectedVariant?.size)
         return true;
       return false;
     });
 
-    return bestMatch ? bestMatch.id : candidates[0].id;
+    return bestMatch ? bestMatch.variant_id : candidates[0].variant_id;
   };
 
   const handleAddToCart = () => {
+    // Check if user is logged in
+    const token = localStorage.getItem("token");
+    const customerId = localStorage.getItem("customer_id");
+
+    if (!token || !customerId) {
+      // Redirect to login page if not logged in
+      router.push("/login");
+      return;
+    }
+
     if (selectedVariant) {
       addToCart(selectedVariant, 1);
       setAddedToCart(true);
@@ -76,29 +93,75 @@ export default function ProductDetailPage() {
     }
   };
 
-  if (loading || !product)
-    return <div className="text-center py-12">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="text-center">
+          <div className="text-6xl mb-4">⏳</div>
+          <p className="text-text-primary text-xl">
+            Loading product details...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  const isInStock = selectedVariant && selectedVariant.stock > 0;
+  if (!product) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="text-center">
+          <div className="text-6xl mb-4">❌</div>
+          <h3 className="text-xl font-semibold text-text-primary mb-2">
+            Product Not Found
+          </h3>
+          <p className="text-text-secondary">
+            The product you're looking for doesn't exist.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const isInStock = selectedVariant && selectedVariant.stock_quantity > 0;
   const estimatedDelivery = isInStock
     ? "5-7 business days"
     : "8-10 business days";
+
+  const imageUrl = selectedVariant?.image_url 
+    ? `http://localhost:5001${selectedVariant.image_url}`
+    : null;
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Image Gallery */}
         <div className="flex flex-col gap-4">
-          <div className="bg-card border border-card-border rounded-lg h-96 flex items-center justify-center">
-            <span className="text-text-secondary">Main Image Placeholder</span>
-          </div>
-          <div className="grid grid-cols-4 gap-4">
-            {product.images.map((_, index) => (
-              <div
-                key={index}
-                className="bg-card h-24 rounded-md border border-card-border cursor-pointer hover:border-secondary"
-              ></div>
-            ))}
+          <div className="bg-card border border-card-border rounded-lg overflow-hidden">
+            {imageUrl ? (
+              <img 
+                src={imageUrl}
+                alt={`${product.name} - ${selectedVariant.color}`}
+                className="w-full h-96 object-cover"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.parentElement.innerHTML = `
+                    <div class="h-96 flex items-center justify-center">
+                      <div class="text-center">
+                        <span class="text-text-secondary text-lg block">${product.brand || "Product"}</span>
+                        <span class="text-text-secondary text-sm">Image Not Available</span>
+                      </div>
+                    </div>
+                  `;
+                }}
+              />
+            ) : (
+              <div className="h-96 flex items-center justify-center">
+                <div className="text-center">
+                  <span className="text-text-secondary text-lg block">{product.brand || "Product"}</span>
+                  <span className="text-text-secondary text-sm">Image Not Available</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -107,12 +170,12 @@ export default function ProductDetailPage() {
           <h1 className="text-3xl font-bold text-text-primary mb-2">
             {product.name}
           </h1>
+          {product.brand && (
+            <p className="text-lg text-text-secondary mb-4">
+              by <span className="font-semibold">{product.brand}</span>
+            </p>
+          )}
           <div className="flex items-center mb-4 gap-2">
-            <span className="text-yellow-500 flex items-center gap-1">
-              <i className="fas fa-star"></i>
-              {product.rating}
-            </span>
-            <span className="text-gray-300">|</span>
             <span
               className={`font-semibold ${
                 isInStock ? "text-green-600" : "text-red-500"
@@ -121,11 +184,11 @@ export default function ProductDetailPage() {
               {isInStock ? "In Stock" : "Out of Stock"}
             </span>
           </div>
-          <ul className="list-disc list-inside text-text-secondary mb-6 space-y-1">
-            {product.description.map((point, index) => (
-              <li key={index}>{point}</li>
-            ))}
-          </ul>
+          {selectedVariant?.description && (
+            <div className="text-text-secondary mb-6">
+              <p>{selectedVariant.description}</p>
+            </div>
+          )}
 
           {/* Variant Selection Section */}
           {product.variants && product.variants.length > 1 && (
@@ -168,50 +231,6 @@ export default function ProductDetailPage() {
                           }`}
                         >
                           {color}
-                          {!isAvailable && (
-                            <span className="ml-1 text-xs">(Out of Stock)</span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Memory/Storage Selection */}
-              {getUniqueAttributes("memory").length > 0 && (
-                <div className="mb-4">
-                  <label className="text-md font-semibold text-text-primary mb-2 block">
-                    Storage:{" "}
-                    <span className="font-normal text-text-secondary">
-                      {selectedVariant?.memory}
-                    </span>
-                  </label>
-                  <div className="flex gap-2 flex-wrap">
-                    {getUniqueAttributes("memory").map((memory) => {
-                      const isAvailable = product.variants.some(
-                        (v) => v.memory === memory && v.stock_quantity > 0
-                      );
-                      const isSelected = selectedVariant?.memory === memory;
-
-                      return (
-                        <button
-                          key={memory}
-                          onClick={() =>
-                            handleVariantChange(
-                              findMatchingVariant("memory", memory)
-                            )
-                          }
-                          disabled={!isAvailable}
-                          className={`px-4 py-2 rounded-md text-sm font-semibold border-2 transition-all ${
-                            isSelected
-                              ? "border-secondary bg-secondary text-white shadow-md"
-                              : isAvailable
-                              ? "border-card-border bg-card text-text-primary hover:border-primary"
-                              : "border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed"
-                          }`}
-                        >
-                          {memory}
                           {!isAvailable && (
                             <span className="ml-1 text-xs">(Out of Stock)</span>
                           )}
@@ -300,20 +319,12 @@ export default function ProductDetailPage() {
           )}
 
           <div className="mb-6">
-            <span className="text-2xl text-text-secondary line-through mr-3">
-              Rs.{" "}
-              {selectedVariant?.oldPrice?.toFixed(2) ||
-                selectedVariant?.old_price?.toFixed(2)}
-            </span>
             <span className="text-4xl font-extrabold text-primary">
-              Rs. {selectedVariant?.price?.toFixed(2)}
+              $
+              {selectedVariant?.price
+                ? parseFloat(selectedVariant.price).toFixed(2)
+                : "N/A"}
             </span>
-            {selectedVariant?.oldPrice && (
-              <span className="ml-3 text-sm font-semibold text-green-600">
-                Save Rs.{" "}
-                {(selectedVariant.oldPrice - selectedVariant.price).toFixed(2)}
-              </span>
-            )}
           </div>
 
           <div className="flex items-center gap-4">

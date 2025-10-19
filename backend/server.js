@@ -2,10 +2,13 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
-const db = require("./config/db"); // initializes the DB connection
+const path = require("path");
 
 // Load environment variables immediately
+// Load environment variables FIRST before requiring db
 dotenv.config();
+
+const db = require("./config/db"); // initializes the DB connection
 
 const app = express();
 
@@ -31,11 +34,29 @@ app.use(cors({
 // (like /api/products/add) because multer handles the request body parsing.
 // However, for all other routes, it's still needed.
 app.use(express.json()); 
+// Configure CORS to allow requests from frontend
+app.use(
+  cors({
+    origin: ["http://localhost:3000", "http://localhost:3001"], // Allow Next.js default ports
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+app.use(express.json()); // To accept JSON data in the body
+
+// Serve static assets (product images)
+app.use("/assets", express.static(path.join(__dirname, "../assets")));
 
 // --- API Routes ---
 app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/staff", staffRoutes);
+app.use("/api/products", require("./routes/products"));
+app.use("/api/categories", require("./routes/categories"));
+app.use("/api/variants", require("./routes/variants"));
+app.use("/api/cart", require("./routes/cart"));
+app.use("/api/auth", require("./routes/auth"));
 // app.use('/api/orders', require('./routes/orders'));
 
 // Basic Test Route

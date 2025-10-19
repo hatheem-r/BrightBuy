@@ -12,7 +12,84 @@ export default function SignupPage() {
     const router = useRouter();
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-    const handleSubmit = (e) => { /* ... same as before ... */ };
+    
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        console.log('\n=== FRONTEND SIGNUP FORM SUBMISSION ===');
+        console.log('Form data:', {
+            name: formData.name,
+            email: formData.email,
+            password: '***' + formData.password.slice(-3),
+            confirmPassword: '***' + formData.confirmPassword.slice(-3)
+        });
+        
+        setError('');
+        
+        // Validate passwords match
+        if (formData.password !== formData.confirmPassword) {
+            console.log('❌ Passwords do not match');
+            setError('Passwords do not match');
+            return;
+        }
+        
+        console.log('✓ Password validation passed');
+        setLoading(true);
+        
+        try {
+            const payload = {
+                name: formData.name,
+                email: formData.email,
+                password: formData.password
+            };
+            
+            console.log('Sending POST request to /api/auth/signup');
+            console.log('Payload:', {
+                ...payload,
+                password: '***' + payload.password.slice(-3)
+            });
+            
+            const response = await fetch('http://localhost:5001/api/auth/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+            
+            const data = await response.json();
+            console.log('Response data:', {
+                ...data,
+                token: data.token ? 'JWT_TOKEN_' + data.token.slice(-10) : 'no token'
+            });
+            
+            if (response.ok && data.success) {
+                console.log('✅ Signup successful!');
+                console.log('Storing token and user data in localStorage');
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                console.log('Redirecting to home page...');
+                console.log('=== END FRONTEND SIGNUP ===\n');
+                router.push('/');
+            } else {
+                console.log('❌ Signup failed:', data.message);
+                console.log('=== END FRONTEND SIGNUP (ERROR) ===\n');
+                setError(data.message || 'Signup failed');
+            }
+        } catch (err) {
+            console.error('❌ Network error during signup:', err);
+            console.log('Error details:', {
+                message: err.message,
+                stack: err.stack
+            });
+            console.log('=== END FRONTEND SIGNUP (ERROR) ===\n');
+            setError('Network error. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <main className={styles.pageWrapper}>
