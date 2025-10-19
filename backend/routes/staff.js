@@ -7,7 +7,11 @@ const { authenticate, authorizeStaff, authorizeLevel01 } = require("../middlewar
 // Staff management routes (Level01 only)
 router.get("/list", authenticate, authorizeLevel01, staffController.getAllStaff);
 router.post("/create", authenticate, authorizeLevel01, staffController.createStaff);
-router.delete("/:staffId", authenticate, authorizeLevel01, staffController.deleteStaff);
+router.delete("/:staffId/admin", authenticate, authorizeLevel01, staffController.deleteStaff);
+
+// Staff account management routes (Own account)
+router.put("/:staffId", authenticate, authorizeStaff, staffController.updateStaffAccount);
+router.delete("/:staffId", authenticate, authorizeStaff, staffController.deleteStaffAccount);
 
 // Inventory management routes (All staff)
 router.get("/inventory", authenticate, authorizeStaff, staffController.getInventory);

@@ -11,5 +11,6 @@ router.post("/signup", authController.register); // Alias for register
 
 // Protected routes (require authentication)
 router.get("/me", authenticate, authController.getMe);
+router.post("/change-password", authenticate, authController.changePassword);
 
 module.exports = router;

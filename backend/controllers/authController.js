@@ -361,3 +361,87 @@ exports.getMe = async (req, res) => {
     });
   }
 };
+
+// Change password for authenticated users
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password and new password are required",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "New password must be at least 6 characters",
+      });
+    }
+
+    // Get current password hash
+    const [users] = await db.query(
+      "SELECT password_hash FROM users WHERE user_id = ?",
+      [userId]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      users[0].password_hash
+    );
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const newPasswordHash = await bcrypt.hash(newPassword, salt);
+
+    // Update password in users table
+    await db.query(
+      "UPDATE users SET password_hash = ? WHERE user_id = ?",
+      [newPasswordHash, userId]
+    );
+
+    // Also update in Customer or Staff table based on role
+    const role = req.user.role;
+    if (role === "customer" && req.user.customerId) {
+      await db.query(
+        "UPDATE Customer SET password_hash = ? WHERE customer_id = ?",
+        [newPasswordHash, req.user.customerId]
+      );
+    } else if (role === "staff" && req.user.staffId) {
+      await db.query(
+        "UPDATE Staff SET password_hash = ? WHERE staff_id = ?",
+        [newPasswordHash, req.user.staffId]
+      );
+    }
+
+    res.json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error("Change password error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Please try again later.",
+    });
+  }
+};

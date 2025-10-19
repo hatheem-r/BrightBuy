@@ -20,7 +20,7 @@ router.get("/", getAllProducts);
 router.get("/names", getProductNames);
 
 // @route   GET /api/products/search
-// @desc    Search products by name or brand
+// @desc    Search products by keyword (name, brand, description, category, SKU, color, size)
 // @access  Public
 router.get("/search", searchProducts);
 

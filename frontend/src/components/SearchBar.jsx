@@ -53,14 +53,21 @@ const SearchBar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Filter suggestions based on search term
+  // Filter suggestions based on search term - Enhanced keyword search
   useEffect(() => {
     if (searchTerm.trim().length > 0) {
-      const filtered = allProducts.filter(
-        (product) =>
-          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.brand.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      const searchLower = searchTerm.toLowerCase();
+      const filtered = allProducts.filter((product) => {
+        // Search in product name, brand, description, color, size, and SKU
+        return (
+          product.name.toLowerCase().includes(searchLower) ||
+          product.brand.toLowerCase().includes(searchLower) ||
+          (product.description && product.description.toLowerCase().includes(searchLower)) ||
+          (product.color && product.color.toLowerCase().includes(searchLower)) ||
+          (product.size && product.size.toLowerCase().includes(searchLower)) ||
+          (product.sku && product.sku.toLowerCase().includes(searchLower))
+        );
+      });
       setSuggestions(filtered.slice(0, 8)); // Limit to 8 suggestions
       setShowSuggestions(true);
       setSelectedIndex(-1);

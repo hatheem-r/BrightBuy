@@ -189,7 +189,13 @@ class ProductModel {
       LEFT JOIN Inventory i ON pv.variant_id = i.variant_id
       LEFT JOIN ProductCategory pc ON p.product_id = pc.product_id
       LEFT JOIN Category c ON pc.category_id = c.category_id
-      WHERE p.name LIKE ? OR p.brand LIKE ?
+      WHERE p.name LIKE ? 
+        OR p.brand LIKE ?
+        OR pv.description LIKE ?
+        OR pv.sku LIKE ?
+        OR pv.color LIKE ?
+        OR pv.size LIKE ?
+        OR c.name LIKE ?
       GROUP BY p.product_id, p.name, p.brand, pv.variant_id, pv.price, pv.sku, pv.size, pv.color, pv.description, i.quantity, pv.image_url
       ORDER BY p.product_id DESC
     `;
@@ -197,7 +203,15 @@ class ProductModel {
     const searchPattern = `%${searchTerm}%`;
 
     try {
-      const [rows] = await db.query(sql, [searchPattern, searchPattern]);
+      const [rows] = await db.query(sql, [
+        searchPattern, 
+        searchPattern, 
+        searchPattern, 
+        searchPattern, 
+        searchPattern, 
+        searchPattern, 
+        searchPattern
+      ]);
       return rows;
     } catch (error) {
       throw error;
