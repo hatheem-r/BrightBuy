@@ -337,12 +337,13 @@ const updateOrderStatus = async (req, res) => {
 // Get all orders (for staff)
 const getAllOrders = async (req, res) => {
   try {
-    // Get all orders with full details
+    // Get all orders with full details including shipment information
     const [orders] = await db.execute(
       `SELECT o.order_id,
               o.customer_id,
               o.address_id,
               o.payment_id,
+              o.shipment_id,
               o.delivery_mode,
               o.delivery_zip,
               o.status,
@@ -356,10 +357,16 @@ const getAllOrders = async (req, res) => {
               p.status as payment_status,
               p.amount as payment_amount,
               p.transaction_id,
+              s.shipment_provider,
+              s.tracking_number,
+              s.shipped_date,
+              s.delivered_date,
+              s.notes as shipment_notes,
               COUNT(DISTINCT oi.order_item_id) as item_count,
               SUM(oi.quantity * oi.unit_price) as items_total
        FROM Orders o
        LEFT JOIN Payment p ON o.payment_id = p.payment_id
+       LEFT JOIN Shipment s ON o.shipment_id = s.shipment_id
        LEFT JOIN Order_item oi ON o.order_id = oi.order_id
        GROUP BY o.order_id
        ORDER BY o.created_at DESC`
@@ -377,10 +384,77 @@ const getAllOrders = async (req, res) => {
   }
 };
 
+// Update shipment information (for staff)
+const updateShipmentInfo = async (req, res) => {
+  try {
+    const { order_id } = req.params;
+    const { shipment_provider, tracking_number, notes } = req.body;
+
+    // First, check if order exists and get its shipment_id
+    const [orders] = await db.execute(
+      `SELECT shipment_id FROM Orders WHERE order_id = ?`,
+      [order_id]
+    );
+
+    if (orders.length === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    const order = orders[0];
+
+    if (order.shipment_id) {
+      // Update existing shipment record
+      await db.execute(
+        `UPDATE Shipment 
+         SET shipment_provider = ?, 
+             tracking_number = ?, 
+             notes = ?,
+             shipped_date = CASE WHEN shipped_date IS NULL AND ? IS NOT NULL THEN NOW() ELSE shipped_date END
+         WHERE shipment_id = ?`,
+        [shipment_provider, tracking_number, notes, tracking_number, order.shipment_id]
+      );
+
+      res.json({
+        message: "Shipment information updated successfully",
+        order_id,
+        shipment_id: order.shipment_id,
+      });
+    } else {
+      // Create new shipment record
+      const [result] = await db.execute(
+        `INSERT INTO Shipment (shipment_provider, tracking_number, notes, shipped_date)
+         VALUES (?, ?, ?, ?)`,
+        [shipment_provider, tracking_number, notes, tracking_number ? new Date() : null]
+      );
+
+      const shipment_id = result.insertId;
+
+      // Link shipment to order
+      await db.execute(
+        `UPDATE Orders SET shipment_id = ? WHERE order_id = ?`,
+        [shipment_id, order_id]
+      );
+
+      res.json({
+        message: "Shipment information created successfully",
+        order_id,
+        shipment_id,
+      });
+    }
+  } catch (error) {
+    console.error("Error updating shipment information:", error);
+    res.status(500).json({
+      error: "Failed to update shipment information",
+      details: error.message,
+    });
+  }
+};
+
 module.exports = {
   createOrder,
   getOrderById,
   getOrdersByCustomer,
   updateOrderStatus,
   getAllOrders,
+  updateShipmentInfo,
 };

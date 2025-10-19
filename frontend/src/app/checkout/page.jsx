@@ -37,6 +37,7 @@ export default function CheckoutPage() {
   const [loadingCustomerData, setLoadingCustomerData] = useState(false);
   const [savedAddressId, setSavedAddressId] = useState(null);
 
+  const [deliveryMode, setDeliveryMode] = useState("Standard Delivery"); // New state for delivery mode
   const [shippingInfo, setShippingInfo] = useState({
     firstName: "",
     lastName: "",
@@ -74,7 +75,7 @@ export default function CheckoutPage() {
   );
   const itemCount = checkoutItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const SHIPPING_COST = 5.00; // $5.00
+  const SHIPPING_COST = deliveryMode === "Store Pickup" ? 0 : 5.00; // Free for Store Pickup
   const TAX_RATE = 0.08; // 8% tax
   const taxAmount = subtotal * TAX_RATE;
   const totalAmount = subtotal + SHIPPING_COST + taxAmount;
@@ -236,11 +237,14 @@ export default function CheckoutPage() {
       errors.phone = "Phone number must not exceed 15 digits";
     }
 
-    if (!shippingInfo.address.trim()) errors.address = "Address is required";
-    if (!shippingInfo.city.trim()) errors.city = "City is required";
-    if (!shippingInfo.state.trim()) errors.state = "State is required";
-    if (!shippingInfo.postalCode.trim())
-      errors.postalCode = "Postal code is required";
+    // Address fields only required for Standard Delivery
+    if (deliveryMode === "Standard Delivery") {
+      if (!shippingInfo.address.trim()) errors.address = "Address is required";
+      if (!shippingInfo.city.trim()) errors.city = "City is required";
+      if (!shippingInfo.state.trim()) errors.state = "State is required";
+      if (!shippingInfo.postalCode.trim())
+        errors.postalCode = "Postal code is required";
+    }
 
     // Card payment validation
     if (paymentMethod === "card") {
@@ -295,25 +299,28 @@ export default function CheckoutPage() {
           phone: shippingInfo.phone,
         });
 
-        // Step 2: Save address
-        const addressData = {
-          address_id: savedAddressId, // Will be null for new address
-          line1: shippingInfo.address,
-          line2: shippingInfo.address2,
-          city: shippingInfo.city,
-          state: shippingInfo.state,
-          zip_code: shippingInfo.postalCode,
-          is_default: 1, // Set as default address
-        };
+        // Step 2: Save address (only for Standard Delivery)
+        let addressResult = null;
+        if (deliveryMode === "Standard Delivery") {
+          const addressData = {
+            address_id: savedAddressId, // Will be null for new address
+            line1: shippingInfo.address,
+            line2: shippingInfo.address2,
+            city: shippingInfo.city,
+            state: shippingInfo.state,
+            zip_code: shippingInfo.postalCode,
+            is_default: 1, // Set as default address
+          };
 
-        const addressResult = await customerAPI.saveAddress(
-          customerId,
-          addressData
-        );
+          addressResult = await customerAPI.saveAddress(
+            customerId,
+            addressData
+          );
 
-        // Update saved address ID for future updates
-        if (addressResult.address_id) {
-          setSavedAddressId(addressResult.address_id);
+          // Update saved address ID for future updates
+          if (addressResult.address_id) {
+            setSavedAddressId(addressResult.address_id);
+          }
         }
       }
 
@@ -333,14 +340,14 @@ export default function CheckoutPage() {
       // Prepare order data
       const orderData = {
         customer_id: parseInt(customerId),
-        address_id: savedAddressId || addressResult?.address_id,
-        delivery_mode: "Standard Delivery",
-        delivery_zip: shippingInfo.postalCode,
+        address_id: deliveryMode === "Standard Delivery" ? (savedAddressId || addressResult?.address_id) : null,
+        delivery_mode: deliveryMode,
+        delivery_zip: deliveryMode === "Standard Delivery" ? shippingInfo.postalCode : null,
         payment_method:
           paymentMethod === "card" ? "Card Payment" : "Cash on Delivery",
         items: orderItems,
         sub_total: subtotal,
-        delivery_fee: SHIPPING_COST, // $5.00
+        delivery_fee: SHIPPING_COST,
         total: totalAmount,
       };
 
@@ -348,12 +355,16 @@ export default function CheckoutPage() {
       const orderResult = await ordersAPI.createOrder(orderData, token);
 
       // Success message
+      const deliveryMessage = deliveryMode === "Store Pickup" 
+        ? "\n\nPlease collect your order from our store. We'll notify you when it's ready for pickup."
+        : "\n\nYour shipping information has been saved for future orders.";
+      
       alert(
         `Order placed successfully!\n\nOrder ID: ${
           orderResult.order.order_id
-        }\nTotal: ${formatCurrency(totalAmount)}\nPayment: ${
+        }\nDelivery: ${deliveryMode}\nTotal: ${formatCurrency(totalAmount)}\nPayment: ${
           paymentMethod === "card" ? "Card Payment" : "Cash on Delivery"
-        }\n\nYour shipping information has been saved for future orders.`
+        }${deliveryMessage}`
       );
 
       // Remove items from cart based on checkout type
@@ -492,6 +503,79 @@ export default function CheckoutPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Side: Shipping & Payment Forms */}
             <div className="lg:col-span-2 space-y-6">
+              {/* Delivery Mode Selection */}
+              <div className="bg-card border border-card-border p-6 rounded-lg shadow-sm">
+                <h2 className="text-xl font-semibold mb-4 text-text-primary flex items-center">
+                  <svg
+                    className="w-5 h-5 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+                    />
+                  </svg>
+                  Delivery Method
+                </h2>
+
+                <div className="space-y-3">
+                  <label className="flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all has-[:checked]:border-secondary has-[:checked]:bg-secondary/5">
+                    <input
+                      type="radio"
+                      name="deliveryMode"
+                      value="Standard Delivery"
+                      checked={deliveryMode === "Standard Delivery"}
+                      onChange={(e) => setDeliveryMode(e.target.value)}
+                      className="w-4 h-4 mt-1 text-secondary focus:ring-secondary"
+                    />
+                    <div className="ml-3 flex-grow">
+                      <div className="font-medium text-text-primary">Standard Delivery</div>
+                      <p className="text-sm text-text-secondary mt-1">
+                        Get your items delivered to your address • Delivery fee: $5.00
+                      </p>
+                      <p className="text-xs text-text-secondary mt-1">
+                        Est. Delivery: 5-7 business days (in stock items) or 8-10 business days (out of stock)
+                      </p>
+                    </div>
+                    <svg className="w-6 h-6 ml-3 text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    </svg>
+                  </label>
+
+                  <label className="flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50 dark:has-[:checked]:bg-purple-900/20">
+                    <input
+                      type="radio"
+                      name="deliveryMode"
+                      value="Store Pickup"
+                      checked={deliveryMode === "Store Pickup"}
+                      onChange={(e) => setDeliveryMode(e.target.value)}
+                      className="w-4 h-4 mt-1 text-purple-500 focus:ring-purple-500"
+                    />
+                    <div className="ml-3 flex-grow">
+                      <div className="font-medium text-text-primary flex items-center gap-2">
+                        Store Pickup
+                        <span className="px-2 py-0.5 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 text-xs font-semibold rounded">
+                          FREE
+                        </span>
+                      </div>
+                      <p className="text-sm text-text-secondary mt-1">
+                        Pick up your order from our store • No delivery fee
+                      </p>
+                      <p className="text-xs text-text-secondary mt-1">
+                        Store Address: 123 Main Street, Austin, TX 78701 • Mon-Sat: 9AM-7PM
+                      </p>
+                    </div>
+                    <svg className="w-6 h-6 ml-3 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </label>
+                </div>
+              </div>
+
               {/* Shipping Information */}
               <div className="bg-card border border-card-border p-6 rounded-lg shadow-sm">
                 <h2 className="text-xl font-semibold mb-4 text-text-primary flex items-center">
@@ -514,8 +598,16 @@ export default function CheckoutPage() {
                       d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                     />
                   </svg>
-                  Shipping Address
+                  {deliveryMode === "Store Pickup" ? "Contact Information" : "Shipping Address"}
                 </h2>
+                
+                {deliveryMode === "Store Pickup" && (
+                  <div className="mb-4 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                    <p className="text-sm text-purple-800 dark:text-purple-300">
+                      📍 We'll notify you when your order is ready for pickup at our store.
+                    </p>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -611,128 +703,132 @@ export default function CheckoutPage() {
                     )}
                   </div>
 
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-text-secondary mb-1">
-                      Address *
-                    </label>
-                    <input
-                      type="text"
-                      name="address"
-                      value={shippingInfo.address}
-                      onChange={handleInputChange}
-                      className={`w-full p-3 bg-background border ${
-                        formErrors.address
-                          ? "border-red-500"
-                          : "border-card-border"
-                      } rounded-md focus:outline-none focus:ring-2 focus:ring-secondary`}
-                      placeholder="123 Main Street"
-                    />
-                    {formErrors.address && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {formErrors.address}
-                      </p>
-                    )}
-                  </div>
+                  {deliveryMode === "Standard Delivery" && (
+                    <>
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-text-secondary mb-1">
+                          Address *
+                        </label>
+                        <input
+                          type="text"
+                          name="address"
+                          value={shippingInfo.address}
+                          onChange={handleInputChange}
+                          className={`w-full p-3 bg-background border ${
+                            formErrors.address
+                              ? "border-red-500"
+                              : "border-card-border"
+                          } rounded-md focus:outline-none focus:ring-2 focus:ring-secondary`}
+                          placeholder="123 Main Street"
+                        />
+                        {formErrors.address && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {formErrors.address}
+                          </p>
+                        )}
+                      </div>
 
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-text-secondary mb-1">
-                      Apartment, suite, etc. (optional)
-                    </label>
-                    <input
-                      type="text"
-                      name="address2"
-                      value={shippingInfo.address2}
-                      onChange={handleInputChange}
-                      className="w-full p-3 bg-background border border-card-border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                      placeholder="Apt 4B"
-                    />
-                  </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-text-secondary mb-1">
+                          Apartment, suite, etc. (optional)
+                        </label>
+                        <input
+                          type="text"
+                          name="address2"
+                          value={shippingInfo.address2}
+                          onChange={handleInputChange}
+                          className="w-full p-3 bg-background border border-card-border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                          placeholder="Apt 4B"
+                        />
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">
-                      City *
-                    </label>
-                    <input
-                      type="text"
-                      name="city"
-                      value={shippingInfo.city}
-                      onChange={handleInputChange}
-                      className={`w-full p-3 bg-background border ${
-                        formErrors.city
-                          ? "border-red-500"
-                          : "border-card-border"
-                      } rounded-md focus:outline-none focus:ring-2 focus:ring-secondary`}
-                      placeholder="New York"
-                    />
-                    {formErrors.city && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {formErrors.city}
-                      </p>
-                    )}
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">
+                          City *
+                        </label>
+                        <input
+                          type="text"
+                          name="city"
+                          value={shippingInfo.city}
+                          onChange={handleInputChange}
+                          className={`w-full p-3 bg-background border ${
+                            formErrors.city
+                              ? "border-red-500"
+                              : "border-card-border"
+                          } rounded-md focus:outline-none focus:ring-2 focus:ring-secondary`}
+                          placeholder="New York"
+                        />
+                        {formErrors.city && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {formErrors.city}
+                          </p>
+                        )}
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">
-                      State *
-                    </label>
-                    <input
-                      type="text"
-                      name="state"
-                      value={shippingInfo.state}
-                      onChange={handleInputChange}
-                      className={`w-full p-3 bg-background border ${
-                        formErrors.state
-                          ? "border-red-500"
-                          : "border-card-border"
-                      } rounded-md focus:outline-none focus:ring-2 focus:ring-secondary`}
-                      placeholder="NY"
-                    />
-                    {formErrors.state && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {formErrors.state}
-                      </p>
-                    )}
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">
+                          State *
+                        </label>
+                        <input
+                          type="text"
+                          name="state"
+                          value={shippingInfo.state}
+                          onChange={handleInputChange}
+                          className={`w-full p-3 bg-background border ${
+                            formErrors.state
+                              ? "border-red-500"
+                              : "border-card-border"
+                          } rounded-md focus:outline-none focus:ring-2 focus:ring-secondary`}
+                          placeholder="NY"
+                        />
+                        {formErrors.state && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {formErrors.state}
+                          </p>
+                        )}
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">
-                      Postal Code *
-                    </label>
-                    <input
-                      type="text"
-                      name="postalCode"
-                      value={shippingInfo.postalCode}
-                      onChange={handleInputChange}
-                      className={`w-full p-3 bg-background border ${
-                        formErrors.postalCode
-                          ? "border-red-500"
-                          : "border-card-border"
-                      } rounded-md focus:outline-none focus:ring-2 focus:ring-secondary`}
-                      placeholder="10001"
-                    />
-                    {formErrors.postalCode && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {formErrors.postalCode}
-                      </p>
-                    )}
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">
+                          Postal Code *
+                        </label>
+                        <input
+                          type="text"
+                          name="postalCode"
+                          value={shippingInfo.postalCode}
+                          onChange={handleInputChange}
+                          className={`w-full p-3 bg-background border ${
+                            formErrors.postalCode
+                              ? "border-red-500"
+                              : "border-card-border"
+                          } rounded-md focus:outline-none focus:ring-2 focus:ring-secondary`}
+                          placeholder="10001"
+                        />
+                        {formErrors.postalCode && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {formErrors.postalCode}
+                          </p>
+                        )}
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">
-                      Country *
-                    </label>
-                    <select
-                      name="country"
-                      value={shippingInfo.country}
-                      onChange={handleInputChange}
-                      className="w-full p-3 bg-background border border-card-border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
-                    >
-                      <option value="United States">United States</option>
-                      <option value="Canada">Canada</option>
-                      <option value="United Kingdom">United Kingdom</option>
-                      <option value="Australia">Australia</option>
-                    </select>
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">
+                          Country *
+                        </label>
+                        <select
+                          name="country"
+                          value={shippingInfo.country}
+                          onChange={handleInputChange}
+                          className="w-full p-3 bg-background border border-card-border rounded-md focus:outline-none focus:ring-2 focus:ring-secondary"
+                        >
+                          <option value="United States">United States</option>
+                          <option value="Canada">Canada</option>
+                          <option value="United Kingdom">United Kingdom</option>
+                          <option value="Australia">Australia</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -956,8 +1052,15 @@ export default function CheckoutPage() {
                     <span>{formatCurrency(subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-text-secondary">
-                    <span>Shipping</span>
-                    <span>{formatCurrency(SHIPPING_COST)}</span>
+                    <span>
+                      {deliveryMode === "Store Pickup" ? "Pickup" : "Shipping"}
+                      {deliveryMode === "Store Pickup" && (
+                        <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 text-xs font-semibold rounded">
+                          FREE
+                        </span>
+                      )}
+                    </span>
+                    <span>{deliveryMode === "Store Pickup" ? "Free" : formatCurrency(SHIPPING_COST)}</span>
                   </div>
                   <div className="flex justify-between text-text-secondary">
                     <span>Tax (8%)</span>

@@ -33,4 +33,11 @@ router.put(
   orderController.updateOrderStatus
 );
 
+// Update shipment information (for staff)
+router.put(
+  "/:order_id/shipment",
+  authenticate,
+  orderController.updateShipmentInfo
+);
+
 module.exports = router;

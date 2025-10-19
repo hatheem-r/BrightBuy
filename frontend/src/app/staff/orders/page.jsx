@@ -91,6 +91,31 @@ export default function StaffOrdersPage() {
     }
   };
 
+  const handleShipmentUpdate = async (orderId, shipmentData) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`${BACKEND_URL}/api/orders/${orderId}/shipment`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(shipmentData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update shipment information");
+      }
+
+      // Refresh orders after update
+      fetchAllOrders();
+      alert(`Shipment information updated for Order #${orderId}`);
+    } catch (error) {
+      console.error("Error updating shipment:", error);
+      alert("Failed to update shipment information. Please try again.");
+    }
+  };
+
   const getStatusBadge = (status) => {
     const badges = {
       pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
@@ -248,71 +273,228 @@ export default function StaffOrdersPage() {
         ) : (
           <div className="space-y-4">
             {filteredOrders.map((order) => (
-              <div key={order.order_id} className="bg-card border border-card-border rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3 flex-wrap">
-                      <h3 className="font-bold text-text-primary text-lg">Order #{order.order_id}</h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(order.status)}`}>
-                        {order.status.toUpperCase()}
-                      </span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getPaymentBadge(order.payment_status)}`}>
-                        {order.payment_status === "paid" ? "PAID" : "PAYMENT PENDING"}
-                      </span>
-                    </div>
-                    <div className="text-sm text-text-secondary space-y-1">
-                      <p>👤 Customer ID: {order.customer_id}</p>
-                      <p>📅 Placed on {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString()}</p>
-                      <p>📦 {order.item_count} {order.item_count === 1 ? "item" : "items"} • Rs. {parseFloat(order.total).toLocaleString()}</p>
-                      <p>🚚 {order.delivery_mode} {order.delivery_zip && `• ZIP: ${order.delivery_zip}`}</p>
-                      {order.estimated_delivery_days && (
-                        <p>⏱️ Est. Delivery: {order.estimated_delivery_days} days</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    {/* Status Update Dropdown */}
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-text-primary whitespace-nowrap">
-                        Update Status:
-                      </label>
-                      <select
-                        value={order.status}
-                        onChange={(e) => handleStatusUpdate(order.order_id, e.target.value)}
-                        className="px-3 py-2 border border-card-border rounded-lg bg-background text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="paid">Paid</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
-                      </select>
-                    </div>
-
-                    {/* View Details Button */}
-                    <Link
-                      href={`/order-tracking/${order.order_id}`}
-                      className="px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 text-sm font-medium text-center"
-                    >
-                      View Details
-                    </Link>
-                  </div>
-                </div>
-
-                {order.payment_status === "pending" && (
-                  <div className="mt-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 flex items-center text-sm text-orange-800 dark:text-orange-300">
-                    <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <span>⚠️ Payment not completed - Order processing on hold</span>
-                  </div>
-                )}
-              </div>
+              <OrderCard 
+                key={order.order_id} 
+                order={order}
+                onStatusUpdate={handleStatusUpdate}
+                onShipmentUpdate={handleShipmentUpdate}
+                getStatusBadge={getStatusBadge}
+                getPaymentBadge={getPaymentBadge}
+              />
             ))}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// Separate Order Card Component for better organization
+function OrderCard({ order, onStatusUpdate, onShipmentUpdate, getStatusBadge, getPaymentBadge }) {
+  const [showShipmentForm, setShowShipmentForm] = useState(false);
+  const [shipmentData, setShipmentData] = useState({
+    shipment_provider: order.shipment_provider || '',
+    tracking_number: order.tracking_number || '',
+    notes: order.shipment_notes || '',
+  });
+
+  const handleShipmentSubmit = (e) => {
+    e.preventDefault();
+    onShipmentUpdate(order.order_id, shipmentData);
+    setShowShipmentForm(false);
+  };
+
+  const isStorePickup = order.delivery_mode === 'Store Pickup';
+
+  return (
+    <div className="bg-card border border-card-border rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-3 flex-wrap">
+            <h3 className="font-bold text-text-primary text-lg">Order #{order.order_id}</h3>
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(order.status)}`}>
+              {order.status.toUpperCase()}
+            </span>
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getPaymentBadge(order.payment_status)}`}>
+              {order.payment_status === "paid" ? "PAID" : "PAYMENT PENDING"}
+            </span>
+            {isStorePickup && (
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                STORE PICKUP
+              </span>
+            )}
+          </div>
+
+          <div className="text-sm text-text-secondary space-y-1">
+            <p>👤 Customer ID: {order.customer_id}</p>
+            <p>📅 Placed on {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString()}</p>
+            <p>📦 {order.item_count} {order.item_count === 1 ? "item" : "items"} in order • Rs. {parseFloat(order.total).toLocaleString()}</p>
+            <p>🚚 Delivery: {order.delivery_mode} {order.delivery_zip && !isStorePickup && `• ZIP: ${order.delivery_zip}`}</p>
+            {order.estimated_delivery_days && (
+              <p>⏱️ Est. Delivery: {order.estimated_delivery_days} days</p>
+            )}
+          </div>
+
+          {/* Shipment Tracking Section - Only for Standard Delivery */}
+          {!isStorePickup && (
+            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-semibold text-blue-800 dark:text-blue-300 flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                  </svg>
+                  Courier Service Tracking
+                </h4>
+                <button
+                  onClick={() => setShowShipmentForm(!showShipmentForm)}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {showShipmentForm ? 'Cancel' : order.tracking_number ? 'Update' : 'Add Tracking'}
+                </button>
+              </div>
+
+              {!showShipmentForm && (
+                <div className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
+                  {order.shipment_provider ? (
+                    <>
+                      <p>📦 Courier: <span className="font-semibold">{order.shipment_provider}</span></p>
+                      {order.tracking_number && (
+                        <p>🔢 Tracking #: <span className="font-mono font-semibold">{order.tracking_number}</span></p>
+                      )}
+                      {order.shipped_date && (
+                        <p>📤 Shipped: {new Date(order.shipped_date).toLocaleDateString()}</p>
+                      )}
+                      {order.delivered_date && (
+                        <p>✅ Delivered: {new Date(order.delivered_date).toLocaleDateString()}</p>
+                      )}
+                      {order.shipment_notes && (
+                        <p>📝 Notes: {order.shipment_notes}</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-gray-500 dark:text-gray-400">
+                      No courier tracking information available yet. Click "Add Tracking" to enter details.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {showShipmentForm && (
+                <form onSubmit={handleShipmentSubmit} className="mt-3 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
+                      Courier Service
+                    </label>
+                    <input
+                      type="text"
+                      value={shipmentData.shipment_provider}
+                      onChange={(e) => setShipmentData({...shipmentData, shipment_provider: e.target.value})}
+                      placeholder="e.g., FedEx, UPS, DHL"
+                      className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white dark:bg-gray-800 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
+                      Tracking Number
+                    </label>
+                    <input
+                      type="text"
+                      value={shipmentData.tracking_number}
+                      onChange={(e) => setShipmentData({...shipmentData, tracking_number: e.target.value})}
+                      placeholder="Enter tracking number"
+                      className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white dark:bg-gray-800 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
+                      Notes (Optional)
+                    </label>
+                    <textarea
+                      value={shipmentData.notes}
+                      onChange={(e) => setShipmentData({...shipmentData, notes: e.target.value})}
+                      placeholder="Add any shipment notes"
+                      rows="2"
+                      className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white dark:bg-gray-800 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                    >
+                      Save Tracking Info
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowShipmentForm(false)}
+                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 text-sm font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
+
+          {/* Store Pickup Notice */}
+          {isStorePickup && (
+            <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <div>
+                  <h4 className="font-semibold text-purple-800 dark:text-purple-300 mb-1">
+                    Store Pickup Order
+                  </h4>
+                  <p className="text-sm text-purple-700 dark:text-purple-400">
+                    Customer will collect this order from the store. No courier service required.
+                    {order.status === 'paid' && " Prepare items for pickup."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          {/* Status Update Dropdown */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-text-primary whitespace-nowrap">
+              Update Status:
+            </label>
+            <select
+              value={order.status}
+              onChange={(e) => onStatusUpdate(order.order_id, e.target.value)}
+              className="px-3 py-2 border border-card-border rounded-lg bg-background text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="pending">Pending</option>
+              <option value="paid">Paid</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+
+          {/* View Details Button */}
+          <Link
+            href={`/order-tracking/${order.order_id}`}
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 text-sm font-medium text-center"
+          >
+            Track Order
+          </Link>
+        </div>
+      </div>
+
+      {order.payment_status === "pending" && (
+        <div className="mt-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 flex items-center text-sm text-orange-800 dark:text-orange-300">
+          <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span>⚠️ Payment not completed - Order processing on hold</span>
+        </div>
+      )}
     </div>
   );
 }
