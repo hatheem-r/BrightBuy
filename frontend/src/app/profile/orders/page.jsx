@@ -60,20 +60,9 @@ export default function MyOrdersPage() {
     const badges = {
       pending: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
       paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-      completed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
       failed: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
     };
     return badges[status] || "bg-gray-100 text-gray-800";
-  };
-
-  const getPaymentStatusText = (status) => {
-    const statuses = {
-      pending: "PAYMENT PENDING",
-      paid: "PAID",
-      completed: "PAID",
-      failed: "PAYMENT FAILED",
-    };
-    return statuses[status] || status?.toUpperCase();
   };
 
   const filteredOrders = filterStatus === "all" 
@@ -177,7 +166,7 @@ export default function MyOrdersPage() {
                         {order.status.toUpperCase()}
                       </span>
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getPaymentBadge(order.payment_status)}`}>
-                        {getPaymentStatusText(order.payment_status)}
+                        {order.payment_status === "paid" ? "PAID" : "PAYMENT PENDING"}
                       </span>
                     </div>
                     <div className="text-sm text-text-secondary space-y-1">
