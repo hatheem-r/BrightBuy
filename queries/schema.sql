@@ -48,6 +48,7 @@ CREATE TABLE ProductVariant (
 );
 CREATE INDEX idx_productvariant_product ON ProductVariant(product_id);
 -- 
+DELIMITER $$
 CREATE TRIGGER trg_variant_category_check BEFORE
 INSERT ON ProductVariant FOR EACH ROW BEGIN
 DECLARE category_count INT;
@@ -57,7 +58,9 @@ WHERE product_id = NEW.product_id;
 IF category_count = 0 THEN SIGNAL SQLSTATE '45000'
 SET MESSAGE_TEXT = 'Cannot insert ProductVariant: parent Product not assigned to any Category';
 END IF;
-END;
+END$$
+DELIMITER ;
+
 -- NOTE: trg_variant_create_inventory will be created later (after Inventory exists).
 -- ============================
 -- 5. Customer
@@ -128,12 +131,15 @@ CREATE TABLE Orders (
     SET NULL
 );
 CREATE INDEX idx_orders_customer_created ON Orders(customer_id, created_at);
+
+DELIMITER $$
 CREATE TRIGGER trg_orders_address_check BEFORE
 INSERT ON Orders FOR EACH ROW BEGIN IF NEW.delivery_mode = 'Standard Delivery'
     AND NEW.address_id IS NULL THEN SIGNAL SQLSTATE '45000'
 SET MESSAGE_TEXT = 'Standard Delivery requires a valid address_id';
 END IF;
-END;
+END$$
+DELIMITER ;
 -- ============================
 -- 10. ZipDeliveryZone
 -- ============================
@@ -173,6 +179,8 @@ VALUES ('78701', 'TX', 1, 1, 5.00, 5, NULL, 'Austin'),
         NULL,
         'San Antonio'
     );
+
+DELIMITER $$
 CREATE TRIGGER trg_compute_delivery_fee BEFORE
 INSERT ON Orders FOR EACH ROW BEGIN
 DECLARE v_base_fee DECIMAL(10, 2);
@@ -196,7 +204,8 @@ SET NEW.delivery_fee = v_base_fee;
 -- (Optional) If Orders table has a column for estimated days:
 -- SET NEW.delivery_days = v_base_days;
 END delivery_block;
-END;
+END$$
+DELIMITER ;
 -- ============================
 -- 11. Order_item
 -- ============================
@@ -223,6 +232,8 @@ CREATE TABLE Inventory (
 );
 CREATE INDEX idx_inventory_variant ON Inventory(variant_id);
 -- Now that Inventory exists, create the ProductVariant AFTER INSERT trigger to create inventory rows
+
+DELIMITER $$
 CREATE TRIGGER trg_variant_create_inventory
 AFTER
 INSERT ON ProductVariant FOR EACH ROW BEGIN
@@ -230,7 +241,8 @@ INSERT INTO Inventory(variant_id, quantity)
 VALUES (NEW.variant_id, 0) ON DUPLICATE KEY
 UPDATE variant_id = variant_id;
 -- no-op if row exists
-END;
+END$$
+DELIMITER ;
 -- ============================
 -- 13. Cart
 -- ============================
@@ -280,6 +292,8 @@ CREATE TABLE Inventory_updates (
     CONSTRAINT fk_update_staff FOREIGN KEY (staff_id) REFERENCES Staff(staff_id) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT fk_update_variant FOREIGN KEY (variant_id) REFERENCES ProductVariant(variant_id) ON UPDATE CASCADE
 );
+
+DELIMITER $$
 CREATE TRIGGER trg_inventory_update_before_insert BEFORE
 INSERT ON Inventory_updates FOR EACH ROW BEGIN
 DECLARE current_qty INT;
@@ -297,7 +311,8 @@ END IF;
 UPDATE Inventory
 SET quantity = quantity + NEW.added_quantity
 WHERE variant_id = NEW.variant_id;
-END;
+END$$
+DELIMITER ;
 -- ============================
 -- 17. Payment (created now, refers to Orders)
 -- ============================
@@ -314,6 +329,8 @@ CREATE TABLE Payment (
 );
 CREATE INDEX idx_payment_status ON Payment(status);
 -- AFTER INSERT trigger on Payment to set Orders.payment_id so Orders.payment_id is populated
+
+DELIMITER $$    
 CREATE TRIGGER trg_payment_after_insert
 AFTER
 INSERT ON Payment FOR EACH ROW BEGIN IF NEW.order_id IS NOT NULL THEN
@@ -321,7 +338,8 @@ UPDATE Orders
 SET payment_id = NEW.payment_id
 WHERE order_id = NEW.order_id;
 END IF;
-END;
+END$$
+DELIMITER ;
 -- ============================
 -- 18. Delivery-related triggers/procs already created above (trg_compute_delivery_fee, trg_orders_address_check)
 -- ============================
@@ -329,6 +347,8 @@ END;
 -- 19. Cart procedures (NO inventory deduction here)
 -- ============================
 -- DROP PROCEDURE IF EXISTS AddToCart;
+
+DELIMITER $$
 CREATE PROCEDURE AddToCart(
     IN p_cart_id INT,
     IN p_variant_id INT,
@@ -348,8 +368,11 @@ ELSE
 INSERT INTO Cart_item(cart_id, variant_id, quantity)
 VALUES(p_cart_id, p_variant_id, p_quantity);
 END IF;
-END;
+END$$
+DELIMITER ;
+
 -- DROP PROCEDURE IF EXISTS RemoveFromCart;
+DELIMITER $$
 CREATE PROCEDURE RemoveFromCart(
     IN p_cart_id INT,
     IN p_variant_id INT,
@@ -373,13 +396,16 @@ WHERE cart_id = p_cart_id
     AND variant_id = p_variant_id;
 END IF;
 END IF;
-END;
+END$$
+DELIMITER ;
 -- ============================
 -- 20. PlaceOrder procedure
 -- ============================
 -- ============================
 -- When Order.status becomes 'paid', mark corresponding payment as completed
 -- ============================
+
+DELIMITER $$
 CREATE TRIGGER trg_order_paid_update_payment
 AFTER
 UPDATE ON Orders FOR EACH ROW BEGIN IF NEW.status = 'paid'
@@ -389,10 +415,12 @@ SET status = 'completed',
     date_time = IF(date_time IS NULL, NOW(), date_time)
 WHERE payment_id = NEW.payment_id;
 END IF;
-END;
+END$$
+DELIMITER ;
 -- ============================
 -- Reporting procedures & views
 -- ============================
+DELIMITER $$
 DROP PROCEDURE IF EXISTS GetTopSellingProducts;
 CREATE PROCEDURE GetTopSellingProducts(
     IN start_date DATE,
@@ -412,7 +440,10 @@ GROUP BY p.product_id,
     p.name
 ORDER BY total_quantity_sold DESC
 LIMIT top_n;
-END;
+END$$
+DELIMITER ;
+
+DELIMITER $$
 DROP PROCEDURE IF EXISTS GetQuarterlySalesByYear;
 CREATE PROCEDURE GetQuarterlySalesByYear(IN p_year INT) BEGIN
 SELECT QUARTER(o.created_at) AS quarter,
@@ -423,7 +454,8 @@ FROM Orders o
 WHERE YEAR(o.created_at) = p_year
 GROUP BY QUARTER(o.created_at)
 ORDER BY quarter;
-END;
+END$$
+DELIMITER ;
 CREATE OR REPLACE VIEW Staff_CategoryOrders AS
 SELECT c.category_id,
     c.name AS category_name,
@@ -471,6 +503,19 @@ FROM Orders o
     JOIN Order_item oi ON o.order_id = oi.order_id
 GROUP BY YEAR(o.created_at),
     QUARTER(o.created_at);
+
+
+-- table to archive generated reports
+CREATE TABLE report_archive (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    report_type VARCHAR(100) NOT NULL,
+    report_date DATE NOT NULL,
+    data LONGTEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_report_date (report_date),
+    INDEX idx_report_type (report_type)
+);
+
 -- ============================
 -- Additional Indexes (some already created above)
 -- ============================
@@ -491,3 +536,6 @@ CREATE INDEX idx_productcategory_category ON ProductCategory(category_id);
 -- - All other objects (names, columns, triggers, procedures, views) are left as you wrote them.
 -- - Populate ZipDeliveryZone with real TX ZIPs as you planned.
 -- ============================
+
+
+

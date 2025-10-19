@@ -33,6 +33,7 @@ app.use("/api/variants", require("./routes/variants"));
 app.use("/api/cart", require("./routes/cart"));
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/customers", require("./routes/customer"));
+app.use('/api/reports', require('./routes/reports'));    //report routes
 // app.use('/api/orders', require('./routes/orders'));
 
 // Basic Test Route
@@ -45,3 +46,5 @@ const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+
