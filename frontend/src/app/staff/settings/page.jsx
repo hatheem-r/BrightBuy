@@ -3,7 +3,11 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import BackButton from "@/components/BackButton";
 
-const BACKEND_URL = "http://localhost:5001";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
+  "http://localhost:5001";
 
 export default function StaffSettingsPage() {
   const router = useRouter();
@@ -69,14 +73,17 @@ export default function StaffSettingsPage() {
     e.preventDefault();
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`${BACKEND_URL}/api/staff/${user.staff_id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(profileData),
-      });
+      const response = await fetch(
+        `${BACKEND_URL}/api/staff/${user.staff_id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(profileData),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -97,7 +104,7 @@ export default function StaffSettingsPage() {
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       showMessage("New passwords do not match!", "error");
       return;
@@ -124,7 +131,11 @@ export default function StaffSettingsPage() {
 
       if (response.ok) {
         showMessage("Password changed successfully!", "success");
-        setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
       } else {
         const data = await response.json();
         showMessage(data.message || "Failed to change password", "error");
@@ -137,7 +148,7 @@ export default function StaffSettingsPage() {
 
   const handleDeleteAccount = async (e) => {
     e.preventDefault();
-    
+
     if (deleteData.confirmation !== "DELETE") {
       showMessage("Please type DELETE to confirm", "error");
       return;
@@ -145,14 +156,17 @@ export default function StaffSettingsPage() {
 
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`${BACKEND_URL}/api/staff/${user.staff_id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ password: deleteData.password }),
-      });
+      const response = await fetch(
+        `${BACKEND_URL}/api/staff/${user.staff_id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ password: deleteData.password }),
+        }
+      );
 
       if (response.ok) {
         showMessage("Account deleted successfully. Logging out...", "success");
@@ -199,9 +213,24 @@ export default function StaffSettingsPage() {
 
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-text-primary flex items-center">
-              <svg className="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <svg
+                className="w-8 h-8 mr-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
               </svg>
               Staff Account Settings
             </h1>
@@ -212,7 +241,13 @@ export default function StaffSettingsPage() {
 
           {/* Message Display */}
           {message.text && (
-            <div className={`mb-6 p-4 rounded-lg ${message.type === "success" ? "bg-green-50 border border-green-200 text-green-800" : "bg-red-50 border border-red-200 text-red-800"}`}>
+            <div
+              className={`mb-6 p-4 rounded-lg ${
+                message.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-800"
+                  : "bg-red-50 border border-red-200 text-red-800"
+              }`}
+            >
               {message.text}
             </div>
           )}
@@ -240,7 +275,9 @@ export default function StaffSettingsPage() {
           {/* Change Profile Section */}
           {activeSection === "profile" && (
             <div className="bg-card border border-card-border rounded-lg shadow-sm p-8">
-              <h2 className="text-2xl font-bold text-text-primary mb-6">Update Profile Information</h2>
+              <h2 className="text-2xl font-bold text-text-primary mb-6">
+                Update Profile Information
+              </h2>
               <form onSubmit={handleUpdateProfile} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-text-secondary mb-2">
@@ -249,7 +286,9 @@ export default function StaffSettingsPage() {
                   <input
                     type="text"
                     value={profileData.name}
-                    onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                    onChange={(e) =>
+                      setProfileData({ ...profileData, name: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
@@ -262,7 +301,9 @@ export default function StaffSettingsPage() {
                   <input
                     type="email"
                     value={profileData.email}
-                    onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                    onChange={(e) =>
+                      setProfileData({ ...profileData, email: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
@@ -275,7 +316,9 @@ export default function StaffSettingsPage() {
                   <input
                     type="tel"
                     value={profileData.phone}
-                    onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                    onChange={(e) =>
+                      setProfileData({ ...profileData, phone: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
@@ -290,7 +333,9 @@ export default function StaffSettingsPage() {
                     className="w-full px-4 py-3 border border-card-border rounded-lg bg-gray-50 cursor-not-allowed"
                     disabled
                   />
-                  <p className="text-xs text-text-secondary mt-1">Staff level cannot be changed here. Contact admin.</p>
+                  <p className="text-xs text-text-secondary mt-1">
+                    Staff level cannot be changed here. Contact admin.
+                  </p>
                 </div>
 
                 <button
@@ -306,7 +351,9 @@ export default function StaffSettingsPage() {
           {/* Change Password Section */}
           {activeSection === "password" && (
             <div className="bg-card border border-card-border rounded-lg shadow-sm p-8">
-              <h2 className="text-2xl font-bold text-text-primary mb-6">Change Password</h2>
+              <h2 className="text-2xl font-bold text-text-primary mb-6">
+                Change Password
+              </h2>
               <form onSubmit={handleChangePassword} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-text-secondary mb-2">
@@ -315,7 +362,12 @@ export default function StaffSettingsPage() {
                   <input
                     type="password"
                     value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        currentPassword: e.target.value,
+                      })
+                    }
                     className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
@@ -328,12 +380,19 @@ export default function StaffSettingsPage() {
                   <input
                     type="password"
                     value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        newPassword: e.target.value,
+                      })
+                    }
                     className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                     minLength={6}
                   />
-                  <p className="text-xs text-text-secondary mt-1">Must be at least 6 characters</p>
+                  <p className="text-xs text-text-secondary mt-1">
+                    Must be at least 6 characters
+                  </p>
                 </div>
 
                 <div>
@@ -343,7 +402,12 @@ export default function StaffSettingsPage() {
                   <input
                     type="password"
                     value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
                     className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required
                   />
@@ -364,17 +428,31 @@ export default function StaffSettingsPage() {
             <div className="bg-card border border-card-border rounded-lg shadow-sm p-8">
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                 <h3 className="text-red-800 font-bold flex items-center mb-2">
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  <svg
+                    className="w-5 h-5 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
                   </svg>
                   Warning: This action cannot be undone
                 </h3>
                 <p className="text-red-700 text-sm">
-                  Deleting your staff account will permanently remove all your data and access to the system. This action requires admin approval in most cases.
+                  Deleting your staff account will permanently remove all your
+                  data and access to the system. This action requires admin
+                  approval in most cases.
                 </p>
               </div>
 
-              <h2 className="text-2xl font-bold text-text-primary mb-6">Delete Staff Account</h2>
+              <h2 className="text-2xl font-bold text-text-primary mb-6">
+                Delete Staff Account
+              </h2>
               <form onSubmit={handleDeleteAccount} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-text-secondary mb-2">
@@ -383,7 +461,9 @@ export default function StaffSettingsPage() {
                   <input
                     type="password"
                     value={deleteData.password}
-                    onChange={(e) => setDeleteData({ ...deleteData, password: e.target.value })}
+                    onChange={(e) =>
+                      setDeleteData({ ...deleteData, password: e.target.value })
+                    }
                     className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                     required
                   />
@@ -396,7 +476,12 @@ export default function StaffSettingsPage() {
                   <input
                     type="text"
                     value={deleteData.confirmation}
-                    onChange={(e) => setDeleteData({ ...deleteData, confirmation: e.target.value })}
+                    onChange={(e) =>
+                      setDeleteData({
+                        ...deleteData,
+                        confirmation: e.target.value,
+                      })
+                    }
                     className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                     placeholder="Type DELETE"
                     required

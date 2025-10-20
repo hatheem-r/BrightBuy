@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getImageUrl } from "@/utils/imageUrl";
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+
 export default function StaffProductsPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -35,7 +38,7 @@ export default function StaffProductsPage() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch("http://localhost:5001/api/products", {
+      const response = await fetch(`${API_BASE_URL}/products`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
@@ -83,8 +86,18 @@ export default function StaffProductsPage() {
               ← Back to Dashboard
             </Link>
             <h1 className="text-3xl font-bold text-text-primary flex items-center">
-              <svg className="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              <svg
+                className="w-8 h-8 mr-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                />
               </svg>
               Product Information
             </h1>
@@ -97,16 +110,27 @@ export default function StaffProductsPage() {
         {/* Info Banner */}
         <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-lg">
           <div className="flex items-start">
-            <svg className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <div>
               <h3 className="text-blue-800 dark:text-blue-300 font-semibold">
                 Information View Only
               </h3>
               <p className="text-blue-700 dark:text-blue-400 mt-1 text-sm">
-                This page is for viewing product information only. Staff members cannot make purchases. 
-                Use the Inventory Management page to update stock levels.
+                This page is for viewing product information only. Staff members
+                cannot make purchases. Use the Inventory Management page to
+                update stock levels.
               </p>
             </div>
           </div>
@@ -126,10 +150,14 @@ export default function StaffProductsPage() {
         {/* Products Table */}
         <div className="bg-card border border-card-border rounded-lg overflow-hidden">
           <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-card-border">
-            <h2 className="text-xl font-bold text-text-primary">All Products</h2>
-            <p className="text-sm text-text-secondary">Showing {filteredProducts.length} products</p>
+            <h2 className="text-xl font-bold text-text-primary">
+              All Products
+            </h2>
+            <p className="text-sm text-text-secondary">
+              Showing {filteredProducts.length} products
+            </p>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-100 dark:bg-gray-700">
@@ -163,27 +191,35 @@ export default function StaffProductsPage() {
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="px-6 py-8 text-center text-text-secondary">
+                    <td
+                      colSpan="8"
+                      className="px-6 py-8 text-center text-text-secondary"
+                    >
                       No products found
                     </td>
                   </tr>
                 ) : (
                   filteredProducts.map((product) => {
                     const imageUrl = getImageUrl(product.image_url);
-                    
+
                     const stockStatus = product.stock_status || "Out of Stock";
                     const getStockColor = () => {
-                      if (stockStatus === "In Stock") return "bg-green-100 text-green-800";
-                      if (stockStatus === "Low Stock") return "bg-orange-100 text-orange-800";
+                      if (stockStatus === "In Stock")
+                        return "bg-green-100 text-green-800";
+                      if (stockStatus === "Low Stock")
+                        return "bg-orange-100 text-orange-800";
                       return "bg-red-100 text-red-800";
                     };
 
                     return (
-                      <tr key={product.product_id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <tr
+                        key={product.product_id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                      >
                         <td className="px-6 py-4">
                           <div className="w-16 h-16 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
                             {imageUrl ? (
-                              <img 
+                              <img
                                 src={imageUrl}
                                 alt={product.name}
                                 className="w-full h-full object-cover"
@@ -193,12 +229,16 @@ export default function StaffProductsPage() {
                                 }}
                               />
                             ) : (
-                              <span className="text-xs text-gray-400">No image</span>
+                              <span className="text-xs text-gray-400">
+                                No image
+                              </span>
                             )}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-text-primary">{product.name}</div>
+                          <div className="text-sm font-medium text-text-primary">
+                            {product.name}
+                          </div>
                           {product.description && (
                             <div className="text-xs text-text-secondary truncate max-w-xs">
                               {product.description}
@@ -206,21 +246,29 @@ export default function StaffProductsPage() {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-mono text-text-primary">{product.sku}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-text-primary">{product.brand || 'N/A'}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-text-primary">{product.category_name || 'N/A'}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-semibold text-primary">
-                            ${product.price_range || 'N/A'}
+                          <div className="text-sm font-mono text-text-primary">
+                            {product.sku}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStockColor()}`}>
+                          <div className="text-sm text-text-primary">
+                            {product.brand || "N/A"}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-text-primary">
+                            {product.category_name || "N/A"}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-semibold text-primary">
+                            ${product.price_range || "N/A"}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-3 py-1 text-xs font-semibold rounded-full ${getStockColor()}`}
+                          >
                             {stockStatus}
                           </span>
                         </td>

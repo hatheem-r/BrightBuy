@@ -45,6 +45,9 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
+// Listen on all network interfaces (0.0.0.0) to allow LAN access
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Local access: http://localhost:${PORT}`);
+  console.log(`LAN access: http://192.168.8.129:${PORT}`);
 });

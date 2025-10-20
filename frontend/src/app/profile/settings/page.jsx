@@ -3,6 +3,9 @@ import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+
 export default function SettingsPage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
@@ -40,14 +43,17 @@ export default function SettingsPage() {
     e.preventDefault();
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://localhost:5001/api/customers/${user.customer_id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(profileData),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/customers/${user.customer_id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(profileData),
+        }
+      );
 
       if (response.ok) {
         showMessage("Profile updated successfully!", "success");
@@ -63,7 +69,7 @@ export default function SettingsPage() {
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       showMessage("New passwords do not match!", "error");
       return;
@@ -76,7 +82,7 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:5001/api/auth/change-password", {
+      const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,7 +96,11 @@ export default function SettingsPage() {
 
       if (response.ok) {
         showMessage("Password changed successfully!", "success");
-        setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
       } else {
         const data = await response.json();
         showMessage(data.message || "Failed to change password", "error");
@@ -103,7 +113,7 @@ export default function SettingsPage() {
 
   const handleDeleteAccount = async (e) => {
     e.preventDefault();
-    
+
     if (deleteData.confirmation !== "DELETE") {
       showMessage("Please type DELETE to confirm", "error");
       return;
@@ -111,14 +121,17 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://localhost:5001/api/customers/${user.customer_id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ password: deleteData.password }),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/customers/${user.customer_id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ password: deleteData.password }),
+        }
+      );
 
       if (response.ok) {
         showMessage("Account deleted successfully. Logging out...", "success");
@@ -158,9 +171,24 @@ export default function SettingsPage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-text-primary flex items-center">
-            <svg className="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <svg
+              className="w-8 h-8 mr-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
             Account Settings
           </h1>
@@ -171,7 +199,13 @@ export default function SettingsPage() {
 
         {/* Message Display */}
         {message.text && (
-          <div className={`mb-6 p-4 rounded-lg ${message.type === "success" ? "bg-green-50 border border-green-200 text-green-800" : "bg-red-50 border border-red-200 text-red-800"}`}>
+          <div
+            className={`mb-6 p-4 rounded-lg ${
+              message.type === "success"
+                ? "bg-green-50 border border-green-200 text-green-800"
+                : "bg-red-50 border border-red-200 text-red-800"
+            }`}
+          >
             {message.text}
           </div>
         )}
@@ -199,7 +233,9 @@ export default function SettingsPage() {
         {/* Change Profile Section */}
         {activeSection === "profile" && (
           <div className="bg-card border border-card-border rounded-lg shadow-sm p-8">
-            <h2 className="text-2xl font-bold text-text-primary mb-6">Update Profile Information</h2>
+            <h2 className="text-2xl font-bold text-text-primary mb-6">
+              Update Profile Information
+            </h2>
             <form onSubmit={handleUpdateProfile} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-2">
@@ -208,7 +244,9 @@ export default function SettingsPage() {
                 <input
                   type="text"
                   value={profileData.name}
-                  onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, name: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   required
                 />
@@ -221,7 +259,9 @@ export default function SettingsPage() {
                 <input
                   type="email"
                   value={profileData.email}
-                  onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, email: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   required
                 />
@@ -234,7 +274,9 @@ export default function SettingsPage() {
                 <input
                   type="tel"
                   value={profileData.phone}
-                  onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, phone: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
@@ -245,7 +287,9 @@ export default function SettingsPage() {
                 </label>
                 <textarea
                   value={profileData.address}
-                  onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, address: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   rows={4}
                   placeholder="Enter your full delivery address"
@@ -265,7 +309,9 @@ export default function SettingsPage() {
         {/* Change Password Section */}
         {activeSection === "password" && (
           <div className="bg-card border border-card-border rounded-lg shadow-sm p-8">
-            <h2 className="text-2xl font-bold text-text-primary mb-6">Change Password</h2>
+            <h2 className="text-2xl font-bold text-text-primary mb-6">
+              Change Password
+            </h2>
             <form onSubmit={handleChangePassword} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-2">
@@ -274,7 +320,12 @@ export default function SettingsPage() {
                 <input
                   type="password"
                   value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      currentPassword: e.target.value,
+                    })
+                  }
                   className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   required
                 />
@@ -287,12 +338,19 @@ export default function SettingsPage() {
                 <input
                   type="password"
                   value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      newPassword: e.target.value,
+                    })
+                  }
                   className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   required
                   minLength={6}
                 />
-                <p className="text-xs text-text-secondary mt-1">Must be at least 6 characters</p>
+                <p className="text-xs text-text-secondary mt-1">
+                  Must be at least 6 characters
+                </p>
               </div>
 
               <div>
@@ -302,7 +360,12 @@ export default function SettingsPage() {
                 <input
                   type="password"
                   value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      confirmPassword: e.target.value,
+                    })
+                  }
                   className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   required
                 />
@@ -323,17 +386,30 @@ export default function SettingsPage() {
           <div className="bg-card border border-card-border rounded-lg shadow-sm p-8">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
               <h3 className="text-red-800 font-bold flex items-center mb-2">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
                 </svg>
                 Warning: This action cannot be undone
               </h3>
               <p className="text-red-700 text-sm">
-                Deleting your account will permanently remove all your data, including orders, wishlists, and personal information.
+                Deleting your account will permanently remove all your data,
+                including orders, wishlists, and personal information.
               </p>
             </div>
 
-            <h2 className="text-2xl font-bold text-text-primary mb-6">Delete Account</h2>
+            <h2 className="text-2xl font-bold text-text-primary mb-6">
+              Delete Account
+            </h2>
             <form onSubmit={handleDeleteAccount} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-2">
@@ -342,7 +418,9 @@ export default function SettingsPage() {
                 <input
                   type="password"
                   value={deleteData.password}
-                  onChange={(e) => setDeleteData({ ...deleteData, password: e.target.value })}
+                  onChange={(e) =>
+                    setDeleteData({ ...deleteData, password: e.target.value })
+                  }
                   className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   required
                 />
@@ -355,7 +433,12 @@ export default function SettingsPage() {
                 <input
                   type="text"
                   value={deleteData.confirmation}
-                  onChange={(e) => setDeleteData({ ...deleteData, confirmation: e.target.value })}
+                  onChange={(e) =>
+                    setDeleteData({
+                      ...deleteData,
+                      confirmation: e.target.value,
+                    })
+                  }
                   className="w-full px-4 py-3 border border-card-border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   placeholder="Type DELETE"
                   required

@@ -6,12 +6,15 @@
  */
 export const getImageUrl = (imageUrl) => {
   if (!imageUrl) return null;
-  
+
   // If URL already starts with http/https, return as-is (CDN URL)
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
     return imageUrl;
   }
-  
+
   // Otherwise, prepend backend URL (local uploaded images)
-  return `http://localhost:5001${imageUrl}`;
+  const API_SERVER_URL =
+    process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
+    "http://localhost:5001";
+  return `${API_SERVER_URL}${imageUrl}`;
 };

@@ -3,7 +3,11 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
 
-const BACKEND_URL = "http://localhost:5001";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
+  "http://localhost:5001";
 
 export default function StaffOrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -69,14 +73,17 @@ export default function StaffOrdersPage() {
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`${BACKEND_URL}/api/orders/${orderId}/status`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
+      const response = await fetch(
+        `${BACKEND_URL}/api/orders/${orderId}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to update order status");
@@ -94,14 +101,17 @@ export default function StaffOrdersPage() {
   const handleShipmentUpdate = async (orderId, shipmentData) => {
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`${BACKEND_URL}/api/orders/${orderId}/shipment`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(shipmentData),
-      });
+      const response = await fetch(
+        `${BACKEND_URL}/api/orders/${orderId}/shipment`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(shipmentData),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to update shipment information");
@@ -118,10 +128,13 @@ export default function StaffOrdersPage() {
 
   const getStatusBadge = (status) => {
     const badges = {
-      pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+      pending:
+        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
       paid: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-      shipped: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
-      delivered: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+      shipped:
+        "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+      delivered:
+        "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
       cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
     };
     return badges[status] || "bg-gray-100 text-gray-800";
@@ -129,7 +142,8 @@ export default function StaffOrdersPage() {
 
   const getPaymentBadge = (status) => {
     const badges = {
-      pending: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
+      pending:
+        "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
       paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
       failed: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
     };
@@ -138,7 +152,8 @@ export default function StaffOrdersPage() {
 
   // Filter and search orders
   const filteredOrders = orders.filter((order) => {
-    const matchesStatus = filterStatus === "all" || order.status === filterStatus;
+    const matchesStatus =
+      filterStatus === "all" || order.status === filterStatus;
     const matchesSearch =
       searchTerm === "" ||
       order.order_id.toString().includes(searchTerm) ||
@@ -170,8 +185,18 @@ export default function StaffOrdersPage() {
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-text-primary flex items-center">
-            <svg className="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            <svg
+              className="w-8 h-8 mr-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
             </svg>
             Process Orders
           </h1>
@@ -183,24 +208,44 @@ export default function StaffOrdersPage() {
         {/* Order Statistics */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-            <p className="text-sm text-blue-600 dark:text-blue-400 mb-1">Total Orders</p>
-            <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{orderStats.total}</p>
+            <p className="text-sm text-blue-600 dark:text-blue-400 mb-1">
+              Total Orders
+            </p>
+            <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+              {orderStats.total}
+            </p>
           </div>
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
-            <p className="text-sm text-yellow-600 dark:text-yellow-400 mb-1">Pending</p>
-            <p className="text-3xl font-bold text-yellow-700 dark:text-yellow-300">{orderStats.pending}</p>
+            <p className="text-sm text-yellow-600 dark:text-yellow-400 mb-1">
+              Pending
+            </p>
+            <p className="text-3xl font-bold text-yellow-700 dark:text-yellow-300">
+              {orderStats.pending}
+            </p>
           </div>
           <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-6">
-            <p className="text-sm text-purple-600 dark:text-purple-400 mb-1">Shipped</p>
-            <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">{orderStats.shipped}</p>
+            <p className="text-sm text-purple-600 dark:text-purple-400 mb-1">
+              Shipped
+            </p>
+            <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">
+              {orderStats.shipped}
+            </p>
           </div>
           <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
-            <p className="text-sm text-green-600 dark:text-green-400 mb-1">Delivered</p>
-            <p className="text-3xl font-bold text-green-700 dark:text-green-300">{orderStats.delivered}</p>
+            <p className="text-sm text-green-600 dark:text-green-400 mb-1">
+              Delivered
+            </p>
+            <p className="text-3xl font-bold text-green-700 dark:text-green-300">
+              {orderStats.delivered}
+            </p>
           </div>
           <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-6">
-            <p className="text-sm text-indigo-600 dark:text-indigo-400 mb-1">Revenue</p>
-            <p className="text-2xl font-bold text-indigo-700 dark:text-indigo-300">Rs. {orderStats.totalRevenue.toLocaleString()}</p>
+            <p className="text-sm text-indigo-600 dark:text-indigo-400 mb-1">
+              Revenue
+            </p>
+            <p className="text-2xl font-bold text-indigo-700 dark:text-indigo-300">
+              Rs. {orderStats.totalRevenue.toLocaleString()}
+            </p>
           </div>
         </div>
 
@@ -210,8 +255,18 @@ export default function StaffOrdersPage() {
             {/* Search Input */}
             <div className="flex-1">
               <div className="relative">
-                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <svg
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
                 <input
                   type="text"
@@ -225,19 +280,21 @@ export default function StaffOrdersPage() {
 
             {/* Filter Tabs */}
             <div className="flex flex-wrap gap-2">
-              {["all", "pending", "paid", "shipped", "delivered"].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilterStatus(status)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filterStatus === status
-                      ? "bg-primary text-white"
-                      : "bg-background text-text-secondary hover:bg-gray-100 dark:hover:bg-gray-700"
-                  }`}
-                >
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </button>
-              ))}
+              {["all", "pending", "paid", "shipped", "delivered"].map(
+                (status) => (
+                  <button
+                    key={status}
+                    onClick={() => setFilterStatus(status)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      filterStatus === status
+                        ? "bg-primary text-white"
+                        : "bg-background text-text-secondary hover:bg-gray-100 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </button>
+                )
+              )}
             </div>
 
             {/* Refresh Button */}
@@ -245,8 +302,18 @@ export default function StaffOrdersPage() {
               onClick={fetchAllOrders}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
               </svg>
               Refresh
             </button>
@@ -256,11 +323,23 @@ export default function StaffOrdersPage() {
         {/* Orders List */}
         {filteredOrders.length === 0 ? (
           <div className="bg-card border border-card-border rounded-lg shadow-sm p-12 text-center">
-            <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            <svg
+              className="w-16 h-16 mx-auto text-gray-400 mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
             </svg>
             <h3 className="text-lg font-semibold text-text-primary mb-2">
-              {filterStatus === "all" ? "No Orders Found" : `No ${filterStatus} Orders`}
+              {filterStatus === "all"
+                ? "No Orders Found"
+                : `No ${filterStatus} Orders`}
             </h3>
             <p className="text-text-secondary mb-6">
               {searchTerm
@@ -273,8 +352,8 @@ export default function StaffOrdersPage() {
         ) : (
           <div className="space-y-4">
             {filteredOrders.map((order) => (
-              <OrderCard 
-                key={order.order_id} 
+              <OrderCard
+                key={order.order_id}
                 order={order}
                 onStatusUpdate={handleStatusUpdate}
                 onShipmentUpdate={handleShipmentUpdate}
@@ -290,12 +369,18 @@ export default function StaffOrdersPage() {
 }
 
 // Separate Order Card Component for better organization
-function OrderCard({ order, onStatusUpdate, onShipmentUpdate, getStatusBadge, getPaymentBadge }) {
+function OrderCard({
+  order,
+  onStatusUpdate,
+  onShipmentUpdate,
+  getStatusBadge,
+  getPaymentBadge,
+}) {
   const [showShipmentForm, setShowShipmentForm] = useState(false);
   const [shipmentData, setShipmentData] = useState({
-    shipment_provider: order.shipment_provider || '',
-    tracking_number: order.tracking_number || '',
-    notes: order.shipment_notes || '',
+    shipment_provider: order.shipment_provider || "",
+    tracking_number: order.tracking_number || "",
+    notes: order.shipment_notes || "",
   });
 
   const handleShipmentSubmit = (e) => {
@@ -304,18 +389,28 @@ function OrderCard({ order, onStatusUpdate, onShipmentUpdate, getStatusBadge, ge
     setShowShipmentForm(false);
   };
 
-  const isStorePickup = order.delivery_mode === 'Store Pickup';
+  const isStorePickup = order.delivery_mode === "Store Pickup";
 
   return (
     <div className="bg-card border border-card-border rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-3 flex-wrap">
-            <h3 className="font-bold text-text-primary text-lg">Order #{order.order_id}</h3>
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(order.status)}`}>
+            <h3 className="font-bold text-text-primary text-lg">
+              Order #{order.order_id}
+            </h3>
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(
+                order.status
+              )}`}
+            >
               {order.status.toUpperCase()}
             </span>
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getPaymentBadge(order.payment_status)}`}>
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${getPaymentBadge(
+                order.payment_status
+              )}`}
+            >
               {order.payment_status === "paid" ? "PAID" : "PAYMENT PENDING"}
             </span>
             {isStorePickup && (
@@ -327,9 +422,20 @@ function OrderCard({ order, onStatusUpdate, onShipmentUpdate, getStatusBadge, ge
 
           <div className="text-sm text-text-secondary space-y-1">
             <p>👤 Customer ID: {order.customer_id}</p>
-            <p>📅 Placed on {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString()}</p>
-            <p>📦 {order.item_count} {order.item_count === 1 ? "item" : "items"} in order • Rs. {parseFloat(order.total).toLocaleString()}</p>
-            <p>🚚 Delivery: {order.delivery_mode} {order.delivery_zip && !isStorePickup && `• ZIP: ${order.delivery_zip}`}</p>
+            <p>
+              📅 Placed on {new Date(order.created_at).toLocaleDateString()} at{" "}
+              {new Date(order.created_at).toLocaleTimeString()}
+            </p>
+            <p>
+              📦 {order.item_count} {order.item_count === 1 ? "item" : "items"}{" "}
+              in order • Rs. {parseFloat(order.total).toLocaleString()}
+            </p>
+            <p>
+              🚚 Delivery: {order.delivery_mode}{" "}
+              {order.delivery_zip &&
+                !isStorePickup &&
+                `• ZIP: ${order.delivery_zip}`}
+            </p>
             {order.estimated_delivery_days && (
               <p>⏱️ Est. Delivery: {order.estimated_delivery_days} days</p>
             )}
@@ -340,8 +446,18 @@ function OrderCard({ order, onStatusUpdate, onShipmentUpdate, getStatusBadge, ge
             <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-semibold text-blue-800 dark:text-blue-300 flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+                    />
                   </svg>
                   Courier Service Tracking
                 </h4>
@@ -349,7 +465,11 @@ function OrderCard({ order, onStatusUpdate, onShipmentUpdate, getStatusBadge, ge
                   onClick={() => setShowShipmentForm(!showShipmentForm)}
                   className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                 >
-                  {showShipmentForm ? 'Cancel' : order.tracking_number ? 'Update' : 'Add Tracking'}
+                  {showShipmentForm
+                    ? "Cancel"
+                    : order.tracking_number
+                    ? "Update"
+                    : "Add Tracking"}
                 </button>
               </div>
 
@@ -357,15 +477,31 @@ function OrderCard({ order, onStatusUpdate, onShipmentUpdate, getStatusBadge, ge
                 <div className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
                   {order.shipment_provider ? (
                     <>
-                      <p>📦 Courier: <span className="font-semibold">{order.shipment_provider}</span></p>
+                      <p>
+                        📦 Courier:{" "}
+                        <span className="font-semibold">
+                          {order.shipment_provider}
+                        </span>
+                      </p>
                       {order.tracking_number && (
-                        <p>🔢 Tracking #: <span className="font-mono font-semibold">{order.tracking_number}</span></p>
+                        <p>
+                          🔢 Tracking #:{" "}
+                          <span className="font-mono font-semibold">
+                            {order.tracking_number}
+                          </span>
+                        </p>
                       )}
                       {order.shipped_date && (
-                        <p>📤 Shipped: {new Date(order.shipped_date).toLocaleDateString()}</p>
+                        <p>
+                          📤 Shipped:{" "}
+                          {new Date(order.shipped_date).toLocaleDateString()}
+                        </p>
                       )}
                       {order.delivered_date && (
-                        <p>✅ Delivered: {new Date(order.delivered_date).toLocaleDateString()}</p>
+                        <p>
+                          ✅ Delivered:{" "}
+                          {new Date(order.delivered_date).toLocaleDateString()}
+                        </p>
                       )}
                       {order.shipment_notes && (
                         <p>📝 Notes: {order.shipment_notes}</p>
@@ -373,14 +509,18 @@ function OrderCard({ order, onStatusUpdate, onShipmentUpdate, getStatusBadge, ge
                     </>
                   ) : (
                     <p className="text-gray-500 dark:text-gray-400">
-                      No courier tracking information available yet. Click "Add Tracking" to enter details.
+                      No courier tracking information available yet. Click "Add
+                      Tracking" to enter details.
                     </p>
                   )}
                 </div>
               )}
 
               {showShipmentForm && (
-                <form onSubmit={handleShipmentSubmit} className="mt-3 space-y-3">
+                <form
+                  onSubmit={handleShipmentSubmit}
+                  className="mt-3 space-y-3"
+                >
                   <div>
                     <label className="block text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
                       Courier Service
@@ -388,7 +528,12 @@ function OrderCard({ order, onStatusUpdate, onShipmentUpdate, getStatusBadge, ge
                     <input
                       type="text"
                       value={shipmentData.shipment_provider}
-                      onChange={(e) => setShipmentData({...shipmentData, shipment_provider: e.target.value})}
+                      onChange={(e) =>
+                        setShipmentData({
+                          ...shipmentData,
+                          shipment_provider: e.target.value,
+                        })
+                      }
                       placeholder="e.g., FedEx, UPS, DHL"
                       className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white dark:bg-gray-800 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -400,7 +545,12 @@ function OrderCard({ order, onStatusUpdate, onShipmentUpdate, getStatusBadge, ge
                     <input
                       type="text"
                       value={shipmentData.tracking_number}
-                      onChange={(e) => setShipmentData({...shipmentData, tracking_number: e.target.value})}
+                      onChange={(e) =>
+                        setShipmentData({
+                          ...shipmentData,
+                          tracking_number: e.target.value,
+                        })
+                      }
                       placeholder="Enter tracking number"
                       className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white dark:bg-gray-800 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -411,7 +561,12 @@ function OrderCard({ order, onStatusUpdate, onShipmentUpdate, getStatusBadge, ge
                     </label>
                     <textarea
                       value={shipmentData.notes}
-                      onChange={(e) => setShipmentData({...shipmentData, notes: e.target.value})}
+                      onChange={(e) =>
+                        setShipmentData({
+                          ...shipmentData,
+                          notes: e.target.value,
+                        })
+                      }
                       placeholder="Add any shipment notes"
                       rows="2"
                       className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white dark:bg-gray-800 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -441,16 +596,27 @@ function OrderCard({ order, onStatusUpdate, onShipmentUpdate, getStatusBadge, ge
           {isStorePickup && (
             <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
               <div className="flex items-start gap-3">
-                <svg className="w-5 h-5 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                <svg
+                  className="w-5 h-5 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  />
                 </svg>
                 <div>
                   <h4 className="font-semibold text-purple-800 dark:text-purple-300 mb-1">
                     Store Pickup Order
                   </h4>
                   <p className="text-sm text-purple-700 dark:text-purple-400">
-                    Customer will collect this order from the store. No courier service required.
-                    {order.status === 'paid' && " Prepare items for pickup."}
+                    Customer will collect this order from the store. No courier
+                    service required.
+                    {order.status === "paid" && " Prepare items for pickup."}
                   </p>
                 </div>
               </div>
@@ -489,8 +655,18 @@ function OrderCard({ order, onStatusUpdate, onShipmentUpdate, getStatusBadge, ge
 
       {order.payment_status === "pending" && (
         <div className="mt-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 flex items-center text-sm text-orange-800 dark:text-orange-300">
-          <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          <svg
+            className="w-5 h-5 mr-2 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
           </svg>
           <span>⚠️ Payment not completed - Order processing on hold</span>
         </div>

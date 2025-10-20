@@ -2,13 +2,17 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const BACKEND_URL = "http://localhost:5001";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
+  "http://localhost:5001";
 
 export default function InventoryManagement() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [activeSection, setActiveSection] = useState("update-stocks");
-  
+
   // States for Update Stocks
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,18 +24,18 @@ export default function InventoryManagement() {
     addedQuantity: "",
     note: "",
   });
-  
+
   // States for Add/Remove Products
   const [newProduct, setNewProduct] = useState({
     name: "",
     brand: "",
     category: "",
-    variants: [{ color: "", size: "", price: "", stock: 0 }]
+    variants: [{ color: "", size: "", price: "", stock: 0 }],
   });
-  
+
   // State for removing variants
   const [selectedProduct, setSelectedProduct] = useState(null);
-  
+
   const [message, setMessage] = useState({ type: "", text: "" });
   const [updating, setUpdating] = useState(false);
 
@@ -120,10 +124,13 @@ export default function InventoryManagement() {
       setMessage({ type: "error", text: "Please select a variant first" });
       return;
     }
-    
+
     const quantity = parseInt(updateData.addedQuantity);
     if (isNaN(quantity) || updateData.addedQuantity === "") {
-      setMessage({ type: "error", text: "Please enter a valid quantity (positive to add, negative to remove)" });
+      setMessage({
+        type: "error",
+        text: "Please enter a valid quantity (positive to add, negative to remove)",
+      });
       return;
     }
 
@@ -133,24 +140,30 @@ export default function InventoryManagement() {
       console.log("Selected Variant:", selectedVariant);
       console.log("Quantity Change:", quantity);
       console.log("Notes:", updateData.note);
-      console.log("Token:", localStorage.getItem("authToken") ? "Present" : "Missing");
+      console.log(
+        "Token:",
+        localStorage.getItem("authToken") ? "Present" : "Missing"
+      );
 
       const requestBody = {
         variantId: selectedVariant.variant_id,
         quantityChange: quantity,
         notes: updateData.note || "",
       };
-      
+
       console.log("Request Body:", requestBody);
 
-      const response = await fetch(`${BACKEND_URL}/api/staff/inventory/update`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        },
-        body: JSON.stringify(requestBody),
-      });
+      const response = await fetch(
+        `${BACKEND_URL}/api/staff/inventory/update`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
 
       const data = await response.json();
       console.log("=== SERVER RESPONSE ===");
@@ -158,13 +171,19 @@ export default function InventoryManagement() {
       console.log("Response Data:", data);
 
       if (response.ok) {
-        setMessage({ type: "success", text: data.message || "Stock updated successfully!" });
+        setMessage({
+          type: "success",
+          text: data.message || "Stock updated successfully!",
+        });
         setSelectedVariant(null);
         setUpdateData({ addedQuantity: "", note: "" });
         await fetchInventory();
       } else {
         console.error("Update failed:", data);
-        setMessage({ type: "error", text: data.message || "Failed to update stock" });
+        setMessage({
+          type: "error",
+          text: data.message || "Failed to update stock",
+        });
       }
     } catch (error) {
       console.error("=== UPDATE ERROR ===");
@@ -176,28 +195,45 @@ export default function InventoryManagement() {
   };
 
   const handleRemoveVariant = async (variantId) => {
-    if (!confirm("Are you sure you want to remove this variant? This action cannot be undone.")) return;
+    if (
+      !confirm(
+        "Are you sure you want to remove this variant? This action cannot be undone."
+      )
+    )
+      return;
 
     setUpdating(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/staff/product-variants/${variantId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        },
-      });
+      const response = await fetch(
+        `${BACKEND_URL}/api/staff/product-variants/${variantId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
-        setMessage({ type: "success", text: data.message || "Variant removed successfully!" });
+        setMessage({
+          type: "success",
+          text: data.message || "Variant removed successfully!",
+        });
         await fetchInventory();
       } else {
         const data = await response.json();
-        setMessage({ type: "error", text: data.message || "Failed to remove variant" });
+        setMessage({
+          type: "error",
+          text: data.message || "Failed to remove variant",
+        });
       }
     } catch (error) {
       console.error("Remove variant error:", error);
-      setMessage({ type: "error", text: "This feature requires backend API support" });
+      setMessage({
+        type: "error",
+        text: "This feature requires backend API support",
+      });
     } finally {
       setUpdating(false);
     }
@@ -233,30 +269,44 @@ export default function InventoryManagement() {
           name: "",
           brand: "",
           category: "",
-          variants: [{ color: "", size: "", price: "", stock: 0 }]
+          variants: [{ color: "", size: "", price: "", stock: 0 }],
         });
         await fetchInventory();
       } else {
-        setMessage({ type: "error", text: data.message || "Failed to add product" });
+        setMessage({
+          type: "error",
+          text: data.message || "Failed to add product",
+        });
       }
     } catch (error) {
-      setMessage({ type: "error", text: "This feature requires backend API support" });
+      setMessage({
+        type: "error",
+        text: "This feature requires backend API support",
+      });
     } finally {
       setUpdating(false);
     }
   };
 
   const handleRemoveProduct = async (productId) => {
-    if (!confirm("Are you sure you want to remove this product and all its variants?")) return;
+    if (
+      !confirm(
+        "Are you sure you want to remove this product and all its variants?"
+      )
+    )
+      return;
 
     setUpdating(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/staff/products/${productId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        },
-      });
+      const response = await fetch(
+        `${BACKEND_URL}/api/staff/products/${productId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
 
       const data = await response.json();
 
@@ -264,10 +314,16 @@ export default function InventoryManagement() {
         setMessage({ type: "success", text: "Product removed successfully!" });
         await fetchInventory();
       } else {
-        setMessage({ type: "error", text: data.message || "Failed to remove product" });
+        setMessage({
+          type: "error",
+          text: data.message || "Failed to remove product",
+        });
       }
     } catch (error) {
-      setMessage({ type: "error", text: "This feature requires backend API support" });
+      setMessage({
+        type: "error",
+        text: "This feature requires backend API support",
+      });
     } finally {
       setUpdating(false);
     }
@@ -276,7 +332,10 @@ export default function InventoryManagement() {
   const addNewProductVariantRow = () => {
     setNewProduct({
       ...newProduct,
-      variants: [...newProduct.variants, { color: "", size: "", price: "", stock: 0 }]
+      variants: [
+        ...newProduct.variants,
+        { color: "", size: "", price: "", stock: 0 },
+      ],
     });
   };
 
@@ -288,7 +347,10 @@ export default function InventoryManagement() {
 
   const removeVariantRow = (index) => {
     if (newProduct.variants.length === 1) {
-      setMessage({ type: "error", text: "Product must have at least one variant" });
+      setMessage({
+        type: "error",
+        text: "Product must have at least one variant",
+      });
       return;
     }
     const newVariants = newProduct.variants.filter((_, i) => i !== index);
@@ -324,8 +386,18 @@ export default function InventoryManagement() {
       id: "update-stocks",
       name: "Update Stocks",
       icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
         </svg>
       ),
     },
@@ -333,8 +405,18 @@ export default function InventoryManagement() {
       id: "manage-products",
       name: "Add/Remove Products",
       icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+          />
         </svg>
       ),
     },
@@ -396,7 +478,9 @@ export default function InventoryManagement() {
           {activeSection === "update-stocks" && (
             <div>
               <div className="mb-8">
-                <h1 className="text-3xl font-bold text-text-primary">Update Stock Levels</h1>
+                <h1 className="text-3xl font-bold text-text-primary">
+                  Update Stock Levels
+                </h1>
                 <p className="text-text-secondary mt-1">
                   Add or remove stock for product variants
                 </p>
@@ -442,11 +526,17 @@ export default function InventoryManagement() {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
-                      <p className="text-sm text-text-secondary">Current Stock</p>
-                      <p className="text-2xl font-bold text-text-primary">{selectedVariant.stock}</p>
+                      <p className="text-sm text-text-secondary">
+                        Current Stock
+                      </p>
+                      <p className="text-2xl font-bold text-text-primary">
+                        {selectedVariant.stock}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-sm text-text-secondary">Color / Size</p>
+                      <p className="text-sm text-text-secondary">
+                        Color / Size
+                      </p>
                       <p className="text-lg font-semibold text-text-primary">
                         {selectedVariant.color} / {selectedVariant.size}
                       </p>
@@ -466,7 +556,12 @@ export default function InventoryManagement() {
                       <input
                         type="number"
                         value={updateData.addedQuantity}
-                        onChange={(e) => setUpdateData({ ...updateData, addedQuantity: e.target.value })}
+                        onChange={(e) =>
+                          setUpdateData({
+                            ...updateData,
+                            addedQuantity: e.target.value,
+                          })
+                        }
                         placeholder="e.g., 10 or -5"
                         className="w-full px-4 py-2 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
@@ -481,7 +576,9 @@ export default function InventoryManagement() {
                       <input
                         type="text"
                         value={updateData.note}
-                        onChange={(e) => setUpdateData({ ...updateData, note: e.target.value })}
+                        onChange={(e) =>
+                          setUpdateData({ ...updateData, note: e.target.value })
+                        }
                         placeholder="Reason for update..."
                         className="w-full px-4 py-2 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
@@ -534,11 +631,15 @@ export default function InventoryManagement() {
                             <h3 className="text-lg font-semibold text-text-primary">
                               {product.product_name}
                             </h3>
-                            <p className="text-sm text-text-secondary">{product.brand}</p>
+                            <p className="text-sm text-text-secondary">
+                              {product.brand}
+                            </p>
                           </div>
                           <div className="flex items-center gap-6">
                             <div className="text-right">
-                              <p className="text-sm text-text-secondary">Total Stock</p>
+                              <p className="text-sm text-text-secondary">
+                                Total Stock
+                              </p>
                               <p
                                 className={`text-2xl font-bold ${
                                   product.total_stock === 0
@@ -553,13 +654,20 @@ export default function InventoryManagement() {
                             </div>
                             <svg
                               className={`w-6 h-6 text-text-secondary transition-transform ${
-                                expandedProducts.has(product.product_id) ? "rotate-180" : ""
+                                expandedProducts.has(product.product_id)
+                                  ? "rotate-180"
+                                  : ""
                               }`}
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
                             >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 9l-7 7-7-7"
+                              />
                             </svg>
                           </div>
                         </div>
@@ -567,7 +675,9 @@ export default function InventoryManagement() {
 
                       {expandedProducts.has(product.product_id) && (
                         <div className="border-t border-card-border bg-gray-50 dark:bg-gray-800/50 p-6">
-                          <h4 className="font-semibold text-text-primary mb-4">Product Variants</h4>
+                          <h4 className="font-semibold text-text-primary mb-4">
+                            Product Variants
+                          </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {product.variants.map((variant) => (
                               <div
@@ -576,7 +686,9 @@ export default function InventoryManagement() {
                               >
                                 <div className="flex justify-between items-start mb-3">
                                   <div>
-                                    <p className="font-mono text-xs text-text-secondary">{variant.sku}</p>
+                                    <p className="font-mono text-xs text-text-secondary">
+                                      {variant.sku}
+                                    </p>
                                     <p className="text-lg font-semibold text-text-primary mt-1">
                                       {variant.color} / {variant.size}
                                     </p>
@@ -594,7 +706,8 @@ export default function InventoryManagement() {
                                   </span>
                                 </div>
                                 <p className="text-sm text-text-secondary mb-3">
-                                  Rs. {parseFloat(variant.price).toLocaleString()}
+                                  Rs.{" "}
+                                  {parseFloat(variant.price).toLocaleString()}
                                 </p>
                                 <button
                                   onClick={() => setSelectedVariant(variant)}
@@ -618,7 +731,9 @@ export default function InventoryManagement() {
           {activeSection === "manage-products" && (
             <div>
               <div className="mb-8">
-                <h1 className="text-3xl font-bold text-text-primary">Manage Products & Variants</h1>
+                <h1 className="text-3xl font-bold text-text-primary">
+                  Manage Products & Variants
+                </h1>
                 <p className="text-text-secondary mt-1">
                   Add new products with variants or remove existing ones
                 </p>
@@ -626,7 +741,9 @@ export default function InventoryManagement() {
 
               {/* Add Product Form */}
               <div className="bg-card border border-card-border rounded-lg p-6 mb-8">
-                <h2 className="text-xl font-semibold text-text-primary mb-6">Add New Product</h2>
+                <h2 className="text-xl font-semibold text-text-primary mb-6">
+                  Add New Product
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <div>
                     <label className="block text-sm font-medium text-text-secondary mb-2">
@@ -635,7 +752,9 @@ export default function InventoryManagement() {
                     <input
                       type="text"
                       value={newProduct.name}
-                      onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                      onChange={(e) =>
+                        setNewProduct({ ...newProduct, name: e.target.value })
+                      }
                       placeholder="Enter product name"
                       className="w-full px-4 py-2 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
@@ -647,7 +766,9 @@ export default function InventoryManagement() {
                     <input
                       type="text"
                       value={newProduct.brand}
-                      onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })}
+                      onChange={(e) =>
+                        setNewProduct({ ...newProduct, brand: e.target.value })
+                      }
                       placeholder="Enter brand name"
                       className="w-full px-4 py-2 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
@@ -659,54 +780,84 @@ export default function InventoryManagement() {
                     <input
                       type="text"
                       value={newProduct.category}
-                      onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                      onChange={(e) =>
+                        setNewProduct({
+                          ...newProduct,
+                          category: e.target.value,
+                        })
+                      }
                       placeholder="Enter category"
                       className="w-full px-4 py-2 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                 </div>
 
-                <h3 className="font-semibold text-text-primary mb-4">Product Variants</h3>
+                <h3 className="font-semibold text-text-primary mb-4">
+                  Product Variants
+                </h3>
                 <div className="space-y-3 mb-4">
                   {newProduct.variants.map((variant, index) => (
-                    <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                    <div
+                      key={index}
+                      className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end"
+                    >
                       <div>
-                        <label className="block text-xs font-medium text-text-secondary mb-1">Color *</label>
+                        <label className="block text-xs font-medium text-text-secondary mb-1">
+                          Color *
+                        </label>
                         <input
                           type="text"
                           value={variant.color}
-                          onChange={(e) => updateVariantField(index, "color", e.target.value)}
+                          onChange={(e) =>
+                            updateVariantField(index, "color", e.target.value)
+                          }
                           placeholder="e.g., Blue"
                           className="w-full px-3 py-2 border border-card-border rounded-lg text-sm"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-text-secondary mb-1">Size *</label>
+                        <label className="block text-xs font-medium text-text-secondary mb-1">
+                          Size *
+                        </label>
                         <input
                           type="text"
                           value={variant.size}
-                          onChange={(e) => updateVariantField(index, "size", e.target.value)}
+                          onChange={(e) =>
+                            updateVariantField(index, "size", e.target.value)
+                          }
                           placeholder="e.g., M"
                           className="w-full px-3 py-2 border border-card-border rounded-lg text-sm"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-text-secondary mb-1">Price *</label>
+                        <label className="block text-xs font-medium text-text-secondary mb-1">
+                          Price *
+                        </label>
                         <input
                           type="number"
                           value={variant.price}
-                          onChange={(e) => updateVariantField(index, "price", e.target.value)}
+                          onChange={(e) =>
+                            updateVariantField(index, "price", e.target.value)
+                          }
                           placeholder="0.00"
                           step="0.01"
                           className="w-full px-3 py-2 border border-card-border rounded-lg text-sm"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-text-secondary mb-1">Initial Stock *</label>
+                        <label className="block text-xs font-medium text-text-secondary mb-1">
+                          Initial Stock *
+                        </label>
                         <input
                           type="number"
                           value={variant.stock}
-                          onChange={(e) => updateVariantField(index, "stock", parseInt(e.target.value) || 0)}
+                          onChange={(e) =>
+                            updateVariantField(
+                              index,
+                              "stock",
+                              parseInt(e.target.value) || 0
+                            )
+                          }
                           placeholder="0"
                           className="w-full px-3 py-2 border border-card-border rounded-lg text-sm"
                         />
@@ -743,29 +894,44 @@ export default function InventoryManagement() {
 
               {/* Remove Products/Variants Section */}
               <div className="bg-card border border-card-border rounded-lg p-6">
-                <h2 className="text-xl font-semibold text-text-primary mb-2">Remove Products or Variants</h2>
+                <h2 className="text-xl font-semibold text-text-primary mb-2">
+                  Remove Products or Variants
+                </h2>
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                   <p className="text-yellow-800 text-sm">
-                    ⚠️ Warning: Removing products or variants is permanent and cannot be undone.
+                    ⚠️ Warning: Removing products or variants is permanent and
+                    cannot be undone.
                   </p>
                 </div>
 
                 {loading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-3"></div>
-                    <p className="text-text-secondary text-sm">Loading products...</p>
+                    <p className="text-text-secondary text-sm">
+                      Loading products...
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {products.map((product) => (
-                      <div key={product.product_id} className="border border-card-border rounded-lg overflow-hidden">
+                      <div
+                        key={product.product_id}
+                        className="border border-card-border rounded-lg overflow-hidden"
+                      >
                         <div className="p-4 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
                           <div>
-                            <h3 className="font-semibold text-text-primary">{product.product_name}</h3>
-                            <p className="text-sm text-text-secondary">{product.brand} • {product.variants.length} variants</p>
+                            <h3 className="font-semibold text-text-primary">
+                              {product.product_name}
+                            </h3>
+                            <p className="text-sm text-text-secondary">
+                              {product.brand} • {product.variants.length}{" "}
+                              variants
+                            </p>
                           </div>
                           <button
-                            onClick={() => handleRemoveProduct(product.product_id)}
+                            onClick={() =>
+                              handleRemoveProduct(product.product_id)
+                            }
                             disabled={updating}
                             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm font-medium"
                           >
@@ -773,7 +939,9 @@ export default function InventoryManagement() {
                           </button>
                         </div>
                         <div className="p-4 space-y-2">
-                          <p className="text-xs font-medium text-text-secondary uppercase mb-2">Product Variants:</p>
+                          <p className="text-xs font-medium text-text-secondary uppercase mb-2">
+                            Product Variants:
+                          </p>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {product.variants.map((variant) => (
                               <div
@@ -781,22 +949,38 @@ export default function InventoryManagement() {
                                 className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-card-border rounded-lg"
                               >
                                 <div>
-                                  <p className="font-mono text-xs text-text-secondary">{variant.sku}</p>
+                                  <p className="font-mono text-xs text-text-secondary">
+                                    {variant.sku}
+                                  </p>
                                   <p className="text-sm font-semibold text-text-primary">
                                     {variant.color} / {variant.size}
                                   </p>
                                   <p className="text-xs text-text-secondary">
-                                    Rs. {parseFloat(variant.price).toLocaleString()} • Stock: {variant.stock}
+                                    Rs.{" "}
+                                    {parseFloat(variant.price).toLocaleString()}{" "}
+                                    • Stock: {variant.stock}
                                   </p>
                                 </div>
                                 <button
-                                  onClick={() => handleRemoveVariant(variant.variant_id)}
+                                  onClick={() =>
+                                    handleRemoveVariant(variant.variant_id)
+                                  }
                                   disabled={updating}
                                   className="p-2 text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50"
                                   title="Remove variant"
                                 >
-                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  <svg
+                                    className="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
                                   </svg>
                                 </button>
                               </div>
