@@ -244,7 +244,7 @@ export default function StaffOrdersPage() {
               Revenue
             </p>
             <p className="text-2xl font-bold text-indigo-700 dark:text-indigo-300">
-              Rs. {orderStats.totalRevenue.toLocaleString()}
+              $ {orderStats.totalRevenue.toLocaleString()}
             </p>
           </div>
         </div>
@@ -428,7 +428,7 @@ function OrderCard({
             </p>
             <p>
               📦 {order.item_count} {order.item_count === 1 ? "item" : "items"}{" "}
-              in order • Rs. {parseFloat(order.total).toLocaleString()}
+              in order • $ {parseFloat(order.total).toLocaleString()}
             </p>
             <p>
               🚚 Delivery: {order.delivery_mode}{" "}
@@ -440,157 +440,6 @@ function OrderCard({
               <p>⏱️ Est. Delivery: {order.estimated_delivery_days} days</p>
             )}
           </div>
-
-          {/* Shipment Tracking Section - Only for Standard Delivery */}
-          {!isStorePickup && (
-            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-semibold text-blue-800 dark:text-blue-300 flex items-center gap-2">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-                    />
-                  </svg>
-                  Courier Service Tracking
-                </h4>
-                <button
-                  onClick={() => setShowShipmentForm(!showShipmentForm)}
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  {showShipmentForm
-                    ? "Cancel"
-                    : order.tracking_number
-                    ? "Update"
-                    : "Add Tracking"}
-                </button>
-              </div>
-
-              {!showShipmentForm && (
-                <div className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
-                  {order.shipment_provider ? (
-                    <>
-                      <p>
-                        📦 Courier:{" "}
-                        <span className="font-semibold">
-                          {order.shipment_provider}
-                        </span>
-                      </p>
-                      {order.tracking_number && (
-                        <p>
-                          🔢 Tracking #:{" "}
-                          <span className="font-mono font-semibold">
-                            {order.tracking_number}
-                          </span>
-                        </p>
-                      )}
-                      {order.shipped_date && (
-                        <p>
-                          📤 Shipped:{" "}
-                          {new Date(order.shipped_date).toLocaleDateString()}
-                        </p>
-                      )}
-                      {order.delivered_date && (
-                        <p>
-                          ✅ Delivered:{" "}
-                          {new Date(order.delivered_date).toLocaleDateString()}
-                        </p>
-                      )}
-                      {order.shipment_notes && (
-                        <p>📝 Notes: {order.shipment_notes}</p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-gray-500 dark:text-gray-400">
-                      No courier tracking information available yet. Click "Add
-                      Tracking" to enter details.
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {showShipmentForm && (
-                <form
-                  onSubmit={handleShipmentSubmit}
-                  className="mt-3 space-y-3"
-                >
-                  <div>
-                    <label className="block text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
-                      Courier Service
-                    </label>
-                    <input
-                      type="text"
-                      value={shipmentData.shipment_provider}
-                      onChange={(e) =>
-                        setShipmentData({
-                          ...shipmentData,
-                          shipment_provider: e.target.value,
-                        })
-                      }
-                      placeholder="e.g., FedEx, UPS, DHL"
-                      className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white dark:bg-gray-800 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
-                      Tracking Number
-                    </label>
-                    <input
-                      type="text"
-                      value={shipmentData.tracking_number}
-                      onChange={(e) =>
-                        setShipmentData({
-                          ...shipmentData,
-                          tracking_number: e.target.value,
-                        })
-                      }
-                      placeholder="Enter tracking number"
-                      className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white dark:bg-gray-800 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
-                      Notes (Optional)
-                    </label>
-                    <textarea
-                      value={shipmentData.notes}
-                      onChange={(e) =>
-                        setShipmentData({
-                          ...shipmentData,
-                          notes: e.target.value,
-                        })
-                      }
-                      placeholder="Add any shipment notes"
-                      rows="2"
-                      className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white dark:bg-gray-800 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
-                    >
-                      Save Tracking Info
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowShipmentForm(false)}
-                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 text-sm font-medium"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          )}
 
           {/* Store Pickup Notice */}
           {isStorePickup && (

@@ -199,14 +199,13 @@ export default function CustomerManagement() {
                     {selectedCustomer.totalOrders}
                   </p>
                   <p>
-                    <span className="font-medium">Total Spent:</span> Rs.{" "}
+                    <span className="font-medium">Total Spent:</span> ${" "}
                     {parseFloat(
                       selectedCustomer.totalSpent || 0
                     ).toLocaleString()}
                   </p>
                   <p>
-                    <span className="font-medium">Average Order Value:</span>{" "}
-                    Rs.{" "}
+                    <span className="font-medium">Average Order Value:</span> ${" "}
                     {parseFloat(
                       selectedCustomer.avgOrderValue || 0
                     ).toLocaleString()}
@@ -325,7 +324,7 @@ export default function CustomerManagement() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-text-primary">
-                        Rs.{" "}
+                        ${" "}
                         {parseFloat(customer.total_spent || 0).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">

@@ -196,7 +196,7 @@ export default function InventoryPage() {
                     Inventory Value
                   </p>
                   <p className="text-3xl font-bold text-text-primary mt-1">
-                    Rs. {(stats.totalValue / 1000).toFixed(1)}K
+                    $ {(stats.totalValue / 1000).toFixed(1)}K
                   </p>
                   <p className="text-xs text-green-600 mt-1">
                     {stats.inStock} in stock
@@ -219,7 +219,7 @@ export default function InventoryPage() {
                     {stats.totalSold}
                   </p>
                   <p className="text-xs text-text-secondary mt-1">
-                    Rs. {(stats.totalRevenue / 1000).toFixed(1)}K revenue
+                    $ {(stats.totalRevenue / 1000).toFixed(1)}K revenue
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
@@ -392,7 +392,7 @@ export default function InventoryPage() {
                     Total Inventory Value
                   </span>
                   <span className="font-semibold text-text-primary">
-                    Rs. {stats.totalValue.toLocaleString()}
+                    $ {stats.totalValue.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-card-border">
@@ -404,7 +404,7 @@ export default function InventoryPage() {
                 <div className="flex items-center justify-between py-2">
                   <span className="text-text-secondary">Total Revenue</span>
                   <span className="font-semibold text-green-600">
-                    Rs. {stats.totalRevenue.toLocaleString()}
+                    $ {stats.totalRevenue.toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -513,7 +513,7 @@ export default function InventoryPage() {
                           {product.totalSold.toLocaleString()}
                         </td>
                         <td className="px-4 py-4 text-sm text-text-primary text-right">
-                          Rs. {product.avgPrice.toLocaleString()}
+                          $ {product.avgPrice.toLocaleString()}
                         </td>
                         <td className="px-4 py-4 text-center">
                           <span
@@ -626,7 +626,7 @@ export default function InventoryPage() {
                           {order.total_items}
                         </td>
                         <td className="px-4 py-4 text-sm text-text-primary text-right font-semibold">
-                          Rs. {parseFloat(order.total_amount).toLocaleString()}
+                          $ {parseFloat(order.total_amount).toLocaleString()}
                         </td>
                         <td className="px-4 py-4 text-center">
                           <span

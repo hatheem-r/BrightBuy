@@ -544,7 +544,7 @@ export default function InventoryManagement() {
                     <div>
                       <p className="text-sm text-text-secondary">Price</p>
                       <p className="text-lg font-semibold text-text-primary">
-                        Rs. {parseFloat(selectedVariant.price).toLocaleString()}
+                        $ {parseFloat(selectedVariant.price).toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -706,8 +706,7 @@ export default function InventoryManagement() {
                                   </span>
                                 </div>
                                 <p className="text-sm text-text-secondary mb-3">
-                                  Rs.{" "}
-                                  {parseFloat(variant.price).toLocaleString()}
+                                  $ {parseFloat(variant.price).toLocaleString()}
                                 </p>
                                 <button
                                   onClick={() => setSelectedVariant(variant)}
@@ -956,7 +955,7 @@ export default function InventoryManagement() {
                                     {variant.color} / {variant.size}
                                   </p>
                                   <p className="text-xs text-text-secondary">
-                                    Rs.{" "}
+                                    ${" "}
                                     {parseFloat(variant.price).toLocaleString()}{" "}
                                     • Stock: {variant.stock}
                                   </p>

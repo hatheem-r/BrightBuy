@@ -115,10 +115,14 @@ const createOrder = async (req, res) => {
     }
 
     // 4. Create payment record
+    // Card payments are marked as 'completed' directly, Cash on Delivery is 'pending'
+    const paymentStatus =
+      payment_method === "Card Payment" ? "completed" : "pending";
+
     const [paymentResult] = await connection.execute(
       `INSERT INTO Payment (order_id, method, amount, status) 
-       VALUES (?, ?, ?, 'pending')`,
-      [order_id, payment_method || "Cash on Delivery", total]
+       VALUES (?, ?, ?, ?)`,
+      [order_id, payment_method || "Cash on Delivery", total, paymentStatus]
     );
 
     const payment_id = paymentResult.insertId;
@@ -307,7 +311,13 @@ const updateOrderStatus = async (req, res) => {
     const { order_id } = req.params;
     const { status } = req.body;
 
-    const validStatuses = ["pending", "paid", "shipped", "delivered", "cancelled"];
+    const validStatuses = [
+      "pending",
+      "paid",
+      "shipped",
+      "delivered",
+      "cancelled",
+    ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         error: "Invalid status",
@@ -411,7 +421,13 @@ const updateShipmentInfo = async (req, res) => {
              notes = ?,
              shipped_date = CASE WHEN shipped_date IS NULL AND ? IS NOT NULL THEN NOW() ELSE shipped_date END
          WHERE shipment_id = ?`,
-        [shipment_provider, tracking_number, notes, tracking_number, order.shipment_id]
+        [
+          shipment_provider,
+          tracking_number,
+          notes,
+          tracking_number,
+          order.shipment_id,
+        ]
       );
 
       res.json({
@@ -424,16 +440,21 @@ const updateShipmentInfo = async (req, res) => {
       const [result] = await db.execute(
         `INSERT INTO Shipment (shipment_provider, tracking_number, notes, shipped_date)
          VALUES (?, ?, ?, ?)`,
-        [shipment_provider, tracking_number, notes, tracking_number ? new Date() : null]
+        [
+          shipment_provider,
+          tracking_number,
+          notes,
+          tracking_number ? new Date() : null,
+        ]
       );
 
       const shipment_id = result.insertId;
 
       // Link shipment to order
-      await db.execute(
-        `UPDATE Orders SET shipment_id = ? WHERE order_id = ?`,
-        [shipment_id, order_id]
-      );
+      await db.execute(`UPDATE Orders SET shipment_id = ? WHERE order_id = ?`, [
+        shipment_id,
+        order_id,
+      ]);
 
       res.json({
         message: "Shipment information created successfully",
