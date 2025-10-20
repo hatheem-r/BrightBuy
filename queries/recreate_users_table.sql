@@ -4,12 +4,15 @@
 -- This file recreates the `users` table exactly as it exists in the brightbuy database
 -- Retrieved using: SHOW CREATE TABLE users
 -- Date: 2025-10-17
+
+USE brightbuy;
+
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
     `user_id` int(11) NOT NULL AUTO_INCREMENT,
     `email` varchar(255) NOT NULL,
     `password_hash` varchar(255) NOT NULL,
-    `role` enum('customer', 'staff', 'manager', 'admin') NOT NULL DEFAULT 'customer',
+    `role` enum('customer', 'staff') NOT NULL DEFAULT 'customer',
     `is_active` tinyint(1) DEFAULT 1,
     `created_at` timestamp NULL DEFAULT current_timestamp(),
     `last_login` timestamp NULL DEFAULT NULL,

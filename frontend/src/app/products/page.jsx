@@ -5,11 +5,10 @@ import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { productsAPI, categoriesAPI } from "@/services/api";
+import { getImageUrl } from "@/utils/imageUrl";
 
 const ProductCard = ({ product }) => {
-  const imageUrl = product.image_url
-    ? `http://localhost:5001${product.image_url}`
-    : null;
+  const imageUrl = getImageUrl(product.image_url);
   const stockStatus = product.stock_status || "Out of Stock";
   const stockQuantity = product.stock_quantity || 0;
 

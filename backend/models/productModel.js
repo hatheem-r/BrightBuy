@@ -189,13 +189,7 @@ class ProductModel {
       LEFT JOIN Inventory i ON pv.variant_id = i.variant_id
       LEFT JOIN ProductCategory pc ON p.product_id = pc.product_id
       LEFT JOIN Category c ON pc.category_id = c.category_id
-      WHERE p.name LIKE ? 
-        OR p.brand LIKE ?
-        OR pv.description LIKE ?
-        OR pv.sku LIKE ?
-        OR pv.color LIKE ?
-        OR pv.size LIKE ?
-        OR c.name LIKE ?
+      WHERE p.name LIKE ? OR p.brand LIKE ?
       GROUP BY p.product_id, p.name, p.brand, pv.variant_id, pv.price, pv.sku, pv.size, pv.color, pv.description, i.quantity, pv.image_url
       ORDER BY p.product_id DESC
     `;
@@ -203,15 +197,7 @@ class ProductModel {
     const searchPattern = `%${searchTerm}%`;
 
     try {
-      const [rows] = await db.query(sql, [
-        searchPattern, 
-        searchPattern, 
-        searchPattern, 
-        searchPattern, 
-        searchPattern, 
-        searchPattern, 
-        searchPattern
-      ]);
+      const [rows] = await db.query(sql, [searchPattern, searchPattern]);
       return rows;
     } catch (error) {
       throw error;
@@ -232,6 +218,87 @@ class ProductModel {
     try {
       const [rows] = await db.query(sql);
       return rows;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Create new product
+  static async createProduct(productData) {
+    const sql = `
+      INSERT INTO Product (name, brand, description)
+      VALUES (?, ?, ?)
+    `;
+
+    try {
+      const [result] = await db.query(sql, [
+        productData.name,
+        productData.brand,
+        productData.description
+      ]);
+      
+      // If category_id is provided, link product to category
+      if (productData.category_id) {
+        await this.linkProductToCategory(result.insertId, productData.category_id);
+      }
+      
+      return result.insertId;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Create new product variant
+  static async createVariant(variantData) {
+    const sql = `
+      INSERT INTO ProductVariant 
+      (product_id, sku, price, size, color, description, image_url, is_default)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    try {
+      const [result] = await db.query(sql, [
+        variantData.product_id,
+        variantData.sku,
+        variantData.price,
+        variantData.size,
+        variantData.color,
+        variantData.description,
+        variantData.image_url,
+        variantData.is_default
+      ]);
+      
+      return result.insertId;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Link product to category
+  static async linkProductToCategory(productId, categoryId) {
+    const sql = `
+      INSERT INTO ProductCategory (product_id, category_id)
+      VALUES (?, ?)
+    `;
+
+    try {
+      await db.query(sql, [productId, categoryId]);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Update product variant image
+  static async updateVariantImage(variantId, imageUrl) {
+    const sql = `
+      UPDATE ProductVariant
+      SET image_url = ?
+      WHERE variant_id = ?
+    `;
+
+    try {
+      const [result] = await db.query(sql, [imageUrl, variantId]);
+      return result.affectedRows;
     } catch (error) {
       throw error;
     }

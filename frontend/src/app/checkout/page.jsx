@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { variantsAPI, customerAPI, ordersAPI } from "@/services/api";
 import { formatCurrency } from "@/utils/currency";
 import BackButton from "@/components/BackButton";
+import { getImageUrl } from "@/utils/imageUrl";
 
 export default function CheckoutPage() {
   const { cartItems, cartSubtotal, cartCount, clearCart, removeFromCart } =
@@ -998,9 +999,7 @@ export default function CheckoutPage() {
 
                 <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
                   {checkoutItems.map((item) => {
-                    const imageUrl = item.variant.image_url
-                      ? `http://localhost:5001${item.variant.image_url}`
-                      : null;
+                    const imageUrl = getImageUrl(item.variant.image_url);
 
                     return (
                       <div

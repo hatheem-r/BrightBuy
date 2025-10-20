@@ -1,13 +1,32 @@
 // routes/products.js
 const express = require("express");
 const router = express.Router();
+const upload = require("../middleware/upload");
 const {
   getAllProducts,
   getProductById,
   getProductsByCategory,
   searchProducts,
   getProductNames,
+  uploadProductImage,
+  createProduct,
+  updateVariantImage,
 } = require("../controllers/productController");
+
+// @route   POST /api/products/upload-image
+// @desc    Upload a product image
+// @access  Public (you can add auth middleware later)
+router.post("/upload-image", upload.single('image'), uploadProductImage);
+
+// @route   POST /api/products
+// @desc    Create new product with variants
+// @access  Public (you can add auth middleware later)
+router.post("/", createProduct);
+
+// @route   PUT /api/products/variants/:variantId/image
+// @desc    Update product variant image URL
+// @access  Public (you can add auth middleware later)
+router.put("/variants/:variantId/image", updateVariantImage);
 
 // @route   GET /api/products
 // @desc    Get all products with default variants
@@ -20,7 +39,7 @@ router.get("/", getAllProducts);
 router.get("/names", getProductNames);
 
 // @route   GET /api/products/search
-// @desc    Search products by keyword (name, brand, description, category, SKU, color, size)
+// @desc    Search products by name or brand
 // @access  Public
 router.get("/search", searchProducts);
 

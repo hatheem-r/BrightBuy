@@ -7,15 +7,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/utils/currency';
 import BackButton from '@/components/BackButton';
+import { getImageUrl } from '@/utils/imageUrl';
 
 const CartItem = ({ item, isSelected, onToggleSelect }) => {
   const { updateQuantity, removeFromCart } = useCart();
   const router = useRouter();
 
   // Construct image URL similar to products page
-  const imageUrl = item.variant.image_url
-    ? `http://localhost:5001${item.variant.image_url}`
-    : null;
+  const imageUrl = getImageUrl(item.variant.image_url);
 
   const handleBuyNow = (e) => {
     e.stopPropagation(); // Prevent triggering the card click

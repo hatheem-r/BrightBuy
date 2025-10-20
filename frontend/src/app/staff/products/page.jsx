@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getImageUrl } from "@/utils/imageUrl";
 
 export default function StaffProductsPage() {
   const router = useRouter();
@@ -168,9 +169,7 @@ export default function StaffProductsPage() {
                   </tr>
                 ) : (
                   filteredProducts.map((product) => {
-                    const imageUrl = product.image_url
-                      ? `http://localhost:5001${product.image_url}`
-                      : null;
+                    const imageUrl = getImageUrl(product.image_url);
                     
                     const stockStatus = product.stock_status || "Out of Stock";
                     const getStockColor = () => {

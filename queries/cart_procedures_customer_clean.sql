@@ -6,7 +6,6 @@
 
 USE brightbuy;
 
---@block Add Item to Cart
 -- ============================
 -- 1. Add Item to Customer's Cart
 -- ============================
@@ -45,7 +44,6 @@ BEGIN
 END//
 DELIMITER ;
 
---@block Get Customer Cart
 -- ============================
 -- 2. Get Customer's Cart Items
 -- ============================
@@ -84,7 +82,6 @@ BEGIN
 END//
 DELIMITER ;
 
---@block Get Customer Cart Summary
 -- ============================
 -- 3. Get Customer's Cart Summary
 -- ============================
@@ -111,7 +108,6 @@ BEGIN
 END//
 DELIMITER ;
 
---@block Update Cart Item Quantity
 -- ============================
 -- 4. Update Cart Item Quantity
 -- ============================
@@ -143,7 +139,6 @@ BEGIN
 END//
 DELIMITER ;
 
---@block Remove Item from Cart
 -- ============================
 -- 5. Remove Item from Customer's Cart
 -- ============================
@@ -166,7 +161,6 @@ BEGIN
 END//
 DELIMITER ;
 
---@block Clear Customer Cart
 -- ============================
 -- 6. Clear Customer's Cart
 -- ============================
@@ -182,7 +176,6 @@ BEGIN
 END//
 DELIMITER ;
 
---@block Get Customer Cart Count
 -- ============================
 -- 7. Get Cart Item Count for Customer
 -- ============================
@@ -199,7 +192,6 @@ BEGIN
 END//
 DELIMITER ;
 
---@block Test Procedures
 -- ============================
 -- Usage Examples
 -- ============================

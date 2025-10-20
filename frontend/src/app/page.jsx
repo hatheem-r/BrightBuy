@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { productsAPI } from "@/services/api";
+import { getImageUrl } from "@/utils/imageUrl";
 
 // Widget data
 const featureWidgets = [
@@ -24,9 +25,8 @@ const featureWidgets = [
 ];
 
 const ProductCard = ({ product }) => {
-  const imageUrl = product.image_url
-    ? `http://localhost:5001${product.image_url}`
-    : null;
+  // Use utility function to handle both CDN URLs and local paths
+  const imageUrl = getImageUrl(product.image_url);
   const stockStatus = product.stock_status || "Out of Stock";
 
   const getStockBadgeStyle = () => {
@@ -50,13 +50,16 @@ const ProductCard = ({ product }) => {
                 e.target.onerror = null;
                 e.target.src = "";
                 e.target.style.display = "none";
-                e.target.parentElement.innerHTML = `
-                  <div class="w-full h-full flex items-center justify-center">
-                    <span class="text-text-secondary text-sm">
-                      ${product.brand || "Product Image"}
-                    </span>
-                  </div>
-                `;
+                // Check if parentElement exists before modifying
+                if (e.target.parentElement) {
+                  e.target.parentElement.innerHTML = `
+                    <div class="w-full h-full flex items-center justify-center">
+                      <span class="text-text-secondary text-sm">
+                        ${product.brand || "Product Image"}
+                      </span>
+                    </div>
+                  `;
+                }
               }}
             />
           ) : (

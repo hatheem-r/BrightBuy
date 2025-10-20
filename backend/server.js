@@ -25,6 +25,7 @@ app.use(express.json()); // To accept JSON data in the body
 
 // Serve static assets (product images)
 app.use("/assets", express.static(path.join(__dirname, "../assets")));
+app.use("/images", express.static(path.join(__dirname, "public/images")));
 
 // --- API Routes ---
 app.use("/api/products", require("./routes/products"));

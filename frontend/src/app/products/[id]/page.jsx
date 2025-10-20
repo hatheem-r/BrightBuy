@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
 import { productsAPI } from "@/services/api";
 import BackButton from "@/components/BackButton";
+import { getImageUrl } from "@/utils/imageUrl";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -176,9 +177,7 @@ export default function ProductDetailPage() {
     ? "5-7 business days"
     : "8-10 business days";
 
-  const imageUrl = selectedVariant?.image_url
-    ? `http://localhost:5001${selectedVariant.image_url}`
-    : null;
+  const imageUrl = getImageUrl(selectedVariant?.image_url);
 
   return (
     <div className="container mx-auto px-4 py-8">
