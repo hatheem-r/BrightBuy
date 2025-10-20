@@ -84,11 +84,11 @@ const uploadProductImage = async (req, res) => {
 
     // Return the file path that can be used as image_url
     const imageUrl = `/images/products/${req.file.filename}`;
-    
+
     res.json({
       message: "Image uploaded successfully",
       imageUrl: imageUrl,
-      filename: req.file.filename
+      filename: req.file.filename,
     });
   } catch (error) {
     console.error("Error uploading image:", error);
@@ -106,12 +106,11 @@ const createProduct = async (req, res) => {
       return res.status(400).json({ message: "Name and brand are required" });
     }
 
-    // Create product
+    // Create product (description is not stored in Product table, it goes to ProductVariant)
     const productData = {
       name,
       brand,
       category_id: category_id || null,
-      description: description || null
     };
 
     const productId = await ProductModel.createProduct(productData);
@@ -127,16 +126,16 @@ const createProduct = async (req, res) => {
           color: variant.color || null,
           description: variant.description || null,
           image_url: variant.image_url || null,
-          is_default: variant.is_default || false
+          is_default: variant.is_default || false,
         };
-        
+
         await ProductModel.createVariant(variantData);
       }
     }
 
     res.status(201).json({
       message: "Product created successfully",
-      productId: productId
+      productId: productId,
     });
   } catch (error) {
     console.error("Error creating product:", error);

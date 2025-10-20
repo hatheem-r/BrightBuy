@@ -1,5 +1,11 @@
 // components/ImageUpload.jsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
+  "http://localhost:5001";
 
 const ImageUpload = ({ onImageUploaded, currentImage = null }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -13,16 +19,22 @@ const ImageUpload = ({ onImageUploaded, currentImage = null }) => {
     if (!file) return;
 
     // Validate file type
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const validTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
     if (!validTypes.includes(file.type)) {
-      setError('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+      setError("Please select a valid image file (JPEG, PNG, GIF, or WebP)");
       return;
     }
 
     // Validate file size (5MB)
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
-      setError('File size must be less than 5MB');
+      setError("File size must be less than 5MB");
       return;
     }
 
@@ -64,7 +76,7 @@ const ImageUpload = ({ onImageUploaded, currentImage = null }) => {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      setError('Please select a file first');
+      setError("Please select a file first");
       return;
     }
 
@@ -72,20 +84,20 @@ const ImageUpload = ({ onImageUploaded, currentImage = null }) => {
     setError(null);
 
     const formData = new FormData();
-    formData.append('image', selectedFile);
+    formData.append("image", selectedFile);
 
     try {
-      const response = await fetch('http://localhost:5001/api/products/upload-image', {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/products/upload-image`, {
+        method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        throw new Error("Upload failed");
       }
 
       const data = await response.json();
-      
+
       // Call parent component's callback with the image URL
       if (onImageUploaded) {
         onImageUploaded(data.imageUrl);
@@ -93,10 +105,9 @@ const ImageUpload = ({ onImageUploaded, currentImage = null }) => {
 
       setPreview(data.imageUrl);
       setSelectedFile(null);
-      
     } catch (err) {
-      setError('Failed to upload image. Please try again.');
-      console.error('Upload error:', err);
+      setError("Failed to upload image. Please try again.");
+      console.error("Upload error:", err);
     } finally {
       setUploading(false);
     }
@@ -107,7 +118,7 @@ const ImageUpload = ({ onImageUploaded, currentImage = null }) => {
     setPreview(currentImage);
     setError(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -148,7 +159,7 @@ const ImageUpload = ({ onImageUploaded, currentImage = null }) => {
           max-width: 100%;
           max-height: 300px;
           border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .upload-button {
@@ -218,7 +229,7 @@ const ImageUpload = ({ onImageUploaded, currentImage = null }) => {
 
       {!preview ? (
         <div
-          className={`upload-area ${dragActive ? 'drag-active' : ''}`}
+          className={`upload-area ${dragActive ? "drag-active" : ""}`}
           onClick={() => fileInputRef.current?.click()}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -227,7 +238,7 @@ const ImageUpload = ({ onImageUploaded, currentImage = null }) => {
         >
           <div className="upload-icon">📸</div>
           <div className="upload-text">
-            {dragActive ? 'Drop image here' : 'Click or drag image to upload'}
+            {dragActive ? "Drop image here" : "Click or drag image to upload"}
           </div>
           <div className="upload-subtext">
             Supports: JPG, PNG, GIF, WebP (Max 5MB)
@@ -237,22 +248,25 @@ const ImageUpload = ({ onImageUploaded, currentImage = null }) => {
             type="file"
             accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
             onChange={handleFileChange}
-            style={{ display: 'none' }}
+            style={{ display: "none" }}
           />
         </div>
       ) : (
         <div className="preview-container">
-          <img 
-            src={preview.startsWith('http') ? preview : `http://localhost:5001${preview}`} 
-            alt="Preview" 
-            className="preview-image" 
+          <img
+            src={
+              preview.startsWith("http") ? preview : `${BACKEND_URL}${preview}`
+            }
+            alt="Preview"
+            className="preview-image"
           />
         </div>
       )}
 
       {selectedFile && (
         <div className="file-info">
-          Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
+          Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)}{" "}
+          KB)
         </div>
       )}
 
@@ -266,7 +280,7 @@ const ImageUpload = ({ onImageUploaded, currentImage = null }) => {
               onClick={handleUpload}
               disabled={uploading}
             >
-              {uploading ? 'Uploading...' : 'Upload Image'}
+              {uploading ? "Uploading..." : "Upload Image"}
             </button>
             <button
               className="remove-button"
@@ -292,7 +306,7 @@ const ImageUpload = ({ onImageUploaded, currentImage = null }) => {
         type="file"
         accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
         onChange={handleFileChange}
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
       />
     </div>
   );

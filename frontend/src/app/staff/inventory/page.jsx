@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getImageUrl } from "@/utils/imageUrl";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
@@ -30,8 +31,13 @@ export default function InventoryManagement() {
     name: "",
     brand: "",
     category: "",
+    image: null,
+    imagePreview: null,
     variants: [{ color: "", size: "", price: "", stock: 0 }],
   });
+
+  // State for categories
+  const [categories, setCategories] = useState([]);
 
   // State for removing variants
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -57,7 +63,20 @@ export default function InventoryManagement() {
 
     setUser(parsedUser);
     fetchInventory();
+    fetchCategories();
   }, [router]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/categories`);
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
 
   const fetchInventory = async () => {
     try {
@@ -246,31 +265,133 @@ export default function InventoryManagement() {
     }
 
     if (newProduct.variants.length === 0 || !newProduct.variants[0].color) {
-      setMessage({ type: "error", text: "Please add at least one variant" });
+      setMessage({
+        type: "error",
+        text: "Please add at least one variant with color",
+      });
       return;
+    }
+
+    // Validate variant data
+    for (let i = 0; i < newProduct.variants.length; i++) {
+      const variant = newProduct.variants[i];
+      if (!variant.price || variant.price <= 0) {
+        setMessage({
+          type: "error",
+          text: `Variant ${
+            i + 1
+          }: Price is required and must be greater than 0`,
+        });
+        return;
+      }
+      if (!variant.color || variant.color.trim() === "") {
+        setMessage({
+          type: "error",
+          text: `Variant ${i + 1}: Color is required`,
+        });
+        return;
+      }
     }
 
     setUpdating(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/staff/products`, {
+      let imageUrl = null;
+
+      // Upload image if provided
+      if (newProduct.image) {
+        const formData = new FormData();
+        formData.append("image", newProduct.image);
+
+        const uploadResponse = await fetch(
+          `${API_BASE_URL}/products/upload-image`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            },
+            body: formData,
+          }
+        );
+
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          imageUrl = uploadData.imageUrl;
+        } else {
+          setMessage({ type: "error", text: "Failed to upload image" });
+          setUpdating(false);
+          return;
+        }
+      }
+
+      // Find category_id from category name
+      const category = categories.find((c) => c.name === newProduct.category);
+
+      if (!category) {
+        setMessage({ type: "error", text: "Invalid category selected" });
+        setUpdating(false);
+        return;
+      }
+
+      // Prepare product data with proper structure
+      const productData = {
+        name: newProduct.name.trim(),
+        brand: newProduct.brand.trim(),
+        category_id: category.category_id,
+        variants: newProduct.variants.map((v, index) => ({
+          sku: `${newProduct.brand
+            .trim()
+            .substring(0, 3)
+            .toUpperCase()}-${newProduct.name
+            .trim()
+            .substring(0, 3)
+            .toUpperCase()}-${v.color.substring(0, 3).toUpperCase()}${
+            v.size ? `-${v.size}` : ""
+          }-${Date.now()}${index}`.replace(/\s+/g, ""),
+          price: parseFloat(v.price),
+          size: v.size ? v.size.trim() : null,
+          color: v.color.trim(),
+          description: null,
+          image_url: imageUrl,
+          is_default: index === 0 ? 1 : 0,
+        })),
+      };
+
+      const response = await fetch(`${API_BASE_URL}/products`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
-        body: JSON.stringify(newProduct),
+        body: JSON.stringify(productData),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({ type: "success", text: "Product added successfully!" });
+        // Add variants to inventory with initial stock
+        if (newProduct.variants.some((v) => v.stock > 0)) {
+          // If any variant has stock, we need to add it to inventory
+          const productId = data.productId;
+
+          // Note: We'll handle inventory separately through the update stock section
+          // For now, just inform the user
+        }
+
+        setMessage({
+          type: "success",
+          text: "Product added successfully! Use 'Update Stocks' to add initial inventory.",
+        });
+
+        // Reset form
         setNewProduct({
           name: "",
           brand: "",
           category: "",
+          image: null,
+          imagePreview: null,
           variants: [{ color: "", size: "", price: "", stock: 0 }],
         });
+
         await fetchInventory();
       } else {
         setMessage({
@@ -279,9 +400,10 @@ export default function InventoryManagement() {
         });
       }
     } catch (error) {
+      console.error("Error adding product:", error);
       setMessage({
         type: "error",
-        text: "This feature requires backend API support",
+        text: "Error adding product: " + error.message,
       });
     } finally {
       setUpdating(false);
@@ -327,6 +449,40 @@ export default function InventoryManagement() {
     } finally {
       setUpdating(false);
     }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setMessage({ type: "error", text: "Please select an image file" });
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setMessage({ type: "error", text: "Image size must be less than 5MB" });
+        return;
+      }
+
+      setNewProduct({
+        ...newProduct,
+        image: file,
+        imagePreview: URL.createObjectURL(file),
+      });
+    }
+  };
+
+  const removeImage = () => {
+    if (newProduct.imagePreview) {
+      URL.revokeObjectURL(newProduct.imagePreview);
+    }
+    setNewProduct({
+      ...newProduct,
+      image: null,
+      imagePreview: null,
+    });
   };
 
   const addNewProductVariantRow = () => {
@@ -684,6 +840,20 @@ export default function InventoryManagement() {
                                 key={variant.variant_id}
                                 className="bg-white dark:bg-gray-800 border border-card-border rounded-lg p-4 hover:shadow-md transition-shadow"
                               >
+                                {/* Product Image */}
+                                {variant.image_url && (
+                                  <div className="mb-3 rounded-lg overflow-hidden bg-gray-100">
+                                    <img
+                                      src={getImageUrl(variant.image_url)}
+                                      alt={`${variant.color} ${variant.size}`}
+                                      className="w-full h-32 object-cover"
+                                      onError={(e) => {
+                                        e.target.style.display = "none";
+                                      }}
+                                    />
+                                  </div>
+                                )}
+
                                 <div className="flex justify-between items-start mb-3">
                                   <div>
                                     <p className="font-mono text-xs text-text-secondary">
@@ -776,8 +946,7 @@ export default function InventoryManagement() {
                     <label className="block text-sm font-medium text-text-secondary mb-2">
                       Category *
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={newProduct.category}
                       onChange={(e) =>
                         setNewProduct({
@@ -785,9 +954,57 @@ export default function InventoryManagement() {
                           category: e.target.value,
                         })
                       }
-                      placeholder="Enter category"
                       className="w-full px-4 py-2 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
+                    >
+                      <option value="">Select a category</option>
+                      {categories.map((cat) => (
+                        <option key={cat.category_id} value={cat.name}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Product Image Upload */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-text-secondary mb-2">
+                    Product Image
+                  </label>
+                  <div className="flex items-start gap-4">
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="w-full px-4 py-2 border border-card-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      />
+                      <p className="text-xs text-text-secondary mt-1">
+                        Upload a product image (JPG, PNG, GIF - Max 5MB)
+                      </p>
+                    </div>
+                    {newProduct.imagePreview && (
+                      <div className="relative w-24 h-24 border border-card-border rounded-lg overflow-hidden">
+                        <img
+                          src={newProduct.imagePreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewProduct({
+                              ...newProduct,
+                              image: null,
+                              imagePreview: null,
+                            });
+                          }}
+                          className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 

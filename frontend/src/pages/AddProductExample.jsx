@@ -1,23 +1,28 @@
 // Example: How to use ImageUpload component for adding products
 
-import React, { useState } from 'react';
-import ImageUpload from '../components/ImageUpload';
+import React, { useState } from "react";
+import ImageUpload from "../components/ImageUpload";
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
 const AddProductPage = () => {
   const [productData, setProductData] = useState({
-    name: '',
-    brand: '',
-    description: '',
-    category_id: '',
-    variants: [{
-      sku: '',
-      price: '',
-      size: '',
-      color: '',
-      description: '',
-      image_url: '',
-      is_default: true
-    }]
+    name: "",
+    brand: "",
+    description: "",
+    category_id: "",
+    variants: [
+      {
+        sku: "",
+        price: "",
+        size: "",
+        color: "",
+        description: "",
+        image_url: "",
+        is_default: true,
+      },
+    ],
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -25,47 +30,50 @@ const AddProductPage = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setProductData(prev => ({
+    setProductData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleVariantChange = (index, field, value) => {
-    setProductData(prev => ({
+    setProductData((prev) => ({
       ...prev,
-      variants: prev.variants.map((variant, i) => 
+      variants: prev.variants.map((variant, i) =>
         i === index ? { ...variant, [field]: value } : variant
-      )
+      ),
     }));
   };
 
   const handleImageUploaded = (index, imageUrl) => {
-    handleVariantChange(index, 'image_url', imageUrl);
-    setMessage({ type: 'success', text: 'Image uploaded successfully!' });
+    handleVariantChange(index, "image_url", imageUrl);
+    setMessage({ type: "success", text: "Image uploaded successfully!" });
     setTimeout(() => setMessage(null), 3000);
   };
 
   const addVariant = () => {
-    setProductData(prev => ({
+    setProductData((prev) => ({
       ...prev,
-      variants: [...prev.variants, {
-        sku: '',
-        price: '',
-        size: '',
-        color: '',
-        description: '',
-        image_url: '',
-        is_default: false
-      }]
+      variants: [
+        ...prev.variants,
+        {
+          sku: "",
+          price: "",
+          size: "",
+          color: "",
+          description: "",
+          image_url: "",
+          is_default: false,
+        },
+      ],
     }));
   };
 
   const removeVariant = (index) => {
     if (productData.variants.length > 1) {
-      setProductData(prev => ({
+      setProductData((prev) => ({
         ...prev,
-        variants: prev.variants.filter((_, i) => i !== index)
+        variants: prev.variants.filter((_, i) => i !== index),
       }));
     }
   };
@@ -76,60 +84,61 @@ const AddProductPage = () => {
     setMessage(null);
 
     try {
-      const response = await fetch('http://localhost:5001/api/products', {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/products`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(productData)
+        body: JSON.stringify(productData),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create product');
+        throw new Error("Failed to create product");
       }
 
       const data = await response.json();
-      setMessage({ 
-        type: 'success', 
-        text: `Product created successfully! ID: ${data.productId}` 
+      setMessage({
+        type: "success",
+        text: `Product created successfully! ID: ${data.productId}`,
       });
 
       // Reset form
       setProductData({
-        name: '',
-        brand: '',
-        description: '',
-        category_id: '',
-        variants: [{
-          sku: '',
-          price: '',
-          size: '',
-          color: '',
-          description: '',
-          image_url: '',
-          is_default: true
-        }]
+        name: "",
+        brand: "",
+        description: "",
+        category_id: "",
+        variants: [
+          {
+            sku: "",
+            price: "",
+            size: "",
+            color: "",
+            description: "",
+            image_url: "",
+            is_default: true,
+          },
+        ],
       });
-
     } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: 'Failed to create product. Please try again.' 
+      setMessage({
+        type: "error",
+        text: "Failed to create product. Please try again.",
       });
-      console.error('Submit error:', error);
+      console.error("Submit error:", error);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: '2rem auto', padding: '0 1rem' }}>
+    <div style={{ maxWidth: "800px", margin: "2rem auto", padding: "0 1rem" }}>
       <style jsx>{`
         .form-container {
           background: white;
           padding: 2rem;
           border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
@@ -148,7 +157,9 @@ const AddProductPage = () => {
           font-weight: 500;
         }
 
-        input, textarea, select {
+        input,
+        textarea,
+        select {
           width: 100%;
           padding: 0.75rem;
           border: 1px solid #cbd5e0;
@@ -156,7 +167,9 @@ const AddProductPage = () => {
           font-size: 1rem;
         }
 
-        input:focus, textarea:focus, select:focus {
+        input:focus,
+        textarea:focus,
+        select:focus {
           outline: none;
           border-color: #4299e1;
           box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
@@ -329,7 +342,13 @@ const AddProductPage = () => {
           </div>
 
           {/* Variants */}
-          <h2 style={{ marginTop: '2rem', marginBottom: '1rem', color: '#2d3748' }}>
+          <h2
+            style={{
+              marginTop: "2rem",
+              marginBottom: "1rem",
+              color: "#2d3748",
+            }}
+          >
             Product Variants
           </h2>
 
@@ -337,7 +356,7 @@ const AddProductPage = () => {
             <div key={index} className="variant-section">
               <div className="variant-header">
                 <div className="variant-title">
-                  Variant {index + 1} {variant.is_default && '(Default)'}
+                  Variant {index + 1} {variant.is_default && "(Default)"}
                 </div>
                 {productData.variants.length > 1 && (
                   <button
@@ -356,7 +375,9 @@ const AddProductPage = () => {
                   <input
                     type="text"
                     value={variant.sku}
-                    onChange={(e) => handleVariantChange(index, 'sku', e.target.value)}
+                    onChange={(e) =>
+                      handleVariantChange(index, "sku", e.target.value)
+                    }
                     required
                   />
                 </div>
@@ -367,7 +388,9 @@ const AddProductPage = () => {
                     type="number"
                     step="0.01"
                     value={variant.price}
-                    onChange={(e) => handleVariantChange(index, 'price', e.target.value)}
+                    onChange={(e) =>
+                      handleVariantChange(index, "price", e.target.value)
+                    }
                     required
                   />
                 </div>
@@ -379,7 +402,9 @@ const AddProductPage = () => {
                   <input
                     type="text"
                     value={variant.size}
-                    onChange={(e) => handleVariantChange(index, 'size', e.target.value)}
+                    onChange={(e) =>
+                      handleVariantChange(index, "size", e.target.value)
+                    }
                     placeholder="e.g., 256GB, M, L"
                   />
                 </div>
@@ -389,7 +414,9 @@ const AddProductPage = () => {
                   <input
                     type="text"
                     value={variant.color}
-                    onChange={(e) => handleVariantChange(index, 'color', e.target.value)}
+                    onChange={(e) =>
+                      handleVariantChange(index, "color", e.target.value)
+                    }
                     placeholder="e.g., Black, White"
                   />
                 </div>
@@ -399,9 +426,11 @@ const AddProductPage = () => {
                 <label>Variant Description</label>
                 <textarea
                   value={variant.description}
-                  onChange={(e) => handleVariantChange(index, 'description', e.target.value)}
+                  onChange={(e) =>
+                    handleVariantChange(index, "description", e.target.value)
+                  }
                   placeholder="Variant-specific description (optional)"
-                  style={{ minHeight: '80px' }}
+                  style={{ minHeight: "80px" }}
                 />
               </div>
 
@@ -409,10 +438,18 @@ const AddProductPage = () => {
                 <label>Product Image</label>
                 <ImageUpload
                   currentImage={variant.image_url}
-                  onImageUploaded={(imageUrl) => handleImageUploaded(index, imageUrl)}
+                  onImageUploaded={(imageUrl) =>
+                    handleImageUploaded(index, imageUrl)
+                  }
                 />
                 {variant.image_url && (
-                  <div style={{ marginTop: '0.5rem', color: '#48bb78', fontSize: '0.875rem' }}>
+                  <div
+                    style={{
+                      marginTop: "0.5rem",
+                      color: "#48bb78",
+                      fontSize: "0.875rem",
+                    }}
+                  >
                     ✓ Image URL: {variant.image_url}
                   </div>
                 )}
@@ -434,7 +471,7 @@ const AddProductPage = () => {
               className="button button-primary"
               disabled={submitting}
             >
-              {submitting ? 'Creating Product...' : 'Create Product'}
+              {submitting ? "Creating Product..." : "Create Product"}
             </button>
           </div>
         </form>

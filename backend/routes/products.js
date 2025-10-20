@@ -3,6 +3,10 @@ const express = require("express");
 const router = express.Router();
 const upload = require("../middleware/upload");
 const {
+  authenticate,
+  authorizeStaff,
+} = require("../middleware/authMiddleware");
+const {
   getAllProducts,
   getProductById,
   getProductsByCategory,
@@ -15,18 +19,29 @@ const {
 
 // @route   POST /api/products/upload-image
 // @desc    Upload a product image
-// @access  Public (you can add auth middleware later)
-router.post("/upload-image", upload.single('image'), uploadProductImage);
+// @access  Private (Staff only)
+router.post(
+  "/upload-image",
+  authenticate,
+  authorizeStaff,
+  upload.single("image"),
+  uploadProductImage
+);
 
 // @route   POST /api/products
 // @desc    Create new product with variants
-// @access  Public (you can add auth middleware later)
-router.post("/", createProduct);
+// @access  Private (Staff only)
+router.post("/", authenticate, authorizeStaff, createProduct);
 
 // @route   PUT /api/products/variants/:variantId/image
 // @desc    Update product variant image URL
-// @access  Public (you can add auth middleware later)
-router.put("/variants/:variantId/image", updateVariantImage);
+// @access  Private (Staff only)
+router.put(
+  "/variants/:variantId/image",
+  authenticate,
+  authorizeStaff,
+  updateVariantImage
+);
 
 // @route   GET /api/products
 // @desc    Get all products with default variants

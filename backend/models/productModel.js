@@ -226,22 +226,24 @@ class ProductModel {
   // Create new product
   static async createProduct(productData) {
     const sql = `
-      INSERT INTO Product (name, brand, description)
-      VALUES (?, ?, ?)
+      INSERT INTO Product (name, brand)
+      VALUES (?, ?)
     `;
 
     try {
       const [result] = await db.query(sql, [
         productData.name,
         productData.brand,
-        productData.description
       ]);
-      
+
       // If category_id is provided, link product to category
       if (productData.category_id) {
-        await this.linkProductToCategory(result.insertId, productData.category_id);
+        await this.linkProductToCategory(
+          result.insertId,
+          productData.category_id
+        );
       }
-      
+
       return result.insertId;
     } catch (error) {
       throw error;
@@ -265,9 +267,9 @@ class ProductModel {
         variantData.color,
         variantData.description,
         variantData.image_url,
-        variantData.is_default
+        variantData.is_default,
       ]);
-      
+
       return result.insertId;
     } catch (error) {
       throw error;
