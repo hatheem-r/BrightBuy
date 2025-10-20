@@ -5,6 +5,7 @@ import Link from "next/link";
 import { productsAPI } from "@/services/api";
 import { getImageUrl } from "@/utils/imageUrl";
 import TextType from "@/components/TextType";
+import Particles from "@/components/Particles";
 
 // Widget data
 const featureWidgets = [
@@ -140,14 +141,24 @@ export default function HomePage() {
   return (
     <div>
       {/* Welcome Section */}
-      <section className="relative bg-gradient-to-br from-primary via-primary to-secondary py-20 border-b border-card-border overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute top-0 left-0 w-full h-full opacity-10">
-          <div className="absolute top-10 left-10 w-32 h-32 bg-white rounded-full animate-float"></div>
-          <div className="absolute top-40 right-20 w-24 h-24 bg-white rounded-full animate-float delay-200"></div>
-          <div className="absolute bottom-20 left-1/4 w-40 h-40 bg-white rounded-full animate-float delay-300"></div>
-          <div className="absolute bottom-10 right-1/3 w-28 h-28 bg-white rounded-full animate-float delay-100"></div>
-        </div>
+      <section
+        className="relative bg-gradient-to-br from-primary via-primary to-secondary py-20 border-b border-card-border overflow-hidden"
+        style={{ minHeight: "600px" }}
+      >
+        {/* Particles Background */}
+        <Particles
+          particleCount={300}
+          particleSpread={12}
+          speed={0.15}
+          particleColors={["#ffffff", "#fde047", "#FFD700", "#F9560B"]}
+          moveParticlesOnHover={true}
+          particleHoverFactor={2}
+          alphaParticles={true}
+          particleBaseSize={120}
+          sizeRandomness={1.5}
+          cameraDistance={25}
+          disableRotation={false}
+        />
 
         <div className="container mx-auto px-6 text-center relative z-10">
           <div className="text-5xl md:text-7xl font-extrabold text-white mb-6 animate-fade-in-up min-h-[100px] flex items-center justify-center">
