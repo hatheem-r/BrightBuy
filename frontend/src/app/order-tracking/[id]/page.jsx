@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatCurrency } from "@/utils/currency";
 import { ordersAPI } from "@/services/api";
+import { getImageUrl } from "@/utils/imageUrl";
 
 export default function OrderTrackingPage() {
   const params = useParams();
@@ -381,7 +382,7 @@ export default function OrderTrackingPage() {
                       <div className="w-20 h-20 bg-white rounded-md mr-4 flex-shrink-0 border border-gray-200 overflow-hidden relative">
                         {item.image_url ? (
                           <Image
-                            src={`http://localhost:5001${item.image_url}`}
+                            src={getImageUrl(item.image_url)}
                             alt={item.product_name}
                             fill
                             className="object-contain p-1"

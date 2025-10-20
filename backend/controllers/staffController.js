@@ -405,3 +405,97 @@ exports.getCustomerDetails = async (req, res) => {
     });
   }
 };
+
+// Delete product and all its variants
+exports.deleteProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const ProductModel = require("../models/productModel");
+
+    console.log(`Attempting to delete product ${productId}`);
+
+    // Check if product exists
+    const product = await ProductModel.getProductById(productId);
+    console.log("Product found:", product ? "Yes" : "No");
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    // Check if any variants are in orders or carts
+    console.log("Checking orders...");
+    const [orderCheck] = await db.query(
+      `SELECT COUNT(*) as count FROM Order_item oi 
+       JOIN ProductVariant pv ON oi.variant_id = pv.variant_id 
+       WHERE pv.product_id = ?`,
+      [productId]
+    );
+    console.log("Order check result:", orderCheck[0]);
+
+    console.log("Checking carts...");
+    const [cartCheck] = await db.query(
+      `SELECT COUNT(*) as count FROM Cart_item ci 
+       JOIN ProductVariant pv ON ci.variant_id = pv.variant_id 
+       WHERE pv.product_id = ?`,
+      [productId]
+    );
+    console.log("Cart check result:", cartCheck[0]);
+
+    if (orderCheck[0].count > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Cannot delete product - it has been ordered by customers. You can only update stock to 0 to hide it.",
+      });
+    }
+
+    if (cartCheck[0].count > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Cannot delete product - it is currently in customer carts. Please try again later.",
+      });
+    }
+
+    // Delete product (cascades to variants, inventory, and categories)
+    console.log("Attempting delete...");
+    const affectedRows = await ProductModel.deleteProduct(productId);
+    console.log("Affected rows:", affectedRows);
+
+    if (affectedRows > 0) {
+      res.json({
+        success: true,
+        message: "Product and all its variants deleted successfully",
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Failed to delete product",
+      });
+    }
+  } catch (error) {
+    console.error("Delete product error:", error);
+    console.error("Error details:", {
+      code: error.code,
+      errno: error.errno,
+      sqlMessage: error.sqlMessage,
+    });
+
+    // Handle foreign key constraint errors
+    if (error.code === "ER_ROW_IS_REFERENCED_2") {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot delete product - it is referenced in orders or carts.",
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Server error. Please try again later.",
+      error: error.message,
+    });
+  }
+};

@@ -222,6 +222,101 @@ class ProductModel {
       throw error;
     }
   }
+
+  // Create new product
+  static async createProduct(productData) {
+    const sql = `
+      INSERT INTO Product (name, brand)
+      VALUES (?, ?)
+    `;
+
+    try {
+      const [result] = await db.query(sql, [
+        productData.name,
+        productData.brand,
+      ]);
+
+      // If category_id is provided, link product to category
+      if (productData.category_id) {
+        await this.linkProductToCategory(
+          result.insertId,
+          productData.category_id
+        );
+      }
+
+      return result.insertId;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Create new product variant
+  static async createVariant(variantData) {
+    const sql = `
+      INSERT INTO ProductVariant 
+      (product_id, sku, price, size, color, description, image_url, is_default)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    try {
+      const [result] = await db.query(sql, [
+        variantData.product_id,
+        variantData.sku,
+        variantData.price,
+        variantData.size,
+        variantData.color,
+        variantData.description,
+        variantData.image_url,
+        variantData.is_default,
+      ]);
+
+      return result.insertId;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Link product to category
+  static async linkProductToCategory(productId, categoryId) {
+    const sql = `
+      INSERT INTO ProductCategory (product_id, category_id)
+      VALUES (?, ?)
+    `;
+
+    try {
+      await db.query(sql, [productId, categoryId]);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Update product variant image
+  static async updateVariantImage(variantId, imageUrl) {
+    const sql = `
+      UPDATE ProductVariant
+      SET image_url = ?
+      WHERE variant_id = ?
+    `;
+
+    try {
+      const [result] = await db.query(sql, [imageUrl, variantId]);
+      return result.affectedRows;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Delete product and all its variants
+  static async deleteProduct(productId) {
+    try {
+      // Delete will cascade to ProductVariant and ProductCategory due to foreign key constraints
+      const sql = `DELETE FROM Product WHERE product_id = ?`;
+      const [result] = await db.query(sql, [productId]);
+      return result.affectedRows;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = ProductModel;

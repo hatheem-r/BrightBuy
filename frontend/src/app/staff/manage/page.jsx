@@ -3,6 +3,9 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+
 export default function StaffManagement() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -14,7 +17,7 @@ export default function StaffManagement() {
     email: "",
     password: "",
     phone: "",
-    role: "Level02"
+    role: "Level02",
   });
   const [message, setMessage] = useState({ type: "", text: "" });
 
@@ -42,7 +45,7 @@ export default function StaffManagement() {
 
   const fetchStaffList = async () => {
     try {
-      const response = await fetch("http://localhost:5001/api/staff/list", {
+      const response = await fetch(`${API_BASE_URL}/staff/list`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
         },
@@ -71,7 +74,7 @@ export default function StaffManagement() {
     setMessage({ type: "", text: "" });
 
     try {
-      const response = await fetch("http://localhost:5001/api/staff/create", {
+      const response = await fetch(`${API_BASE_URL}/staff/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -83,7 +86,10 @@ export default function StaffManagement() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({ type: "success", text: "Staff member added successfully!" });
+        setMessage({
+          type: "success",
+          text: "Staff member added successfully!",
+        });
         setFormData({
           userName: "",
           email: "",
@@ -94,7 +100,10 @@ export default function StaffManagement() {
         setShowAddForm(false);
         fetchStaffList();
       } else {
-        setMessage({ type: "error", text: data.message || "Failed to add staff member" });
+        setMessage({
+          type: "error",
+          text: data.message || "Failed to add staff member",
+        });
       }
     } catch (error) {
       setMessage({ type: "error", text: "Server error. Please try again." });
@@ -102,12 +111,14 @@ export default function StaffManagement() {
   };
 
   const handleDeleteStaff = async (staffId, staffEmail) => {
-    if (!confirm(`Are you sure you want to delete staff member: ${staffEmail}?`)) {
+    if (
+      !confirm(`Are you sure you want to delete staff member: ${staffEmail}?`)
+    ) {
       return;
     }
 
     try {
-      const response = await fetch(`http://localhost:5001/api/staff/${staffId}`, {
+      const response = await fetch(`${API_BASE_URL}/staff/${staffId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,
@@ -115,11 +126,17 @@ export default function StaffManagement() {
       });
 
       if (response.ok) {
-        setMessage({ type: "success", text: "Staff member deleted successfully!" });
+        setMessage({
+          type: "success",
+          text: "Staff member deleted successfully!",
+        });
         fetchStaffList();
       } else {
         const data = await response.json();
-        setMessage({ type: "error", text: data.message || "Failed to delete staff member" });
+        setMessage({
+          type: "error",
+          text: data.message || "Failed to delete staff member",
+        });
       }
     } catch (error) {
       setMessage({ type: "error", text: "Server error. Please try again." });
@@ -130,7 +147,7 @@ export default function StaffManagement() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-text-secondary">Loading...</p>
         </div>
       </div>
@@ -143,15 +160,25 @@ export default function StaffManagement() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
-            <Link 
+            <Link
               href="/staff/dashboard"
               className="text-primary hover:underline mb-2 inline-block"
             >
               ← Back to Dashboard
             </Link>
             <h1 className="text-3xl font-bold text-text-primary flex items-center">
-              <svg className="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              <svg
+                className="w-8 h-8 mr-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                />
               </svg>
               Staff Management
             </h1>
@@ -169,7 +196,13 @@ export default function StaffManagement() {
 
         {/* Messages */}
         {message.text && (
-          <div className={`mb-6 p-4 rounded-lg ${message.type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'}`}>
+          <div
+            className={`mb-6 p-4 rounded-lg ${
+              message.type === "success"
+                ? "bg-green-100 text-green-800 border border-green-300"
+                : "bg-red-100 text-red-800 border border-red-300"
+            }`}
+          >
             {message.text}
           </div>
         )}
@@ -177,8 +210,13 @@ export default function StaffManagement() {
         {/* Add Staff Form */}
         {showAddForm && (
           <div className="bg-card border border-card-border rounded-lg p-6 mb-8">
-            <h2 className="text-xl font-bold text-text-primary mb-4">Add New Staff Member</h2>
-            <form onSubmit={handleAddStaff} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h2 className="text-xl font-bold text-text-primary mb-4">
+              Add New Staff Member
+            </h2>
+            <form
+              onSubmit={handleAddStaff}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-2">
                   Username
@@ -193,7 +231,7 @@ export default function StaffManagement() {
                   placeholder="e.g., staff_john"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-2">
                   Email
@@ -208,7 +246,7 @@ export default function StaffManagement() {
                   placeholder="staff@brightbuy.com"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-2">
                   Password
@@ -224,7 +262,7 @@ export default function StaffManagement() {
                   placeholder="Minimum 6 characters"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-2">
                   Phone
@@ -238,7 +276,7 @@ export default function StaffManagement() {
                   placeholder="1234567890"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-2">
                   Staff Level
@@ -253,7 +291,7 @@ export default function StaffManagement() {
                   <option value="Level01">Level01 (Senior Staff)</option>
                 </select>
               </div>
-              
+
               <div className="flex items-end">
                 <button
                   type="submit"
@@ -269,9 +307,11 @@ export default function StaffManagement() {
         {/* Staff List */}
         <div className="bg-card border border-card-border rounded-lg overflow-hidden">
           <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-card-border">
-            <h2 className="text-xl font-bold text-text-primary">All Staff Members</h2>
+            <h2 className="text-xl font-bold text-text-primary">
+              All Staff Members
+            </h2>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-100 dark:bg-gray-700">
@@ -299,28 +339,42 @@ export default function StaffManagement() {
               <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                 {staffList.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-4 text-center text-text-secondary">
+                    <td
+                      colSpan="6"
+                      className="px-6 py-4 text-center text-text-secondary"
+                    >
                       No staff members found
                     </td>
                   </tr>
                 ) : (
                   staffList.map((staff) => (
-                    <tr key={staff.staff_id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <tr
+                      key={staff.staff_id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-text-primary">{staff.user_name}</div>
+                        <div className="text-sm font-medium text-text-primary">
+                          {staff.user_name}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-text-primary">{staff.email}</div>
+                        <div className="text-sm text-text-primary">
+                          {staff.email}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-text-primary">{staff.phone || 'N/A'}</div>
+                        <div className="text-sm text-text-primary">
+                          {staff.phone || "N/A"}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          staff.role === 'Level01' 
-                            ? 'bg-purple-100 text-purple-800' 
-                            : 'bg-blue-100 text-blue-800'
-                        }`}>
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            staff.role === "Level01"
+                              ? "bg-purple-100 text-purple-800"
+                              : "bg-blue-100 text-blue-800"
+                          }`}
+                        >
                           {staff.role}
                         </span>
                       </td>
@@ -330,7 +384,9 @@ export default function StaffManagement() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {staff.staff_id !== user.staff_id && (
                           <button
-                            onClick={() => handleDeleteStaff(staff.staff_id, staff.email)}
+                            onClick={() =>
+                              handleDeleteStaff(staff.staff_id, staff.email)
+                            }
                             className="text-red-600 hover:text-red-900"
                           >
                             Delete

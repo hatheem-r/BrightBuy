@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { productsAPI } from "@/services/api";
+import { getImageUrl } from "@/utils/imageUrl";
+import TextType from "@/components/TextType";
+import Particles from "@/components/Particles";
 
 // Widget data
 const featureWidgets = [
@@ -24,9 +27,8 @@ const featureWidgets = [
 ];
 
 const ProductCard = ({ product }) => {
-  const imageUrl = product.image_url
-    ? `http://localhost:5001${product.image_url}`
-    : null;
+  // Use utility function to handle both CDN URLs and local paths
+  const imageUrl = getImageUrl(product.image_url);
   const stockStatus = product.stock_status || "Out of Stock";
 
   const getStockBadgeStyle = () => {
@@ -38,25 +40,28 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className="bg-card border border-card-border rounded-lg shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+    <div className="card bg-card border border-card-border rounded-lg shadow-sm overflow-hidden group">
       <Link href={`/products/${product.product_id}`}>
         <div className="relative h-48 bg-background overflow-hidden">
           {imageUrl ? (
             <img
               src={imageUrl}
               alt={product.name}
-              className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               onError={(e) => {
                 e.target.onerror = null;
                 e.target.src = "";
                 e.target.style.display = "none";
-                e.target.parentElement.innerHTML = `
-                  <div class="w-full h-full flex items-center justify-center">
-                    <span class="text-text-secondary text-sm">
-                      ${product.brand || "Product Image"}
-                    </span>
-                  </div>
-                `;
+                // Check if parentElement exists before modifying
+                if (e.target.parentElement) {
+                  e.target.parentElement.innerHTML = `
+                    <div class="w-full h-full flex items-center justify-center">
+                      <span class="text-text-secondary text-sm">
+                        ${product.brand || "Product Image"}
+                      </span>
+                    </div>
+                  `;
+                }
               }}
             />
           ) : (
@@ -136,24 +141,78 @@ export default function HomePage() {
   return (
     <div>
       {/* Welcome Section */}
-      <section className="bg-card py-12 border-b border-card-border">
-        <div className="container mx-auto px-6 text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-text-primary mb-4">
-            Welcome to BrightBuy
-          </h1>
-          <p className="text-lg text-text-secondary max-w-2xl mx-auto">
+      <section
+        className="relative bg-gradient-to-br from-primary via-primary to-secondary py-20 border-b border-card-border overflow-hidden"
+        style={{ minHeight: "600px" }}
+      >
+        {/* Particles Background */}
+        <Particles
+          particleCount={300}
+          particleSpread={12}
+          speed={0.15}
+          particleColors={["#ffffff", "#fde047", "#FFD700", "#F9560B"]}
+          moveParticlesOnHover={true}
+          particleHoverFactor={2}
+          alphaParticles={true}
+          particleBaseSize={120}
+          sizeRandomness={1.5}
+          cameraDistance={25}
+          disableRotation={false}
+        />
+
+        <div className="container mx-auto px-6 text-center relative z-10">
+          <div className="text-5xl md:text-7xl font-extrabold text-white mb-6 animate-fade-in-up min-h-[100px] flex items-center justify-center">
+            <TextType
+              text={[
+                "Welcome to BrightBuy 🛍️",
+                "Premium Electronics 🎧",
+                "Latest Tech Gadgets 📱",
+                "Best Deals Daily ⚡",
+              ]}
+              typingSpeed={100}
+              pauseDuration={2000}
+              deletingSpeed={50}
+              showCursor={true}
+              cursorCharacter="|"
+              cursorClassName="text-yellow-300"
+              className="text-5xl md:text-7xl font-extrabold"
+              textColors={["#ffffff", "#fde047", "#ffffff", "#fde047"]}
+            />
+          </div>
+          <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-8 animate-fade-in-up delay-200">
             Your one-stop destination for the latest consumer electronics and
             tech gadgets
           </p>
+          <div className="flex justify-center gap-4 animate-fade-in-up delay-300">
+            <Link
+              href="/products"
+              className="bg-white text-primary px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300"
+            >
+              Shop Now
+              <i className="fas fa-arrow-right ml-2"></i>
+            </Link>
+            <Link
+              href="/products"
+              className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-primary transition-all duration-300"
+            >
+              Explore
+              <i className="fas fa-compass ml-2"></i>
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* Trending Items Section */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center text-text-primary mb-8">
-            Trending Items
-          </h2>
+          <div className="text-center mb-12 animate-fade-in-up">
+            <h2 className="text-4xl md:text-5xl font-bold text-text-primary mb-4">
+              🔥 Trending Items
+            </h2>
+            <p className="text-text-secondary text-lg">
+              Discover the hottest products everyone's talking about
+            </p>
+          </div>
 
           {loading ? (
             <div className="flex justify-center items-center py-16">
@@ -182,18 +241,24 @@ export default function HomePage() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                {trendingProducts.map((product) => (
-                  <ProductCard key={product.product_id} product={product} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                {trendingProducts.map((product, index) => (
+                  <div
+                    key={product.product_id}
+                    className="animate-fade-in-up"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <ProductCard product={product} />
+                  </div>
                 ))}
               </div>
-              <div className="text-center">
+              <div className="text-center animate-fade-in-up delay-500">
                 <Link
                   href="/products"
-                  className="inline-block bg-primary text-white px-8 py-3 rounded-full font-semibold hover:bg-secondary transition-colors text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+                  className="inline-block bg-gradient-to-r from-primary to-secondary text-white px-12 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
                 >
                   <i className="fas fa-arrow-right mr-2"></i>
-                  Explore More
+                  Explore More Products
                 </Link>
               </div>
             </>
@@ -202,21 +267,24 @@ export default function HomePage() {
       </section>
 
       {/* Feature Widgets */}
-      <section className="py-16">
+      <section className="py-16 bg-gradient-to-b from-background to-card">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {featureWidgets.map((feature) => (
+            {featureWidgets.map((feature, index) => (
               <div
                 key={feature.title}
-                className="text-center p-6 bg-card rounded-lg border border-card-border"
+                className="card text-center p-8 bg-card rounded-2xl border border-card-border shadow-lg hover:shadow-2xl animate-scale-in"
+                style={{ animationDelay: `${index * 0.2}s` }}
               >
-                <i
-                  className={`fas ${feature.icon} text-3xl text-secondary mb-4`}
-                ></i>
-                <h3 className="text-xl font-bold text-text-primary mb-2">
+                <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center animate-pulse-slow">
+                  <i className={`fas ${feature.icon} text-3xl text-white`}></i>
+                </div>
+                <h3 className="text-2xl font-bold text-text-primary mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-text-secondary">{feature.description}</p>
+                <p className="text-text-secondary text-lg">
+                  {feature.description}
+                </p>
               </div>
             ))}
           </div>

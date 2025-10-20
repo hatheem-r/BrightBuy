@@ -12,6 +12,10 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata = {
   title: "BrightBuy - Electronics & More",
   description: "Your trusted source for consumer electronics in Texas.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }) {

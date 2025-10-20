@@ -83,7 +83,7 @@ export default function AdminDashboard() {
           <div className="bg-card border border-card-border rounded-lg p-6">
             <h3 className="text-text-secondary text-sm font-medium">Revenue</h3>
             <p className="text-3xl font-bold text-text-primary mt-2">
-              Rs. 45,678
+              $ 45,678
             </p>
           </div>
         </div>
