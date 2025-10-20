@@ -115,9 +115,9 @@ const createOrder = async (req, res) => {
     }
 
     // 4. Create payment record
-    // Card payments are marked as 'completed' directly, Cash on Delivery is 'pending'
+    // Card payments are marked as 'paid' directly, Cash on Delivery is 'pending'
     const paymentStatus =
-      payment_method === "Card Payment" ? "completed" : "pending";
+      payment_method === "Card Payment" ? "paid" : "pending";
 
     const [paymentResult] = await connection.execute(
       `INSERT INTO Payment (order_id, method, amount, status) 
