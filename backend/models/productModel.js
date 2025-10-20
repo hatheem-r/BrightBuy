@@ -305,6 +305,18 @@ class ProductModel {
       throw error;
     }
   }
+
+  // Delete product and all its variants
+  static async deleteProduct(productId) {
+    try {
+      // Delete will cascade to ProductVariant and ProductCategory due to foreign key constraints
+      const sql = `DELETE FROM Product WHERE product_id = ?`;
+      const [result] = await db.query(sql, [productId]);
+      return result.affectedRows;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = ProductModel;
