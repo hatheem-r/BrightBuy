@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useRef, useEffect, useState } from 'react';
-import { motion } from 'motion/react';
+import { useRef, useEffect, useState } from "react";
+import { motion } from "motion/react";
 
 const AnimatedList = ({
   items = [],
@@ -9,10 +9,10 @@ const AnimatedList = ({
   showGradients = true,
   enableArrowNavigation = true,
   displayScrollbar = true,
-  className = '',
-  itemClassName = '',
-  selectedItemClassName = '',
-  containerHeight = '400px',
+  className = "",
+  itemClassName = "",
+  selectedItemClassName = "",
+  containerHeight = "400px",
   animationDuration = 0.3,
   staggerDelay = 0.05,
 }) => {
@@ -28,21 +28,21 @@ const AnimatedList = ({
     const handleKeyDown = (e) => {
       if (!items.length) return;
 
-      if (e.key === 'ArrowDown') {
+      if (e.key === "ArrowDown") {
         e.preventDefault();
         setSelectedIndex((prev) => {
           const next = prev === null ? 0 : Math.min(prev + 1, items.length - 1);
           scrollToItem(next);
           return next;
         });
-      } else if (e.key === 'ArrowUp') {
+      } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setSelectedIndex((prev) => {
           const next = prev === null ? items.length - 1 : Math.max(prev - 1, 0);
           scrollToItem(next);
           return next;
         });
-      } else if (e.key === 'Enter' && selectedIndex !== null) {
+      } else if (e.key === "Enter" && selectedIndex !== null) {
         e.preventDefault();
         if (onItemSelect) {
           onItemSelect(items[selectedIndex], selectedIndex);
@@ -50,15 +50,15 @@ const AnimatedList = ({
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [enableArrowNavigation, items, selectedIndex, onItemSelect]);
 
   const scrollToItem = (index) => {
     if (itemRefs.current[index]) {
       itemRefs.current[index].scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
+        behavior: "smooth",
+        block: "nearest",
       });
     }
   };
@@ -81,7 +81,9 @@ const AnimatedList = ({
       <div
         ref={listRef}
         className={`animated-list-content ${
-          displayScrollbar ? 'overflow-y-auto' : 'overflow-y-scroll scrollbar-hide'
+          displayScrollbar
+            ? "overflow-y-auto"
+            : "overflow-y-scroll scrollbar-hide"
         }`}
         style={{ height: containerHeight }}
       >
@@ -95,7 +97,7 @@ const AnimatedList = ({
               transition={{
                 duration: animationDuration,
                 delay: index * staggerDelay,
-                ease: 'easeOut',
+                ease: "easeOut",
               }}
               whileHover={{ scale: 1.02, x: 4 }}
               whileTap={{ scale: 0.98 }}
@@ -108,16 +110,15 @@ const AnimatedList = ({
                 cursor-pointer transition-all duration-200
                 ${
                   selectedIndex === index
-                    ? selectedItemClassName ||
-                      'bg-primary text-white shadow-lg'
+                    ? selectedItemClassName || "bg-primary text-white shadow-lg"
                     : hoveredIndex === index
-                    ? 'bg-gray-100 dark:bg-gray-700'
-                    : 'bg-white dark:bg-gray-800 hover:shadow-md'
+                    ? "bg-gray-100 dark:bg-gray-700"
+                    : "bg-white dark:bg-gray-800 hover:shadow-md"
                 }
                 ${itemClassName}
               `}
             >
-              {typeof item === 'string' ? (
+              {typeof item === "string" ? (
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{item}</span>
                   {selectedIndex === index && (
