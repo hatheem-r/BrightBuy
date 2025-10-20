@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { productsAPI } from "@/services/api";
 import { getImageUrl } from "@/utils/imageUrl";
+import TextType from "@/components/TextType";
 
 // Widget data
 const featureWidgets = [
@@ -147,11 +148,26 @@ export default function HomePage() {
           <div className="absolute bottom-20 left-1/4 w-40 h-40 bg-white rounded-full animate-float delay-300"></div>
           <div className="absolute bottom-10 right-1/3 w-28 h-28 bg-white rounded-full animate-float delay-100"></div>
         </div>
-        
+
         <div className="container mx-auto px-6 text-center relative z-10">
-          <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 animate-fade-in-up">
-            Welcome to <span className="text-yellow-300">BrightBuy</span>
-          </h1>
+          <div className="text-5xl md:text-7xl font-extrabold text-white mb-6 animate-fade-in-up min-h-[100px] flex items-center justify-center">
+            <TextType
+              text={[
+                "Welcome to BrightBuy 🛍️",
+                "Premium Electronics 🎧",
+                "Latest Tech Gadgets 📱",
+                "Best Deals Daily ⚡",
+              ]}
+              typingSpeed={100}
+              pauseDuration={2000}
+              deletingSpeed={50}
+              showCursor={true}
+              cursorCharacter="|"
+              cursorClassName="text-yellow-300"
+              className="text-5xl md:text-7xl font-extrabold"
+              textColors={["#ffffff", "#fde047", "#ffffff", "#fde047"]}
+            />
+          </div>
           <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-8 animate-fade-in-up delay-200">
             Your one-stop destination for the latest consumer electronics and
             tech gadgets
@@ -250,14 +266,14 @@ export default function HomePage() {
                 style={{ animationDelay: `${index * 0.2}s` }}
               >
                 <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center animate-pulse-slow">
-                  <i
-                    className={`fas ${feature.icon} text-3xl text-white`}
-                  ></i>
+                  <i className={`fas ${feature.icon} text-3xl text-white`}></i>
                 </div>
                 <h3 className="text-2xl font-bold text-text-primary mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-text-secondary text-lg">{feature.description}</p>
+                <p className="text-text-secondary text-lg">
+                  {feature.description}
+                </p>
               </div>
             ))}
           </div>
