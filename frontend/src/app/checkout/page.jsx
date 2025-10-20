@@ -76,7 +76,7 @@ export default function CheckoutPage() {
   );
   const itemCount = checkoutItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  const SHIPPING_COST = deliveryMode === "Store Pickup" ? 0 : 5.00; // Free for Store Pickup
+  const SHIPPING_COST = deliveryMode === "Store Pickup" ? 0 : 5.0; // Free for Store Pickup
   const TAX_RATE = 0.08; // 8% tax
   const taxAmount = subtotal * TAX_RATE;
   const totalAmount = subtotal + SHIPPING_COST + taxAmount;
@@ -198,12 +198,19 @@ export default function CheckoutPage() {
       if (formattedValue.replace(/\s/g, "").length > 16) return;
     }
 
-    // Format expiry date
+    // Format expiry date (YY/MM)
     if (name === "expiryDate") {
-      formattedValue = value
-        .replace(/\s/g, "")
-        .replace(/(\d{2})(\d{0,2})/, "$1/$2")
-        .substr(0, 5);
+      // Remove all non-digit characters first
+      const digitsOnly = value.replace(/\D/g, "");
+      // Limit to 4 digits
+      const limitedDigits = digitsOnly.substr(0, 4);
+      // Add slash after first 2 digits
+      if (limitedDigits.length >= 2) {
+        formattedValue =
+          limitedDigits.substr(0, 2) + "/" + limitedDigits.substr(2);
+      } else {
+        formattedValue = limitedDigits;
+      }
     }
 
     // Limit CVV to 4 digits
@@ -341,9 +348,13 @@ export default function CheckoutPage() {
       // Prepare order data
       const orderData = {
         customer_id: parseInt(customerId),
-        address_id: deliveryMode === "Standard Delivery" ? (savedAddressId || addressResult?.address_id) : null,
+        address_id:
+          deliveryMode === "Standard Delivery"
+            ? savedAddressId || addressResult?.address_id
+            : null,
         delivery_mode: deliveryMode,
-        delivery_zip: deliveryMode === "Standard Delivery" ? shippingInfo.postalCode : null,
+        delivery_zip:
+          deliveryMode === "Standard Delivery" ? shippingInfo.postalCode : null,
         payment_method:
           paymentMethod === "card" ? "Card Payment" : "Cash on Delivery",
         items: orderItems,
@@ -356,14 +367,17 @@ export default function CheckoutPage() {
       const orderResult = await ordersAPI.createOrder(orderData, token);
 
       // Success message
-      const deliveryMessage = deliveryMode === "Store Pickup" 
-        ? "\n\nPlease collect your order from our store. We'll notify you when it's ready for pickup."
-        : "\n\nYour shipping information has been saved for future orders.";
-      
+      const deliveryMessage =
+        deliveryMode === "Store Pickup"
+          ? "\n\nPlease collect your order from our store. We'll notify you when it's ready for pickup."
+          : "\n\nYour shipping information has been saved for future orders.";
+
       alert(
         `Order placed successfully!\n\nOrder ID: ${
           orderResult.order.order_id
-        }\nDelivery: ${deliveryMode}\nTotal: ${formatCurrency(totalAmount)}\nPayment: ${
+        }\nDelivery: ${deliveryMode}\nTotal: ${formatCurrency(
+          totalAmount
+        )}\nPayment: ${
           paymentMethod === "card" ? "Card Payment" : "Cash on Delivery"
         }${deliveryMessage}`
       );
@@ -417,7 +431,10 @@ export default function CheckoutPage() {
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Back Button and Header */}
         <div className="mb-6">
-          <BackButton variant="outline" label={isBuyNow ? "Back to Product" : "Back to Cart"} />
+          <BackButton
+            variant="outline"
+            label={isBuyNow ? "Back to Product" : "Back to Cart"}
+          />
         </div>
 
         <div className="mb-8">
@@ -534,16 +551,30 @@ export default function CheckoutPage() {
                       className="w-4 h-4 mt-1 text-secondary focus:ring-secondary"
                     />
                     <div className="ml-3 flex-grow">
-                      <div className="font-medium text-text-primary">Standard Delivery</div>
+                      <div className="font-medium text-text-primary">
+                        Standard Delivery
+                      </div>
                       <p className="text-sm text-text-secondary mt-1">
-                        Get your items delivered to your address • Delivery fee: $5.00
+                        Get your items delivered to your address • Delivery fee:
+                        $5.00
                       </p>
                       <p className="text-xs text-text-secondary mt-1">
-                        Est. Delivery: 5-7 business days (in stock items) or 8-10 business days (out of stock)
+                        Est. Delivery: 5-7 business days (in stock items) or
+                        8-10 business days (out of stock)
                       </p>
                     </div>
-                    <svg className="w-6 h-6 ml-3 text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    <svg
+                      className="w-6 h-6 ml-3 text-secondary flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+                      />
                     </svg>
                   </label>
 
@@ -567,11 +598,22 @@ export default function CheckoutPage() {
                         Pick up your order from our store • No delivery fee
                       </p>
                       <p className="text-xs text-text-secondary mt-1">
-                        Store Address: 123 Main Street, Austin, TX 78701 • Mon-Sat: 9AM-7PM
+                        Store Address: 123 Main Street, Austin, TX 78701 •
+                        Mon-Sat: 9AM-7PM
                       </p>
                     </div>
-                    <svg className="w-6 h-6 ml-3 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    <svg
+                      className="w-6 h-6 ml-3 text-purple-500 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      />
                     </svg>
                   </label>
                 </div>
@@ -599,13 +641,16 @@ export default function CheckoutPage() {
                       d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                     />
                   </svg>
-                  {deliveryMode === "Store Pickup" ? "Contact Information" : "Shipping Address"}
+                  {deliveryMode === "Store Pickup"
+                    ? "Contact Information"
+                    : "Shipping Address"}
                 </h2>
-                
+
                 {deliveryMode === "Store Pickup" && (
                   <div className="mb-4 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
                     <p className="text-sm text-purple-800 dark:text-purple-300">
-                      📍 We'll notify you when your order is ready for pickup at our store.
+                      📍 We'll notify you when your order is ready for pickup at
+                      our store.
                     </p>
                   </div>
                 )}
@@ -1059,7 +1104,11 @@ export default function CheckoutPage() {
                         </span>
                       )}
                     </span>
-                    <span>{deliveryMode === "Store Pickup" ? "Free" : formatCurrency(SHIPPING_COST)}</span>
+                    <span>
+                      {deliveryMode === "Store Pickup"
+                        ? "Free"
+                        : formatCurrency(SHIPPING_COST)}
+                    </span>
                   </div>
                   <div className="flex justify-between text-text-secondary">
                     <span>Tax (8%)</span>
