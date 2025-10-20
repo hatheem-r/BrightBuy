@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const path = require("path");
 
+// Load environment variables immediately
 // Load environment variables FIRST before requiring db
 dotenv.config();
 
@@ -11,8 +12,15 @@ const db = require("./config/db"); // initializes the DB connection
 
 const app = express();
 
+// --- ROUTE IMPORTS ---
+// Import all route files to register their paths with Express
+const productRoutes = require("./routes/products");
+const authRoutes = require("./routes/auth");
+const staffRoutes = require("./routes/staff"); 
+// --- END ROUTE IMPORTS ---
+
 // Middleware
-// Configure CORS to allow requests from all origins
+// Configure CORS to allow requests from frontend
 app.use(
   cors({
     origin: true, // Allow all origins
@@ -28,6 +36,9 @@ app.use("/assets", express.static(path.join(__dirname, "../assets")));
 app.use("/images", express.static(path.join(__dirname, "public/images")));
 
 // --- API Routes ---
+app.use("/api/products", productRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/staff", staffRoutes);
 app.use("/api/products", require("./routes/products"));
 app.use("/api/categories", require("./routes/categories"));
 app.use("/api/variants", require("./routes/variants"));
