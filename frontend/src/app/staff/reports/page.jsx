@@ -305,7 +305,7 @@ export default function StaffReports() {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
+        <div className="rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
       </div>
     );
   }
@@ -425,7 +425,7 @@ export default function StaffReports() {
         <div className="bg-white rounded-lg shadow-md p-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
+              <div className="rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
             </div>
           ) : (
             <>

@@ -168,7 +168,7 @@ export default function StaffOrdersPage() {
     return (
       <div className="p-8">
         <div className="max-w-7xl mx-auto text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-text-secondary">Loading orders...</p>
         </div>
       </div>

@@ -540,7 +540,7 @@ export default function InventoryManagement() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-text-secondary">Loading...</p>
         </div>
       </div>
@@ -592,7 +592,7 @@ export default function InventoryManagement() {
     <div className="flex min-h-screen bg-background">
       {/* Toast Notification */}
       {message.text && (
-        <div className="fixed top-4 right-4 z-50 animate-slide-in">
+        <div className="fixed top-4 right-4 z-50">
           <div
             className={`flex items-center gap-3 px-6 py-4 rounded-lg shadow-lg border-l-4 ${
               message.type === "success"
@@ -846,7 +846,7 @@ export default function InventoryManagement() {
               <div className="space-y-4">
                 {loading ? (
                   <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                    <div className="rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                     <p className="text-text-secondary">Loading inventory...</p>
                   </div>
                 ) : filteredProducts.length === 0 ? (
@@ -1203,7 +1203,7 @@ export default function InventoryManagement() {
 
                 {loading ? (
                   <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-3"></div>
+                    <div className="rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-3"></div>
                     <p className="text-text-secondary text-sm">
                       Loading products...
                     </p>

@@ -156,7 +156,7 @@ export default function HomePage() {
                 "Welcome to BrightBuy 🛍️",
                 "Premium Electronics 🎧",
                 "Latest Tech Gadgets 📱",
-                "Best Deals Daily ⚡",
+                "Best Deals Daily ⚡"
               ]}
               typingSpeed={100}
               pauseDuration={2000}
@@ -165,7 +165,7 @@ export default function HomePage() {
               cursorCharacter="|"
               cursorClassName="text-yellow-300"
               className="text-5xl md:text-7xl font-extrabold"
-              textColors={["#ffffff", "#fde047", "#ffffff", "#fde047"]}
+              textColors={['#ffffff', '#fde047', '#ffffff', '#fde047']}
             />
           </div>
           <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-8 animate-fade-in-up delay-200">
