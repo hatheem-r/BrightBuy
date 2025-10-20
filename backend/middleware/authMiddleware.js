@@ -93,3 +93,25 @@ exports.isAdmin = (req, res, next) => {
   }
   next();
 };
+
+// Middleware to check if user is staff (any level)
+exports.authorizeStaff = (req, res, next) => {
+  if (!req.user || req.user.role !== "staff") {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied. Staff access only.",
+    });
+  }
+  next();
+};
+
+// Middleware to check if user is Level01 staff
+exports.authorizeLevel01 = (req, res, next) => {
+  if (!req.user || req.user.role !== "staff" || req.user.staffLevel !== "Level01") {
+    return res.status(403).json({
+      success: false,
+      message: "Access denied. Level01 staff access only.",
+    });
+  }
+  next();
+};

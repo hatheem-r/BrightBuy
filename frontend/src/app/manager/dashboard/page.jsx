@@ -79,7 +79,7 @@ export default function ManagerDashboard() {
               Today's Sales
             </h3>
             <p className="text-3xl font-bold text-text-primary mt-2">
-              Rs. 12,345
+              $ 12,345
             </p>
           </div>
         </div>

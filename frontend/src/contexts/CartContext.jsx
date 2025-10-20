@@ -198,7 +198,6 @@ export const CartProvider = ({ children }) => {
           price: parseFloat(item.price),
           size: item.size,
           color: item.color,
-          image_url: item.image_url,
           description: item.variant_description,
           stock_quantity: item.stock_quantity,
           product_id: item.product_id,

@@ -26,7 +26,8 @@ exports.login = async (req, res) => {
         u.is_active, 
         u.customer_id,
         u.staff_id,
-        COALESCE(CONCAT(c.first_name, ' ', c.last_name), s.user_name) as name
+        COALESCE(CONCAT(c.first_name, ' ', c.last_name), s.user_name) as name,
+        s.role as staff_level
        FROM users u
        LEFT JOIN Customer c ON u.customer_id = c.customer_id
        LEFT JOIN Staff s ON u.staff_id = s.staff_id
@@ -74,6 +75,8 @@ exports.login = async (req, res) => {
         email: user.email,
         role: user.role,
         customerId: user.customer_id || null,
+        staffId: user.staff_id || null,
+        staffLevel: user.staff_level || null,
       },
       process.env.JWT_SECRET || "your-secret-key-change-in-production",
       { expiresIn: "7d" }
@@ -90,6 +93,8 @@ exports.login = async (req, res) => {
         email: user.email,
         role: user.role,
         customer_id: user.customer_id || null,
+        staff_id: user.staff_id || null,
+        staff_level: user.staff_level || null,
       },
     });
   } catch (error) {
@@ -342,6 +347,8 @@ exports.getMe = async (req, res) => {
         email: users[0].email,
         role: users[0].role,
         phone: users[0].phone,
+        customer_id: users[0].customer_id,
+        staff_id: users[0].staff_id,
         createdAt: users[0].created_at,
         lastLogin: users[0].last_login,
       },

@@ -5,6 +5,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
 import { productsAPI } from "@/services/api";
+import BackButton from "@/components/BackButton";
+import { getImageUrl } from "@/utils/imageUrl";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -16,6 +18,18 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+
+  // Check if user is staff
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      const user = JSON.parse(userData);
+      setUserRole(user.role);
+      // Allow staff to view product details, just hide buy buttons
+    }
+  }, [router]);
 
   useEffect(() => {
     if (id) {
@@ -43,6 +57,7 @@ export default function ProductDetailPage() {
       product.variants.find((v) => v.variant_id === variantId)
     );
     setAddedToCart(false);
+    setQuantity(1); // Reset quantity when variant changes
   };
 
   // Get unique variant attributes
@@ -85,7 +100,7 @@ export default function ProductDetailPage() {
     }
 
     if (selectedVariant) {
-      addToCart(selectedVariant, 1);
+      addToCart(selectedVariant, quantity); // Use selected quantity
       setAddedToCart(true);
       setTimeout(() => {
         setAddedToCart(false);
@@ -108,8 +123,23 @@ export default function ProductDetailPage() {
       // Redirect to checkout with product variant ID and quantity as URL params
       // This allows checkout page to show only this product, not the entire cart
       router.push(
-        `/checkout?buyNow=true&variantId=${selectedVariant.variant_id}&quantity=1`
+        `/checkout?buyNow=true&variantId=${selectedVariant.variant_id}&quantity=${quantity}`
       );
+    }
+  };
+
+  const incrementQuantity = () => {
+    setQuantity((prev) => prev + 1);
+  };
+
+  const decrementQuantity = () => {
+    setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+  };
+
+  const handleQuantityInput = (e) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value > 0) {
+      setQuantity(value);
     }
   };
 
@@ -147,12 +177,15 @@ export default function ProductDetailPage() {
     ? "5-7 business days"
     : "8-10 business days";
 
-  const imageUrl = selectedVariant?.image_url
-    ? `http://localhost:5001${selectedVariant.image_url}`
-    : null;
+  const imageUrl = getImageUrl(selectedVariant?.image_url);
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Back Button */}
+      <div className="mb-6">
+        <BackButton variant="outline" label="Back to Products" />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Image Gallery */}
         <div className="flex flex-col gap-4">
@@ -326,7 +359,7 @@ export default function ProductDetailPage() {
                     }`}
                   >
                     {selectedVariant?.stock_quantity > 0
-                      ? `${selectedVariant.stock_quantity} in stock`
+                      ? "In Stock"
                       : "Out of Stock"}
                   </span>
                 </div>
@@ -346,42 +379,116 @@ export default function ProductDetailPage() {
 
           <div className="mb-6">
             <span className="text-4xl font-extrabold text-primary">
-              $
+              ${" "}
               {selectedVariant?.price
                 ? parseFloat(selectedVariant.price).toFixed(2)
                 : "N/A"}
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleAddToCart}
-              disabled={!isInStock}
-              className="w-full bg-secondary text-white py-3 rounded-lg font-semibold text-lg hover:opacity-90 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              <i className="fas fa-shopping-cart mr-2"></i> Add to Cart
-            </button>
-            <button
-              onClick={handleBuyNow}
-              disabled={!isInStock}
-              className="w-full bg-primary text-white py-3 rounded-lg font-semibold text-lg hover:bg-secondary transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              Buy Now
-            </button>
+          {/* Delivery Information */}
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex items-start gap-3">
+              <svg className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              </svg>
+              <div>
+                <p className="font-semibold text-blue-800 dark:text-blue-300 mb-1">
+                  Estimated Delivery
+                </p>
+                <p className="text-sm text-blue-700 dark:text-blue-400">
+                  {estimatedDelivery}
+                  {!isInStock && (
+                    <span className="block mt-1 text-xs text-blue-600 dark:text-blue-500">
+                      (Item currently out of stock - will be dispatched once available)
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
           </div>
 
-          {addedToCart && (
-            <div className="mt-4 p-3 bg-green-100 border border-green-300 text-green-800 rounded-md text-center">
-              Successfully added to cart!
+          {/* Quantity Selector - Only show for customers, not staff */}
+          {userRole !== "staff" && (
+            <div className="mb-6">
+              <label className="text-md font-semibold text-text-primary mb-2 block">
+                Quantity
+              </label>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center border-2 border-card-border rounded-lg overflow-hidden">
+                  <button
+                    onClick={decrementQuantity}
+                    disabled={quantity <= 1}
+                    className="px-4 py-2 bg-card hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    </svg>
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    value={quantity}
+                    onChange={handleQuantityInput}
+                    className="w-20 text-center py-2 border-x-2 border-card-border bg-background text-text-primary font-semibold focus:outline-none"
+                  />
+                  <button
+                    onClick={incrementQuantity}
+                    className="px-4 py-2 bg-card hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+                {isInStock && (
+                  <span className="text-sm text-text-secondary">
+                    Available
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
-          <div className="mt-6 border-t border-card-border pt-4 text-sm text-text-secondary">
-            <p>
-              <i className="fas fa-truck mr-2"></i> Est. Delivery:{" "}
-              <span className="font-semibold">{estimatedDelivery}</span>
-            </p>
-          </div>
+          {/* Action Buttons - Hide for staff */}
+          {userRole !== "staff" && (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={!isInStock}
+                  className="w-full bg-secondary text-white py-3 rounded-lg font-semibold text-lg hover:opacity-90 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  <i className="fas fa-shopping-cart mr-2"></i> Add to Cart
+                </button>
+                <button
+                  onClick={handleBuyNow}
+                  disabled={!isInStock}
+                  className="w-full bg-primary text-white py-3 rounded-lg font-semibold text-lg hover:bg-secondary transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  Buy Now
+                </button>
+              </div>
+
+              {addedToCart && (
+                <div className="p-3 bg-green-100 border border-green-300 text-green-800 rounded-md text-center">
+                  Successfully added {quantity} {quantity === 1 ? "item" : "items"} to cart!
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Staff view - no action buttons */}
+          {userRole === "staff" && (
+            <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <p className="text-yellow-800 dark:text-yellow-300 text-sm">
+                <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                You are viewing this as staff. Purchase functionality is disabled.
+              </p>
+            </div>
+          )}
         </div>
       </div>
       {/* Similar Products section can be added here if needed */}
